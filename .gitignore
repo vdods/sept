@@ -1,0 +1,8 @@
+build
+build.g++
+build.clang++
+ignore
+# The .kdev4 dir is for user-specific settings, and isn't meant to go in git.
+# However, the project file (in this case sept.kdev4) is meant to go in git.
+# https://stackoverflow.com/questions/4832968/project-files-in-kdevelop
+.kdev4
