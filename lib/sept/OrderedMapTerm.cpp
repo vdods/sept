@@ -83,6 +83,8 @@ int compare (OrderedMapTerm_c const &lhs, OrderedMapTerm_c const &rhs) {
 // Registrations for Data functions
 //
 
-SEPT_DATA_OPERATOR_EQ_REGISTER_TYPE(OrderedMapTerm_c)
+SEPT_DATA_PRINTING_REGISTER_TYPE(OrderedMapTerm_c)
+
+SEPT_EQ_DATA_REGISTER_TYPE(OrderedMapTerm_c)
 
 } // end namespace sept

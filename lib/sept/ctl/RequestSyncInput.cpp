@@ -14,9 +14,13 @@ RequestSyncInput_c RequestSyncInput;
 // Registrations for Data functions
 //
 
-SEPT_DATA_OPERATOR_EQ_REGISTER_TYPE(RequestSyncInputType_c)
-SEPT_DATA_OPERATOR_EQ_REGISTER_TYPE(RequestSyncInput_c)
-SEPT_DATA_OPERATOR_EQ_REGISTER_TYPE(RequestSyncInputTerm_c)
+SEPT_DATA_PRINTING_REGISTER_TYPE(RequestSyncInputType_c)
+SEPT_DATA_PRINTING_REGISTER_TYPE(RequestSyncInput_c)
+SEPT_DATA_PRINTING_REGISTER_TYPE(RequestSyncInputTerm_c)
+
+SEPT_EQ_DATA_REGISTER_TYPE(RequestSyncInputType_c)
+SEPT_EQ_DATA_REGISTER_TYPE(RequestSyncInput_c)
+SEPT_EQ_DATA_REGISTER_TYPE(RequestSyncInputTerm_c)
 
 } // end namespace ctl
 

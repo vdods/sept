@@ -32,6 +32,10 @@ using lvd::operator<<;
 template <typename T_>
 class Data_t;
 
+// Forward declaration of print_data, with necessary forward declaration of Data.
+class Data;
+void print_data (std::ostream &out, Data const &data);
+
 // Data is the fundamental unit of currency in sept; this is how each data node is represented in C++.
 // TODO: Should this be called Data or Node?  Or what?
 // TODO: Maybe inherit std::any privately
@@ -163,7 +167,12 @@ public:
     }
 
     // Convenient way to get an overload for operator<< on std::ostream.
-    operator lvd::OstreamDelegate () const;
+    operator lvd::OstreamDelegate () const {
+        assert(this->has_value());
+        return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
+            print_data(out, *this);
+        });
+    }
 };
 
 // TODO: Implement specialization for std::swap(Data &, Data &)
@@ -174,6 +183,39 @@ Data make_data (Args_&&... args) {
     return Data(std::in_place_type_t<T_>(), std::forward<Args_>(args)...);
 }
 
+//
+// StaticAssociation_t for Data::operator lvd::OstreamDelegate
+//
+
+using DataPrintingFunction = std::function<void(std::ostream &, Data const &)>;
+
+// This is the type of the map that the Data printing functions are registered into.
+using DataPrintingFunctionMap = std::unordered_map<std::type_index,DataPrintingFunction>;
+// This defines a static instance of EqDataPredicateMap that the Data equality predicates are registered into.
+LVD_STATIC_ASSOCIATION_DEFINE(DataPrinting, DataPrintingFunctionMap)
+// This macro must be used when `type` is not a C identifier (meaning that it can't automatically go into
+// the static variable name that is used in the registration).
+// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
+#define SEPT_DATA_PRINTING_REGISTER_TYPE_EXPLICIT(type, unique_id) LVD_STATIC_ASSOCIATION_REGISTER(DataPrinting, unique_id, std::type_index(typeid(type)), [](std::ostream &out, Data const &data){ out << data.cast<type const &>(); })
+// This macro can be used when `type` is a C identifier (meaning that it can automatically go into
+// the static variable name that is used in the registration).
+// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
+#define SEPT_DATA_PRINTING_REGISTER_TYPE(type) SEPT_DATA_PRINTING_REGISTER_TYPE_EXPLICIT(type, type)
+
+inline void print_data (std::ostream &out, Data const &data) {
+    // Look up the type in the predicate map.
+    auto const &data_printing_function_map = lvd::static_association_singleton<sept::DataPrinting>();
+    auto it = data_printing_function_map.find(std::type_index(data.type()));
+    if (it == data_printing_function_map.end())
+        throw std::runtime_error(LVD_FMT("Data type " << data.type().name() << " not registered in DataPrinting for use in print_data"));
+
+    it->second(out, data);
+}
+
+//
+// StaticAssociation_t for eq_data
+//
+
 using DataPredicateUnary = std::function<bool(Data const &)>;
 using DataPredicateBinary = std::function<bool(Data const &, Data const &)>;
 
@@ -181,15 +223,18 @@ using DataPredicateBinary = std::function<bool(Data const &, Data const &)>;
 using EqDataPredicateMap = std::unordered_map<std::type_index,DataPredicateBinary>;
 // This defines a static instance of EqDataPredicateMap that the Data equality predicates are registered into.
 LVD_STATIC_ASSOCIATION_DEFINE(DataOperatorEq, EqDataPredicateMap)
+// This macro must be used when `type` is not a C identifier (meaning that it can't automatically go into
+// the static variable name that is used in the registration).
 // NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
-#define SEPT_DATA_OPERATOR_EQ_REGISTER_TYPE(type) LVD_STATIC_ASSOCIATION_REGISTER(DataOperatorEq, type, std::type_index(typeid(type)), [](Data const &lhs, Data const &rhs){ return lhs.cast<type const &>() == rhs.cast<type const &>(); })
+#define SEPT_EQ_DATA_REGISTER_TYPE_EXPLICIT(type, unique_id) LVD_STATIC_ASSOCIATION_REGISTER(DataOperatorEq, unique_id, std::type_index(typeid(type)), [](Data const &lhs, Data const &rhs){ return lhs.cast<type const &>() == rhs.cast<type const &>(); })
+// This macro can be used when `type` is a C identifier (meaning that it can automatically go into
+// the static variable name that is used in the registration).
 // NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
-#define SEPT_DATA_OPERATOR_EQ_REGISTER_TYPE_EXPLICIT(type, unique_id) LVD_STATIC_ASSOCIATION_REGISTER(DataOperatorEq, unique_id, std::type_index(typeid(type)), [](Data const &lhs, Data const &rhs){ return lhs.cast<type const &>() == rhs.cast<type const &>(); })
+#define SEPT_EQ_DATA_REGISTER_TYPE(type) SEPT_EQ_DATA_REGISTER_TYPE_EXPLICIT(type, type)
 
 // Only allow definitions of equality where the data are the same type.  This means that for values of
 // different types to be equal (i.e. different int sizes), their conversion has to be explicit.
 inline bool eq_data (Data const &lhs, Data const &rhs) {
-// inline bool eq_data (Data const &lhs, Data const &rhs) {
     // If the types differ, they can't be equal.
     if (lhs.type() != rhs.type())
         return false;
