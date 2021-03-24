@@ -127,4 +127,17 @@ OrderedMapCTerm_c deserialize_value_OrderedMapCTerm (Data &&abstract_type, std::
     return OrderedMapCTerm_c(std::move(codomain));
 }
 
+//
+// Registrations for Data functions
+//
+
+SEPT_DATA_OPERATOR_EQ_REGISTER_TYPE(OrderedMapDCTerm_c)
+SEPT_DATA_OPERATOR_EQ_REGISTER_TYPE(OrderedMapDTerm_c)
+SEPT_DATA_OPERATOR_EQ_REGISTER_TYPE(OrderedMapCTerm_c)
+SEPT_DATA_OPERATOR_EQ_REGISTER_TYPE(OrderedMapDC_c)
+SEPT_DATA_OPERATOR_EQ_REGISTER_TYPE(OrderedMapD_c)
+SEPT_DATA_OPERATOR_EQ_REGISTER_TYPE(OrderedMapC_c)
+SEPT_DATA_OPERATOR_EQ_REGISTER_TYPE(OrderedMap_c)
+SEPT_DATA_OPERATOR_EQ_REGISTER_TYPE(OrderedMapType_c)
+
 } // end namespace sept

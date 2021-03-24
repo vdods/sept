@@ -87,4 +87,14 @@ Void_c Void;
 True_c True;
 False_c False;
 
+//
+// Registrations for Data functions
+//
+
+SEPT_DATA_OPERATOR_EQ_REGISTER_TYPE(NonParametricTerm_c)
+SEPT_DATA_OPERATOR_EQ_REGISTER_TYPE(Void_c)
+SEPT_DATA_OPERATOR_EQ_REGISTER_TYPE(BoolTerm_c)
+SEPT_DATA_OPERATOR_EQ_REGISTER_TYPE(True_c)
+SEPT_DATA_OPERATOR_EQ_REGISTER_TYPE(False_c)
+
 } // end namespace sept

@@ -10,6 +10,14 @@ namespace ctl {
 OutputType_c OutputType;
 Output_c Output;
 
+//
+// Registrations for Data functions
+//
+
+SEPT_DATA_OPERATOR_EQ_REGISTER_TYPE(OutputType_c)
+SEPT_DATA_OPERATOR_EQ_REGISTER_TYPE(Output_c)
+SEPT_DATA_OPERATOR_EQ_REGISTER_TYPE(OutputTerm_c)
+
 } // end namespace ctl
 
 // TODO: Factor this so that BaseArray_S_t does it.

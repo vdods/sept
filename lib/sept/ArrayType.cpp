@@ -130,4 +130,17 @@ ArraySTerm_c deserialize_value_ArraySTerm (Data &&abstract_type, std::istream &i
     return ArraySTerm_c(size.cast<size_t>());
 }
 
+//
+// Registrations for Data functions
+//
+
+SEPT_DATA_OPERATOR_EQ_REGISTER_TYPE(ArrayESTerm_c)
+SEPT_DATA_OPERATOR_EQ_REGISTER_TYPE(ArrayETerm_c)
+SEPT_DATA_OPERATOR_EQ_REGISTER_TYPE(ArraySTerm_c)
+SEPT_DATA_OPERATOR_EQ_REGISTER_TYPE(ArrayES_c)
+SEPT_DATA_OPERATOR_EQ_REGISTER_TYPE(ArrayE_c)
+SEPT_DATA_OPERATOR_EQ_REGISTER_TYPE(ArrayS_c)
+SEPT_DATA_OPERATOR_EQ_REGISTER_TYPE(Array_c)
+SEPT_DATA_OPERATOR_EQ_REGISTER_TYPE(ArrayType_c)
+
 } // end namespace sept

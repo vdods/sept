@@ -8,7 +8,9 @@
 #include <functional>
 #include <iostream>
 #include <lvd/OstreamDelegate.hpp>
+#include <lvd/StaticAssociation_t.hpp>
 #include "sept/core.hpp"
+#include <typeindex>
 #include <type_traits>
 
 // This template metafunction should be present in std::, but isn't.  There is a private
@@ -172,12 +174,43 @@ Data make_data (Args_&&... args) {
     return Data(std::in_place_type_t<T_>(), std::forward<Args_>(args)...);
 }
 
+using DataPredicateUnary = std::function<bool(Data const &)>;
+using DataPredicateBinary = std::function<bool(Data const &, Data const &)>;
+
+// This is the type of the map that the Data equality predicates are registered into.
+using EqDataPredicateMap = std::unordered_map<std::type_index,DataPredicateBinary>;
+// This defines a static instance of EqDataPredicateMap that the Data equality predicates are registered into.
+LVD_STATIC_ASSOCIATION_DEFINE(DataOperatorEq, EqDataPredicateMap)
+// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
+#define SEPT_DATA_OPERATOR_EQ_REGISTER_TYPE(type) LVD_STATIC_ASSOCIATION_REGISTER(DataOperatorEq, type, std::type_index(typeid(type)), [](Data const &lhs, Data const &rhs){ return lhs.cast<type const &>() == rhs.cast<type const &>(); })
+// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
+#define SEPT_DATA_OPERATOR_EQ_REGISTER_TYPE_EXPLICIT(type, unique_id) LVD_STATIC_ASSOCIATION_REGISTER(DataOperatorEq, unique_id, std::type_index(typeid(type)), [](Data const &lhs, Data const &rhs){ return lhs.cast<type const &>() == rhs.cast<type const &>(); })
+
+// Only allow definitions of equality where the data are the same type.  This means that for values of
+// different types to be equal (i.e. different int sizes), their conversion has to be explicit.
+inline bool eq_data (Data const &lhs, Data const &rhs) {
+// inline bool eq_data (Data const &lhs, Data const &rhs) {
+    // If the types differ, they can't be equal.
+    if (lhs.type() != rhs.type())
+        return false;
+
+    // Otherwise look up the type in the predicate map.
+    auto const &data_operator_eq_predicate_map = lvd::static_association_singleton<sept::DataOperatorEq>();
+    auto it = data_operator_eq_predicate_map.find(std::type_index(lhs.type()));
+    if (it == data_operator_eq_predicate_map.end())
+        throw std::runtime_error(LVD_FMT("Data type " << lhs.type().name() << " not registered in DataOperatorEq for use in eq_data"));
+
+    return it->second(lhs, rhs);
+}
+
+inline bool neq_data (Data const &lhs, Data const &rhs) { return !eq_data(lhs, rhs); }
+
 // TODO: Maybe use an explicitly named equals function instead, otherwise the fact that type can be converted into
 // Data greatly interferes with finding legitimately missing overloads for operator== for specific types.
-bool operator == (Data const &lhs, Data const &rhs);
+inline bool operator == (Data const &lhs, Data const &rhs) { return eq_data(lhs, rhs); }
 
 // TODO: Maybe use an explicitly named not_equals function instead
-inline bool operator != (Data const &lhs, Data const &rhs) { return !(lhs == rhs); }
+inline bool operator != (Data const &lhs, Data const &rhs) { return neq_data(lhs, rhs); }
 
 // Determines set membership.  Doesn't have to be defined for all possible containers.
 // TODO: Provide overloads for all the various Data_t<T_> types, so that more compile-time stuff can be done.

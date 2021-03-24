@@ -38,4 +38,10 @@ ArrayTerm_c deserialize_value_ArrayTerm (Data &&abstract_type, std::istream &in)
     return ArrayTerm_c(std::move(elements)).with_constraint(std::move(abstract_type));
 }
 
+//
+// Registrations for Data functions
+//
+
+SEPT_DATA_OPERATOR_EQ_REGISTER_TYPE(ArrayTerm_c)
+
 } // end namespace sept

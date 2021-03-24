@@ -79,4 +79,10 @@ int compare (OrderedMapTerm_c const &lhs, OrderedMapTerm_c const &rhs) {
     return lhs.size() < rhs.size() ? -1 : (lhs.size() == rhs.size() ? 0 : 1);
 }
 
+//
+// Registrations for Data functions
+//
+
+SEPT_DATA_OPERATOR_EQ_REGISTER_TYPE(OrderedMapTerm_c)
+
 } // end namespace sept

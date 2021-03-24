@@ -254,3 +254,63 @@ LVD_TEST_BEGIN(200__vector_resize__1)
     LVD_TEST_REQ_EQ(BadDonkey::ms_copy_assignment_count, 0);
     LVD_TEST_REQ_EQ(BadDonkey::ms_move_assignment_count, 0);
 LVD_TEST_END
+
+LVD_TEST_BEGIN(200__eq_data)
+    auto x = sept::Sint8(3);
+    auto y = sept::Sint8(3);
+    auto z = sept::Sint8(4);
+
+    static_assert(std::is_same_v<decltype(x),int8_t>);
+
+    test_log << lvd::Log::trc() << LVD_REFLECT(std::type_index(typeid(int8_t)).name()) << '\n';
+
+    auto const &data_operator_eq_map = lvd::static_association_singleton<sept::DataOperatorEq>();
+    for (auto const &it : data_operator_eq_map) {
+        test_log << lvd::Log::trc() << it.first.name() << " -> " << it.second.target_type().name() << '\n';
+    }
+    LVD_TEST_REQ_IS_TRUE(data_operator_eq_map.find(std::type_index(typeid(x))) != data_operator_eq_map.end());
+
+    LVD_TEST_REQ_IS_TRUE(sept::eq_data(x, x));
+    LVD_TEST_REQ_IS_TRUE(sept::eq_data(x, y));
+    LVD_TEST_REQ_IS_TRUE(sept::eq_data(y, x));
+    LVD_TEST_REQ_IS_FALSE(sept::eq_data(x, z));
+    LVD_TEST_REQ_IS_FALSE(sept::eq_data(z, x));
+    LVD_TEST_REQ_IS_FALSE(sept::eq_data(y, z));
+    LVD_TEST_REQ_IS_FALSE(sept::eq_data(z, y));
+
+    auto a = sept::Float64(12.56);
+    auto b = sept::Float64(12.56);
+    auto c = sept::Float64(82.05);
+
+    LVD_TEST_REQ_IS_TRUE(sept::eq_data(a, a));
+    LVD_TEST_REQ_IS_TRUE(sept::eq_data(a, b));
+    LVD_TEST_REQ_IS_TRUE(sept::eq_data(b, a));
+    LVD_TEST_REQ_IS_FALSE(sept::eq_data(a, c));
+    LVD_TEST_REQ_IS_FALSE(sept::eq_data(c, a));
+    LVD_TEST_REQ_IS_FALSE(sept::eq_data(b, c));
+    LVD_TEST_REQ_IS_FALSE(sept::eq_data(c, b));
+
+    LVD_TEST_REQ_IS_FALSE(sept::eq_data(x, a));
+    LVD_TEST_REQ_IS_FALSE(sept::eq_data(x, b));
+    LVD_TEST_REQ_IS_FALSE(sept::eq_data(x, c));
+    LVD_TEST_REQ_IS_FALSE(sept::eq_data(y, a));
+    LVD_TEST_REQ_IS_FALSE(sept::eq_data(y, b));
+    LVD_TEST_REQ_IS_FALSE(sept::eq_data(y, c));
+    LVD_TEST_REQ_IS_FALSE(sept::eq_data(z, a));
+    LVD_TEST_REQ_IS_FALSE(sept::eq_data(z, b));
+    LVD_TEST_REQ_IS_FALSE(sept::eq_data(z, c));
+
+    auto array0 = sept::Array(20,30,40);
+    auto array1 = sept::Array(20,30,40);
+    auto array2 = sept::Array(6,7,8,std::string("HIPPO"));
+
+    test_log << lvd::Log::trc() << array2 << '\n';
+
+    LVD_TEST_REQ_IS_TRUE(sept::eq_data(array0, array0));
+    LVD_TEST_REQ_IS_TRUE(sept::eq_data(array0, array1));
+    LVD_TEST_REQ_IS_TRUE(sept::eq_data(array1, array0));
+    LVD_TEST_REQ_IS_FALSE(sept::eq_data(array0, array2));
+    LVD_TEST_REQ_IS_FALSE(sept::eq_data(array2, array0));
+    LVD_TEST_REQ_IS_FALSE(sept::eq_data(array1, array2));
+    LVD_TEST_REQ_IS_FALSE(sept::eq_data(array2, array1));
+LVD_TEST_END

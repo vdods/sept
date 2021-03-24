@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.18)
 project(sept)
 # NOTE: After cutting a release, you should increment the patch number and append `-DEV` so that
 # the deb packages produced while developing are distinguished from the actual tagged release.
-set(sept_VERSION 0.0.0)
+set(sept_VERSION 0.0.1-DEV)
 
 option(BUILD_septcat "Build sept-cat binary" ON)
 option(BUILD_testlibsept "Build test-libsept binary" ON)
@@ -105,6 +105,9 @@ set(libsept_SOURCES
     lib/sept/abstract_type_of.cpp
     lib/sept/ArrayTerm.cpp
     lib/sept/ArrayType.cpp
+    lib/sept/BaseArray_t.cpp
+    lib/sept/BaseArrayT_t.cpp
+    lib/sept/BaseArray_S_t.cpp
     lib/sept/compare.cpp
     lib/sept/ctl/ClearOutput.cpp
     lib/sept/ctl/EndOfFile.cpp

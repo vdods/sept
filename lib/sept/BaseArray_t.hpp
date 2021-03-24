@@ -4,6 +4,7 @@
 
 #include <cassert>
 #include <lvd/OstreamDelegate.hpp>
+#include <lvd/static_if.hpp>
 #include "sept/core.hpp"
 #include "sept/DataVector.hpp"
 #include "sept/hash.hpp"
