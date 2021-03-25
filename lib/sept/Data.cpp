@@ -20,6 +20,27 @@
 
 namespace sept {
 
+bool inhabits_data (Data const &value_data, Data const &type_data) {
+    // Everything is a Term
+    if (type_data.type() == typeid(Term_c))
+        return true;
+
+    // Look up the type pair in the predicate map.
+    auto const &inhabits_data_predicate_map = lvd::static_association_singleton<sept::InhabitsData>();
+    auto it = inhabits_data_predicate_map.find(InhabitsDataKey{std::type_index(value_data.type()), std::type_index(type_data.type())});
+    // If the (value,type) type pair isn't found, then it's assumed that value does not inhabit type.
+    if (it == inhabits_data_predicate_map.end())
+        return false;
+
+    auto const &inhabits_evaluator = it->second;
+    // If inhabits_evaluator == nullptr, then by convention, value always inhabits type, and it doesn't depend on any runtime value.
+    if (inhabits_evaluator == nullptr)
+        return true;
+
+    // Otherwise delegate to inhabits_evaluator.
+    return inhabits_evaluator(value_data, type_data);
+}
+
 bool is_member (Data const &value, Data const &container) {
 //     assert(value.has_value());
     assert(container.has_value());

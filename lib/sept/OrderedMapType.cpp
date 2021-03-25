@@ -149,4 +149,24 @@ SEPT_EQ_DATA_REGISTER_TYPE(OrderedMapC_c)
 SEPT_EQ_DATA_REGISTER_TYPE(OrderedMap_c)
 SEPT_EQ_DATA_REGISTER_TYPE(OrderedMapType_c)
 
+SEPT_INHABITS_DATA_REGISTER_TYPE_TRIVIAL(OrderedMapDC_c, Type_c)
+SEPT_INHABITS_DATA_REGISTER_TYPE_TRIVIAL(OrderedMapD_c, Type_c)
+SEPT_INHABITS_DATA_REGISTER_TYPE_TRIVIAL(OrderedMapC_c, Type_c)
+SEPT_INHABITS_DATA_REGISTER_TYPE_TRIVIAL(OrderedMap_c, Type_c)
+
+SEPT_INHABITS_DATA_REGISTER_TYPE_TRIVIAL(OrderedMapDC_c, OrderedMapType_c)
+SEPT_INHABITS_DATA_REGISTER_TYPE_TRIVIAL(OrderedMapD_c, OrderedMapType_c)
+SEPT_INHABITS_DATA_REGISTER_TYPE_TRIVIAL(OrderedMapC_c, OrderedMapType_c)
+SEPT_INHABITS_DATA_REGISTER_TYPE_TRIVIAL(OrderedMap_c, OrderedMapType_c)
+
+SEPT_INHABITS_DATA_REGISTER_TYPE_TRIVIAL(OrderedMapDCTerm_c, OrderedMapDC_c)
+SEPT_INHABITS_DATA_REGISTER_TYPE_TRIVIAL(OrderedMapDTerm_c, OrderedMapD_c)
+SEPT_INHABITS_DATA_REGISTER_TYPE_TRIVIAL(OrderedMapCTerm_c, OrderedMapC_c)
+
+// NOTE: This is a type-widening inhabitation; it's more accurate to say that there's a lossless, but type-widening conversion.
+SEPT_INHABITS_DATA_REGISTER_TYPE(OrderedMapTerm_c, OrderedMapDCTerm_c, return type.constraint_is_satisfied(value.pairs()); )
+SEPT_INHABITS_DATA_REGISTER_TYPE(OrderedMapTerm_c, OrderedMapDTerm_c, return type.constraint_is_satisfied(value.pairs()); )
+SEPT_INHABITS_DATA_REGISTER_TYPE(OrderedMapTerm_c, OrderedMapCTerm_c, return type.constraint_is_satisfied(value.pairs()); )
+SEPT_INHABITS_DATA_REGISTER_TYPE(OrderedMapTerm_c, OrderedMap_c, return type.constraint_is_satisfied(value.pairs()); )
+
 } // end namespace sept

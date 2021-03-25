@@ -22,6 +22,9 @@ SEPT_EQ_DATA_REGISTER_TYPE(RequestSyncInputType_c)
 SEPT_EQ_DATA_REGISTER_TYPE(RequestSyncInput_c)
 SEPT_EQ_DATA_REGISTER_TYPE(RequestSyncInputTerm_c)
 
+SEPT_INHABITS_DATA_REGISTER_TYPE_TRIVIAL(RequestSyncInput_c, RequestSyncInputType_c)
+SEPT_INHABITS_DATA_REGISTER_TYPE_TRIVIAL(RequestSyncInputTerm_c, RequestSyncInput_c)
+
 } // end namespace ctl
 
 // TODO: Factor this so that BaseArray_S_t does it.

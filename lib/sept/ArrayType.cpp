@@ -152,4 +152,24 @@ SEPT_EQ_DATA_REGISTER_TYPE(ArrayS_c)
 SEPT_EQ_DATA_REGISTER_TYPE(Array_c)
 SEPT_EQ_DATA_REGISTER_TYPE(ArrayType_c)
 
+SEPT_INHABITS_DATA_REGISTER_TYPE_TRIVIAL(ArrayES_c, Type_c)
+SEPT_INHABITS_DATA_REGISTER_TYPE_TRIVIAL(ArrayE_c, Type_c)
+SEPT_INHABITS_DATA_REGISTER_TYPE_TRIVIAL(ArrayS_c, Type_c)
+SEPT_INHABITS_DATA_REGISTER_TYPE_TRIVIAL(Array_c, Type_c)
+
+SEPT_INHABITS_DATA_REGISTER_TYPE_TRIVIAL(ArrayES_c, ArrayType_c)
+SEPT_INHABITS_DATA_REGISTER_TYPE_TRIVIAL(ArrayE_c, ArrayType_c)
+SEPT_INHABITS_DATA_REGISTER_TYPE_TRIVIAL(ArrayS_c, ArrayType_c)
+SEPT_INHABITS_DATA_REGISTER_TYPE_TRIVIAL(Array_c, ArrayType_c)
+
+SEPT_INHABITS_DATA_REGISTER_TYPE_TRIVIAL(ArrayESTerm_c, ArrayES_c)
+SEPT_INHABITS_DATA_REGISTER_TYPE_TRIVIAL(ArrayETerm_c, ArrayE_c)
+SEPT_INHABITS_DATA_REGISTER_TYPE_TRIVIAL(ArraySTerm_c, ArrayS_c)
+
+// NOTE: This is a type-widening inhabitation; it's more accurate to say that there's a lossless, but type-widening conversion.
+SEPT_INHABITS_DATA_REGISTER_TYPE(ArrayTerm_c, ArrayESTerm_c, return type.constraint_is_satisfied(value.elements()); )
+SEPT_INHABITS_DATA_REGISTER_TYPE(ArrayTerm_c, ArrayETerm_c, return type.constraint_is_satisfied(value.elements()); )
+SEPT_INHABITS_DATA_REGISTER_TYPE(ArrayTerm_c, ArraySTerm_c, return type.constraint_is_satisfied(value.elements()); )
+SEPT_INHABITS_DATA_REGISTER_TYPE(ArrayTerm_c, Array_c, return type.constraint_is_satisfied(value.elements()); )
+
 } // end namespace sept

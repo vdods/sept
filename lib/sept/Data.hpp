@@ -10,6 +10,7 @@
 #include <lvd/OstreamDelegate.hpp>
 #include <lvd/StaticAssociation_t.hpp>
 #include "sept/core.hpp"
+#include "sept/hash.hpp"
 #include <typeindex>
 #include <type_traits>
 
@@ -222,11 +223,11 @@ using DataPredicateBinary = std::function<bool(Data const &, Data const &)>;
 // This is the type of the map that the Data equality predicates are registered into.
 using EqDataPredicateMap = std::unordered_map<std::type_index,DataPredicateBinary>;
 // This defines a static instance of EqDataPredicateMap that the Data equality predicates are registered into.
-LVD_STATIC_ASSOCIATION_DEFINE(DataOperatorEq, EqDataPredicateMap)
+LVD_STATIC_ASSOCIATION_DEFINE(EqData, EqDataPredicateMap)
 // This macro must be used when `type` is not a C identifier (meaning that it can't automatically go into
 // the static variable name that is used in the registration).
 // NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
-#define SEPT_EQ_DATA_REGISTER_TYPE_EXPLICIT(type, unique_id) LVD_STATIC_ASSOCIATION_REGISTER(DataOperatorEq, unique_id, std::type_index(typeid(type)), [](Data const &lhs, Data const &rhs){ return lhs.cast<type const &>() == rhs.cast<type const &>(); })
+#define SEPT_EQ_DATA_REGISTER_TYPE_EXPLICIT(type, unique_id) LVD_STATIC_ASSOCIATION_REGISTER(EqData, unique_id, std::type_index(typeid(type)), [](Data const &lhs, Data const &rhs){ return lhs.cast<type const &>() == rhs.cast<type const &>(); })
 // This macro can be used when `type` is a C identifier (meaning that it can automatically go into
 // the static variable name that is used in the registration).
 // NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
@@ -240,10 +241,10 @@ inline bool eq_data (Data const &lhs, Data const &rhs) {
         return false;
 
     // Otherwise look up the type in the predicate map.
-    auto const &data_operator_eq_predicate_map = lvd::static_association_singleton<sept::DataOperatorEq>();
+    auto const &data_operator_eq_predicate_map = lvd::static_association_singleton<sept::EqData>();
     auto it = data_operator_eq_predicate_map.find(std::type_index(lhs.type()));
     if (it == data_operator_eq_predicate_map.end())
-        throw std::runtime_error(LVD_FMT("Data type " << lhs.type().name() << " not registered in DataOperatorEq for use in eq_data"));
+        throw std::runtime_error(LVD_FMT("Data type " << lhs.type().name() << " not registered in EqData for use in eq_data"));
 
     return it->second(lhs, rhs);
 }
@@ -256,6 +257,105 @@ inline bool operator == (Data const &lhs, Data const &rhs) { return eq_data(lhs,
 
 // TODO: Maybe use an explicitly named not_equals function instead
 inline bool operator != (Data const &lhs, Data const &rhs) { return neq_data(lhs, rhs); }
+
+//
+// StaticAssociation_t for inhabits -- inhabits(x, T) means "x inhabits T [as an abstract type]".
+// Note that this isn't the same as "abstract_type_of(x) == T", since in general x could inhabit
+// many different, overlapping abstract types.
+//
+
+struct InhabitsDataKey {
+    std::type_index m_value_ti;
+    std::type_index m_type_ti;
+
+    InhabitsDataKey (std::type_index value_ti, std::type_index type_ti)
+        :   m_value_ti(value_ti)
+        ,   m_type_ti(type_ti)
+    { }
+
+    bool operator == (InhabitsDataKey const &other) const {
+        return m_value_ti == other.m_value_ti && m_type_ti == other.m_type_ti;
+    }
+};
+
+} // end namespace sept
+
+// This has to go before std::unordered_map<InhabitsDataKey,...>
+namespace std {
+
+// Template specialization to define std::hash<sept::InhabitsDataKey>.
+template <>
+struct hash<sept::InhabitsDataKey> {
+    size_t operator () (sept::InhabitsDataKey const &k) const {
+        return sept::hash(k.m_value_ti, k.m_type_ti);
+    }
+};
+
+} // end namespace std
+
+namespace sept {
+
+// This is the type of the map that the Data equality predicates are registered into.
+// using InhabitsDataKey = std::pair<std::type_index,std::type_index>;
+using InhabitsDataPredicateMap = std::unordered_map<InhabitsDataKey,DataPredicateBinary>;
+// This defines a static instance of EqDataPredicateMap that the Data equality predicates are registered into.
+LVD_STATIC_ASSOCIATION_DEFINE(InhabitsData, InhabitsDataPredicateMap)
+// This macro must be used when any of `Value` or `Type` is not a C identifier (meaning that it can't automatically go into
+// the static variable name that is used in the registration).
+// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
+#define SEPT_INHABITS_DATA_REGISTER_TYPE_EXPLICIT_IMPL(Value, Type, unique_id, inhabits_evaluator) \
+    LVD_STATIC_ASSOCIATION_REGISTER( \
+        InhabitsData, \
+        unique_id, \
+        InhabitsDataKey{std::type_index(typeid(Value)), std::type_index(typeid(Type))}, \
+        inhabits_evaluator \
+    )
+// This macro must be used when any of `Value` or `Type` is not a C identifier (meaning that it can't automatically go into
+// the static variable name that is used in the registration).
+// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
+#define SEPT_INHABITS_DATA_REGISTER_TYPE_IMPL(Value, Type, inhabits_evaluator) \
+    SEPT_INHABITS_DATA_REGISTER_TYPE_EXPLICIT_IMPL(Value, Type, __##Value##___##Type##__, inhabits_evaluator)
+
+// This macro can be used when both of `Value` and `Type` are C identifiers (meaning that it can automatically go into
+// the static variable name that is used in the registration).
+// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
+#define SEPT_INHABITS_DATA_REGISTER_TYPE_EXPLICIT(Value, Type, unique_id, inhabits_evaluator_body) \
+    SEPT_INHABITS_DATA_REGISTER_TYPE_EXPLICIT_IMPL( \
+        Value, \
+        Type, \
+        unique_id, \
+        [](Data const &value_data, Data const &type_data)->bool{ \
+            auto const &value = value_data.cast<Value const &>(); \
+            auto const &type = type_data.cast<Type const &>(); \
+            std::ignore = value; \
+            std::ignore = type; \
+            inhabits_evaluator_body \
+        } \
+    )
+// This macro can be used when both of `Value` and `Type` are C identifiers (meaning that it can automatically go into
+// the static variable name that is used in the registration).
+// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
+#define SEPT_INHABITS_DATA_REGISTER_TYPE(Value, Type, inhabits_evaluator_body) \
+    SEPT_INHABITS_DATA_REGISTER_TYPE_EXPLICIT(Value, Type, __##Value##___##Type##__, inhabits_evaluator_body )
+
+// This macro must be used when any of `Value` or `Type` is not a C identifier (meaning that it can't automatically go into
+// the static variable name that is used in the registration).  This should be used when inhabits_evaluator_body would
+// always return true, meaning it doesn't depend on any runtime state of value or type.
+// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
+#define SEPT_INHABITS_DATA_REGISTER_TYPE_EXPLICIT_TRIVIAL(Value, Type, unique_id) \
+    SEPT_INHABITS_DATA_REGISTER_TYPE_EXPLICIT_IMPL(Value, Type, unique_id, DataPredicateBinary{nullptr})
+// This macro can be used when both of `Value` and `Type` are C identifiers (meaning that it can automatically go into
+// the static variable name that is used in the registration).  This should be used when inhabits_evaluator_body would
+// always return true, meaning it doesn't depend on any runtime state of value or type.
+// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
+#define SEPT_INHABITS_DATA_REGISTER_TYPE_TRIVIAL(Value, Type) \
+    SEPT_INHABITS_DATA_REGISTER_TYPE_IMPL(Value, Type, DataPredicateBinary{nullptr})
+
+bool inhabits_data (Data const &value_data, Data const &type_data);
+
+//
+// Other stuff
+//
 
 // Determines set membership.  Doesn't have to be defined for all possible containers.
 // TODO: Provide overloads for all the various Data_t<T_> types, so that more compile-time stuff can be done.

@@ -18,5 +18,7 @@ SEPT_DATA_PRINTING_REGISTER_TYPE(ClearOutput_c)
 SEPT_EQ_DATA_REGISTER_TYPE(ClearOutputType_c)
 SEPT_EQ_DATA_REGISTER_TYPE(ClearOutput_c)
 
+SEPT_INHABITS_DATA_REGISTER_TYPE_TRIVIAL(ClearOutput_c, ClearOutputType_c)
+
 } // end namespace ctl
 } // end namespace sept

@@ -117,7 +117,6 @@ set(libsept_SOURCES
     lib/sept/Data.cpp
     lib/sept/DataVector.cpp
     lib/sept/deserialize.cpp
-    lib/sept/is_instance.cpp
     lib/sept/NPTerm.cpp
     lib/sept/NPType.cpp
     lib/sept/OrderedMapTerm.cpp

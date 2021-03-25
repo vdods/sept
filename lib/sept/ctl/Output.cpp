@@ -22,6 +22,9 @@ SEPT_EQ_DATA_REGISTER_TYPE(OutputType_c)
 SEPT_EQ_DATA_REGISTER_TYPE(Output_c)
 SEPT_EQ_DATA_REGISTER_TYPE(OutputTerm_c)
 
+SEPT_INHABITS_DATA_REGISTER_TYPE_TRIVIAL(Output_c, OutputType_c)
+SEPT_INHABITS_DATA_REGISTER_TYPE_TRIVIAL(OutputTerm_c, Output_c)
+
 } // end namespace ctl
 
 // TODO: Factor this so that BaseArray_S_t does it.

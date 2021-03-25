@@ -264,7 +264,7 @@ LVD_TEST_BEGIN(200__eq_data)
 
     test_log << lvd::Log::trc() << LVD_REFLECT(std::type_index(typeid(int8_t)).name()) << '\n';
 
-    auto const &data_operator_eq_map = lvd::static_association_singleton<sept::DataOperatorEq>();
+    auto const &data_operator_eq_map = lvd::static_association_singleton<sept::EqData>();
     for (auto const &it : data_operator_eq_map) {
         test_log << lvd::Log::trc() << it.first.name() << " -> " << it.second.target_type().name() << '\n';
     }
