@@ -5,7 +5,6 @@
 #include <cassert>
 #include <QModelIndex>
 #include <QTextStream>
-#include "sept/abstract_type_of.hpp"
 #include "sept/ArrayTerm.hpp"
 #include "sept/Data.hpp"
 #include <sstream>

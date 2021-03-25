@@ -20,6 +20,16 @@
 
 namespace sept {
 
+Data abstract_type_of_data (Data const &value_data) {
+    // Look up the type in the evaluator map.
+    auto const &evaluator_map = lvd::static_association_singleton<sept::AbstractTypeOf>();
+    auto it = evaluator_map.find(std::type_index(value_data.type()));
+    if (it == evaluator_map.end())
+        return Term; // Fallback is Term -- everything is a Term.
+
+    return it->second(value_data);
+}
+
 bool inhabits_data (Data const &value_data, Data const &type_data) {
     // Everything is a Term
     if (type_data.type() == typeid(Term_c))

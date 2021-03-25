@@ -259,8 +259,64 @@ inline bool operator == (Data const &lhs, Data const &rhs) { return eq_data(lhs,
 inline bool operator != (Data const &lhs, Data const &rhs) { return neq_data(lhs, rhs); }
 
 //
-// StaticAssociation_t for inhabits -- inhabits(x, T) means "x inhabits T [as an abstract type]".
-// Note that this isn't the same as "abstract_type_of(x) == T", since in general x could inhabit
+// StaticAssociation_t for abstract_type_of_data -- abstract_type_of_data(x) should return the most-specific
+// type that x belongs to.
+//
+
+using DataEvaluatorFunction = std::function<Data(Data const &)>;
+using AbstractTypeOfDataEvaluatorMap = std::unordered_map<std::type_index,DataEvaluatorFunction>;
+// This defines a static instance of EqDataPredicateMap that the Data equality predicates are registered into.
+LVD_STATIC_ASSOCIATION_DEFINE(AbstractTypeOf, AbstractTypeOfDataEvaluatorMap)
+// This macro must be used when `Value` is not a C identifier (meaning that it can't automatically go into
+// the static variable name that is used in the registration).
+// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
+#define SEPT_ABSTRACT_TYPE_OF_DATA_REGISTER_TYPE_EXPLICIT_IMPL(Value, unique_id, evaluator) \
+    LVD_STATIC_ASSOCIATION_REGISTER( \
+        AbstractTypeOf, \
+        unique_id, \
+        std::type_index(typeid(Value)), \
+        evaluator \
+    )
+// This macro can be used `Value` is a C identifier (meaning that it can automatically go into
+// the static variable name that is used in the registration).
+// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
+#define SEPT_ABSTRACT_TYPE_OF_DATA_REGISTER_TYPE_IMPL(Value, evaluator) \
+    SEPT_ABSTRACT_TYPE_OF_DATA_REGISTER_TYPE_EXPLICIT_IMPL(Value, Value, evaluator)
+
+// This macro must be used when `Value` is not a C identifier (meaning that it can't automatically go into
+// the static variable name that is used in the registration).
+// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
+#define SEPT_ABSTRACT_TYPE_OF_DATA_REGISTER_TYPE_EXPLICIT(Value, unique_id, evaluator_body) \
+    SEPT_ABSTRACT_TYPE_OF_DATA_REGISTER_TYPE_EXPLICIT_IMPL( \
+        Value, \
+        unique_id, \
+        [](Data const &value_data)->Data{ \
+            auto const &value = value_data.cast<Value const &>(); \
+            std::ignore = value; \
+            evaluator_body \
+        } \
+    )
+// This macro can be used `Value` is a C identifier (meaning that it can automatically go into
+// the static variable name that is used in the registration).
+// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
+#define SEPT_ABSTRACT_TYPE_OF_DATA_REGISTER_TYPE(Value, evaluator_body) \
+    SEPT_ABSTRACT_TYPE_OF_DATA_REGISTER_TYPE_EXPLICIT(Value, Value, evaluator_body)
+// This macro must be used when `Value` is not a C identifier (meaning that it can't automatically go into
+// the static variable name that is used in the registration).
+// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
+#define SEPT_ABSTRACT_TYPE_OF_DATA_REGISTER_TYPE_EXPLICIT_DEFAULT(Value, unique_id) \
+    SEPT_ABSTRACT_TYPE_OF_DATA_REGISTER_TYPE_EXPLICIT(Value, unique_id, return abstract_type_of(value);)
+// This macro can be used `Value` is a C identifier (meaning that it can automatically go into
+// the static variable name that is used in the registration).
+// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
+#define SEPT_ABSTRACT_TYPE_OF_DATA_REGISTER_TYPE_DEFAULT(Value) \
+    SEPT_ABSTRACT_TYPE_OF_DATA_REGISTER_TYPE_EXPLICIT(Value, Value, return abstract_type_of(value);)
+
+Data abstract_type_of_data (Data const &value_data);
+
+//
+// StaticAssociation_t for inhabits_data -- inhabits_data(x, T) means "x inhabits T [as an abstract type]".
+// Note that this isn't the same as "abstract_type_of_data(x) == T", since in general x could inhabit
 // many different, overlapping abstract types.
 //
 
@@ -298,7 +354,7 @@ namespace sept {
 // This is the type of the map that the Data equality predicates are registered into.
 // using InhabitsDataKey = std::pair<std::type_index,std::type_index>;
 using InhabitsDataPredicateMap = std::unordered_map<InhabitsDataKey,DataPredicateBinary>;
-// This defines a static instance of EqDataPredicateMap that the Data equality predicates are registered into.
+// This defines a static instance of InhabitsDataPredicateMap that the inhabits predicates are registered into.
 LVD_STATIC_ASSOCIATION_DEFINE(InhabitsData, InhabitsDataPredicateMap)
 // This macro must be used when any of `Value` or `Type` is not a C identifier (meaning that it can't automatically go into
 // the static variable name that is used in the registration).
@@ -310,13 +366,13 @@ LVD_STATIC_ASSOCIATION_DEFINE(InhabitsData, InhabitsDataPredicateMap)
         InhabitsDataKey{std::type_index(typeid(Value)), std::type_index(typeid(Type))}, \
         inhabits_evaluator \
     )
-// This macro must be used when any of `Value` or `Type` is not a C identifier (meaning that it can't automatically go into
+// This macro can be used when both of `Value` and `Type` are C identifiers (meaning that it can automatically go into
 // the static variable name that is used in the registration).
 // NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
 #define SEPT_INHABITS_DATA_REGISTER_TYPE_IMPL(Value, Type, inhabits_evaluator) \
     SEPT_INHABITS_DATA_REGISTER_TYPE_EXPLICIT_IMPL(Value, Type, __##Value##___##Type##__, inhabits_evaluator)
 
-// This macro can be used when both of `Value` and `Type` are C identifiers (meaning that it can automatically go into
+// This macro must be used when any of `Value` or `Type` is not a C identifier (meaning that it can't automatically go into
 // the static variable name that is used in the registration).
 // NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
 #define SEPT_INHABITS_DATA_REGISTER_TYPE_EXPLICIT(Value, Type, unique_id, inhabits_evaluator_body) \

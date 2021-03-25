@@ -3,7 +3,6 @@
 #pragma once
 
 #include <functional>
-#include "sept/abstract_type_of.hpp"
 #include "sept/core.hpp"
 #include "sept/Data.hpp"
 #include "sept/hash.hpp"

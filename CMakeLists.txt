@@ -69,7 +69,6 @@ find_package(lvd 0.11.0 REQUIRED)
 # libsept
 
 set(libsept_HEADERS
-    lib/sept/abstract_type_of.hpp
     lib/sept/ArrayTerm.hpp
     lib/sept/ArrayType.hpp
     lib/sept/BaseArray_t.hpp
@@ -101,7 +100,6 @@ set(libsept_HEADERS
     lib/sept/type/Conversions.hpp
 )
 set(libsept_SOURCES
-    lib/sept/abstract_type_of.cpp
     lib/sept/ArrayTerm.cpp
     lib/sept/ArrayType.cpp
     lib/sept/BaseArray_t.cpp

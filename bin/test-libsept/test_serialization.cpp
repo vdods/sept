@@ -5,7 +5,6 @@
 #include <limits>
 #include <lvd/req.hpp>
 #include <lvd/test.hpp>
-#include "sept/abstract_type_of.hpp"
 #include "sept/ArrayTerm.hpp"
 #include "sept/ctl/ClearOutput.hpp"
 #include "sept/ctl/EndOfFile.hpp"

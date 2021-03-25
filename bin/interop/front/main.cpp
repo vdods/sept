@@ -5,7 +5,6 @@
 #include <lvd/Pipe.hpp>
 #include <random>
 #include "sept/ArrayTerm.hpp"
-#include "sept/abstract_type_of.hpp"
 #include "sept/ctl/ClearOutput.hpp"
 #include "sept/ctl/EndOfFile.hpp"
 #include "sept/ctl/Output.hpp"

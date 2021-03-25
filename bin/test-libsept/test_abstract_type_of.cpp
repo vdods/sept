@@ -1,11 +1,10 @@
 // 2020.04.25 - Victor Dods
 
-#include "sept/abstract_type_of.hpp"
-
 #include <lvd/req.hpp>
 #include <lvd/test.hpp>
 #include "sept/ArrayTerm.hpp"
 #include "sept/ArrayType.hpp"
+#include "sept/Data.hpp"
 #include "sept/NPTerm.hpp"
 #include "sept/NPType.hpp"
 
