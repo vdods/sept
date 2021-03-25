@@ -173,20 +173,20 @@ template <> struct is_an_array_type<ArrayETerm_c> : public std::true_type { };
 template <> struct is_an_array_type<ArraySTerm_c> : public std::true_type { };
 template <> struct is_an_array_type<Array_c> : public std::true_type { };
 
-bool is_instance (ArrayTerm_c const &a, ArrayESTerm_c const &t);
-bool is_instance (ArrayTerm_c const &a, ArrayETerm_c const &t);
-bool is_instance (ArrayTerm_c const &a, ArraySTerm_c const &t);
-bool is_instance (ArrayTerm_c const &a, Array_c const &t);
+bool inhabits (ArrayTerm_c const &a, ArrayESTerm_c const &t);
+bool inhabits (ArrayTerm_c const &a, ArrayETerm_c const &t);
+bool inhabits (ArrayTerm_c const &a, ArraySTerm_c const &t);
+bool inhabits (ArrayTerm_c const &a, Array_c const &t);
 
 template <typename ArrayType_, typename = std::enable_if_t<is_an_array_type_v<ArrayType_>>>
-bool is_instance (Data_t<ArrayTerm_c> const &a, ArrayType_ const &t) {
-    return is_instance(a.value(), t);
+bool inhabits (Data_t<ArrayTerm_c> const &a, ArrayType_ const &t) {
+    return inhabits(a.value(), t);
 }
 
-bool is_instance (Data const &value, ArrayESTerm_c const &t);
-bool is_instance (Data const &value, ArrayETerm_c const &t);
-bool is_instance (Data const &value, ArraySTerm_c const &t);
-bool is_instance (Data const &value, Array_c const &t);
+bool inhabits (Data const &value, ArrayESTerm_c const &t);
+bool inhabits (Data const &value, ArrayETerm_c const &t);
+bool inhabits (Data const &value, ArraySTerm_c const &t);
+bool inhabits (Data const &value, Array_c const &t);
 
 void serialize (ArrayESTerm_c const &v, std::ostream &out);
 void serialize (ArrayETerm_c const &v, std::ostream &out);

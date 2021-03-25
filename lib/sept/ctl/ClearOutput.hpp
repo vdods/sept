@@ -17,7 +17,7 @@ extern ClearOutput_c ClearOutput;
 
 } // end namespace ctl
 
-inline constexpr True_c is_instance (ctl::ClearOutput_c const &, ctl::ClearOutputType_c const &) { return True; }
+inline constexpr True_c inhabits (ctl::ClearOutput_c const &, ctl::ClearOutputType_c const &) { return True; }
 
 inline constexpr NonParametricType_c const &abstract_type_of (ctl::ClearOutputType_c const &) { return NonParametricType; }
 inline constexpr ctl::ClearOutputType_c const &abstract_type_of (ctl::ClearOutput_c const &) { return ctl::ClearOutputType; }

@@ -5,7 +5,6 @@
 #include <lvd/OstreamDelegate.hpp>
 #include "sept/abstract_type_of.hpp"
 #include "sept/ArrayTerm.hpp"
-#include "sept/is_instance.hpp"
 #include <sstream> // Needed by LVD_FMT
 
 namespace sept {
@@ -20,7 +19,7 @@ bool ArrayESTerm_c::constraint_is_satisfied (DataVector const &elements) const {
     if (m_size != elements.size())
         return false;
     for (size_t i = 0; i < elements.size(); ++i)
-        if (!is_instance(elements[i], m_element_type))
+        if (!inhabits_data(elements[i], m_element_type))
             return false;
     return true;
 }
@@ -29,20 +28,20 @@ void ArrayESTerm_c::verify_constraint_or_throw (DataVector const &elements) cons
     if (m_size != elements.size())
         throw std::runtime_error(LVD_FMT("expected " << m_size << " elements, but there were " << elements.size()));
     for (size_t i = 0; i < elements.size(); ++i)
-        if (!is_instance(elements[i], m_element_type))
+        if (!inhabits_data(elements[i], m_element_type))
             throw std::runtime_error(LVD_FMT("element " << i << " had type " << abstract_type_of_data(elements[i]) << " but was expected to be of type " << m_element_type));
 }
 
 bool ArrayETerm_c::constraint_is_satisfied (DataVector const &elements) const {
     for (size_t i = 0; i < elements.size(); ++i)
-        if (!is_instance(elements[i], m_element_type))
+        if (!inhabits_data(elements[i], m_element_type))
             return false;
     return true;
 }
 
 void ArrayETerm_c::verify_constraint_or_throw (DataVector const &elements) const {
     for (size_t i = 0; i < elements.size(); ++i)
-        if (!is_instance(elements[i], m_element_type))
+        if (!inhabits_data(elements[i], m_element_type))
             throw std::runtime_error(LVD_FMT("element " << i << " had type " << abstract_type_of_data(elements[i]) << " but was expected to be of type " << m_element_type));
 }
 
@@ -55,36 +54,36 @@ void ArraySTerm_c::verify_constraint_or_throw (DataVector const &elements) const
         throw std::runtime_error(LVD_FMT("expected " << m_size << " elements, but there were " << elements.size()));
 }
 
-bool is_instance (ArrayTerm_c const &a, ArrayESTerm_c const &t) {
+bool inhabits (ArrayTerm_c const &a, ArrayESTerm_c const &t) {
     return a.element_type() == t.element_type() && a.size() == t.size();
 }
 
-bool is_instance (ArrayTerm_c const &a, ArrayETerm_c const &t) {
+bool inhabits (ArrayTerm_c const &a, ArrayETerm_c const &t) {
     return a.element_type() == t.element_type();
 }
 
-bool is_instance (ArrayTerm_c const &a, ArraySTerm_c const &t) {
+bool inhabits (ArrayTerm_c const &a, ArraySTerm_c const &t) {
     return a.size() == t.size();
 }
 
-bool is_instance (ArrayTerm_c const &a, Array_c const &t) {
+bool inhabits (ArrayTerm_c const &a, Array_c const &t) {
     return true;
 }
 
-bool is_instance (Data const &value, ArrayESTerm_c const &t) {
-    return value.can_cast<ArrayTerm_c>() && is_instance(value.cast<ArrayTerm_c const &>(), t);
+bool inhabits (Data const &value, ArrayESTerm_c const &t) {
+    return value.can_cast<ArrayTerm_c>() && inhabits(value.cast<ArrayTerm_c const &>(), t);
 }
 
-bool is_instance (Data const &value, ArrayETerm_c const &t) {
-    return value.can_cast<ArrayTerm_c>() && is_instance(value.cast<ArrayTerm_c const &>(), t);
+bool inhabits (Data const &value, ArrayETerm_c const &t) {
+    return value.can_cast<ArrayTerm_c>() && inhabits(value.cast<ArrayTerm_c const &>(), t);
 }
 
-bool is_instance (Data const &value, ArraySTerm_c const &t) {
-    return value.can_cast<ArrayTerm_c>() && is_instance(value.cast<ArrayTerm_c const &>(), t);
+bool inhabits (Data const &value, ArraySTerm_c const &t) {
+    return value.can_cast<ArrayTerm_c>() && inhabits(value.cast<ArrayTerm_c const &>(), t);
 }
 
-bool is_instance (Data const &value, Array_c const &t) {
-    return value.can_cast<ArrayTerm_c>() && is_instance(value.cast<ArrayTerm_c const &>(), t);
+bool inhabits (Data const &value, Array_c const &t) {
+    return value.can_cast<ArrayTerm_c>() && inhabits(value.cast<ArrayTerm_c const &>(), t);
 }
 
 void serialize (ArrayESTerm_c const &v, std::ostream &out) {

@@ -60,7 +60,7 @@ void serialize (ctl::OutputTerm_c const &v, std::ostream &out);
 // has already been read in; that value is passed in as abstract_type.
 ctl::OutputTerm_c deserialize_value_OutputTerm (Data &&abstract_type, std::istream &in);
 
-inline constexpr True_c is_instance (ctl::Output_c const &, ctl::OutputType_c const &) { return True; }
+inline constexpr True_c inhabits (ctl::Output_c const &, ctl::OutputType_c const &) { return True; }
 
 inline constexpr NonParametricType_c const &abstract_type_of (ctl::OutputType_c const &) { return NonParametricType; }
 inline constexpr ctl::OutputType_c const &abstract_type_of (ctl::Output_c const &) { return ctl::OutputType; }

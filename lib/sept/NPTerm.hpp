@@ -6,7 +6,6 @@
 #include "sept/core.hpp"
 #include "sept/Data.hpp"
 #include "sept/hash.hpp"
-#include "sept/is_instance.hpp"
 #include <type_traits>
 
 namespace sept {

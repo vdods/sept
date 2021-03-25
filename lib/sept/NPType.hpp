@@ -184,26 +184,70 @@ inline constexpr Float32Type_c const &abstract_type_of (Float32_c const &) { ret
 inline constexpr Float64Type_c const &abstract_type_of (Float64_c const &) { return Float64Type; }
 
 //
-// is_instance definitions
+// inhabits definitions
 //
 
-inline True_c const &is_instance (bool const &, Bool_c const &) { return True; }
-inline True_c const &is_instance (BoolTerm_c const &, Bool_c const &) { return True; }
-inline True_c const &is_instance (True_c const &, Bool_c const &) { return True; }
-inline True_c const &is_instance (False_c const &, Bool_c const &) { return True; }
+// Everything is a Term.
+template <typename T_>
+inline constexpr True_c const &inhabits (T_ const &, Term_c const &) { return True; }
 
-inline True_c const &is_instance (Bool_c const &, BoolType_c const &) { return True; }
+inline constexpr True_c const &inhabits (Void_c const &, VoidType_c const &) { return True; }
+// TODO: In the future, derived "inhabits" relationships (where x : T <: U, i.e. T is a subtype of U)
+// should/could be computed using the poset of subtype relationships.
+inline constexpr True_c const &inhabits (Void_c const &, NonParametricTerm_c const &) { return True; }
+inline constexpr True_c const &inhabits (Void_c const &, NonType_c const &) { return True; }
 
-inline True_c const &is_instance (int8_t const &, Sint8_c const &) { return True; }
-inline True_c const &is_instance (int16_t const &, Sint16_c const &) { return True; }
-inline True_c const &is_instance (int32_t const &, Sint32_c const &) { return True; }
-inline True_c const &is_instance (int64_t const &, Sint64_c const &) { return True; }
-inline True_c const &is_instance (uint8_t const &, Uint8_c const &) { return True; }
-inline True_c const &is_instance (uint16_t const &, Uint16_c const &) { return True; }
-inline True_c const &is_instance (uint32_t const &, Uint32_c const &) { return True; }
-inline True_c const &is_instance (uint64_t const &, Uint64_c const &) { return True; }
-inline True_c const &is_instance (float const &, Float32_c const &) { return True; }
-inline True_c const &is_instance (double const &, Float64_c const &) { return True; }
+inline constexpr True_c const &inhabits (VoidType_c const &, NonParametricTerm_c const &) { return True; }
+inline constexpr True_c const &inhabits (VoidType_c const &, Type_c const &) { return True; }
+inline constexpr True_c const &inhabits (VoidType_c const &, NonParametricType_c const &) { return True; }
+
+inline constexpr True_c const &inhabits (True_c const &, TrueType_c const &) { return True; }
+inline constexpr True_c const &inhabits (False_c const &, FalseType_c const &) { return True; }
+inline constexpr True_c const &inhabits (True_c const &, Bool_c const &) { return True; }
+inline constexpr True_c const &inhabits (False_c const &, Bool_c const &) { return True; }
+inline constexpr True_c const &inhabits (BoolTerm_c const &, Bool_c const &) { return True; }
+inline constexpr True_c const &inhabits (bool const &, Bool_c const &) { return True; }
+
+inline constexpr BoolTerm_c inhabits (BoolTerm_c const &value, TrueType_c const &) { return value == true; }
+inline constexpr BoolTerm_c inhabits (BoolTerm_c const &value, FalseType_c const &) { return value == false; }
+inline constexpr BoolTerm_c inhabits (bool const &value, TrueType_c const &) { return value == true; }
+inline constexpr BoolTerm_c inhabits (bool const &value, FalseType_c const &) { return value == false; }
+
+inline constexpr True_c const &inhabits (Bool_c const &, BoolType_c const &) { return True; }
+inline constexpr True_c const &inhabits (TrueType_c const &, BoolType_c const &) { return True; }
+inline constexpr True_c const &inhabits (FalseType_c const &, BoolType_c const &) { return True; }
+
+inline constexpr True_c const &inhabits (int8_t const &, Sint8_c const &) { return True; }
+inline constexpr True_c const &inhabits (int16_t const &, Sint16_c const &) { return True; }
+inline constexpr True_c const &inhabits (int32_t const &, Sint32_c const &) { return True; }
+inline constexpr True_c const &inhabits (int64_t const &, Sint64_c const &) { return True; }
+inline constexpr True_c const &inhabits (Sint8_c const &, Sint8Type_c const &) { return True; }
+inline constexpr True_c const &inhabits (Sint16_c const &, Sint16Type_c const &) { return True; }
+inline constexpr True_c const &inhabits (Sint32_c const &, Sint32Type_c const &) { return True; }
+inline constexpr True_c const &inhabits (Sint64_c const &, Sint64Type_c const &) { return True; }
+
+inline constexpr True_c const &inhabits (uint8_t const &, Uint8_c const &) { return True; }
+inline constexpr True_c const &inhabits (uint16_t const &, Uint16_c const &) { return True; }
+inline constexpr True_c const &inhabits (uint32_t const &, Uint32_c const &) { return True; }
+inline constexpr True_c const &inhabits (uint64_t const &, Uint64_c const &) { return True; }
+inline constexpr True_c const &inhabits (Uint8_c const &, Uint8Type_c const &) { return True; }
+inline constexpr True_c const &inhabits (Uint16_c const &, Uint16Type_c const &) { return True; }
+inline constexpr True_c const &inhabits (Uint32_c const &, Uint32Type_c const &) { return True; }
+inline constexpr True_c const &inhabits (Uint64_c const &, Uint64Type_c const &) { return True; }
+
+inline constexpr True_c const &inhabits (float const &, Float32Type_c const &) { return True; }
+inline constexpr True_c const &inhabits (double const &, Float64Type_c const &) { return True; }
+inline constexpr True_c const &inhabits (Float32_c const &, Float32Type_c const &) { return True; }
+inline constexpr True_c const &inhabits (Float64_c const &, Float64Type_c const &) { return True; }
+
+inline constexpr True_c const &inhabits (Term_c const &, Type_c const &) { return True; }
+inline constexpr True_c const &inhabits (NonParametricTerm_c const &, Type_c const &) { return True; }
+// inline constexpr True_c const &inhabits (ParametricTerm_c const &, Type_c const &) { return True; }
+
+inline constexpr True_c const &inhabits (Type_c const &, Type_c const &) { return True; }
+inline constexpr True_c const &inhabits (NonType_c const &, Type_c const &) { return True; }
+inline constexpr True_c const &inhabits (NonParametricType_c const &, Type_c const &) { return True; }
+// inline constexpr True_c const &inhabits (ParametricType_c const &, Type_c const &) { return True; }
 
 //
 // serialize and deserialize definitions

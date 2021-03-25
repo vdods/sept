@@ -44,8 +44,7 @@ LVD_TEST_BEGIN(500__Array__ArrayES)
     // Test Array's instantiation with ArrayES constraint
 
     // This one doesn't work at the moment because std::vector<bool>::operator[] returns a "bit reference"
-    // object which isn't the same as bool, and therefore doesn't work as expected in the is_instance
-    // function.
+    // object which isn't the same as bool, and therefore doesn't work as expected in the inhabits function.
 //     LVD_TEST_REQ_EQ(
 //         sept::ArrayES(sept::Bool,3)(true,false,true),
 //         sept::ArrayTerm_c(std::vector<bool>{true,false,true}).with_constraint(sept::ArrayES(sept::Bool,3))
@@ -68,8 +67,7 @@ LVD_TEST_BEGIN(500__Array__ArrayE)
     // Test Array's instantiation with ArrayE constraint
 
     // This one doesn't work at the moment because std::vector<bool>::operator[] returns a "bit reference"
-    // object which isn't the same as bool, and therefore doesn't work as expected in the is_instance
-    // function.
+    // object which isn't the same as bool, and therefore doesn't work as expected in the inhabits function.
 //     LVD_TEST_REQ_EQ(
 //         sept::ArrayE(sept::Bool)(true,false,true),
 //         sept::ArrayTerm_c(std::vector<bool>{true,false,true}).with_constraint(sept::ArrayE(sept::Bool))

@@ -197,20 +197,20 @@ template <> struct is_an_ordered_map_type<OrderedMapDTerm_c> : public std::true_
 template <> struct is_an_ordered_map_type<OrderedMapCTerm_c> : public std::true_type { };
 template <> struct is_an_ordered_map_type<OrderedMap_c> : public std::true_type { };
 
-bool is_instance (OrderedMapTerm_c const &a, OrderedMapDCTerm_c const &t);
-bool is_instance (OrderedMapTerm_c const &a, OrderedMapDTerm_c const &t);
-bool is_instance (OrderedMapTerm_c const &a, OrderedMapCTerm_c const &t);
-bool is_instance (OrderedMapTerm_c const &a, OrderedMap_c const &t);
+bool inhabits (OrderedMapTerm_c const &a, OrderedMapDCTerm_c const &t);
+bool inhabits (OrderedMapTerm_c const &a, OrderedMapDTerm_c const &t);
+bool inhabits (OrderedMapTerm_c const &a, OrderedMapCTerm_c const &t);
+bool inhabits (OrderedMapTerm_c const &a, OrderedMap_c const &t);
 
 template <typename OrderedMapType_, typename = std::enable_if_t<is_an_ordered_map_type_v<OrderedMapType_>>>
-bool is_instance (Data_t<OrderedMapTerm_c> const &m, OrderedMapType_ const &t) {
-    return is_instance(m.value(), t);
+bool inhabits (Data_t<OrderedMapTerm_c> const &m, OrderedMapType_ const &t) {
+    return inhabits(m.value(), t);
 }
 
-bool is_instance (Data const &value, OrderedMapDCTerm_c const &t);
-bool is_instance (Data const &value, OrderedMapDTerm_c const &t);
-bool is_instance (Data const &value, OrderedMapCTerm_c const &t);
-bool is_instance (Data const &value, OrderedMap_c const &t);
+bool inhabits (Data const &value, OrderedMapDCTerm_c const &t);
+bool inhabits (Data const &value, OrderedMapDTerm_c const &t);
+bool inhabits (Data const &value, OrderedMapCTerm_c const &t);
+bool inhabits (Data const &value, OrderedMap_c const &t);
 
 void serialize (OrderedMapDCTerm_c const &v, std::ostream &out);
 void serialize (OrderedMapDTerm_c const &v, std::ostream &out);

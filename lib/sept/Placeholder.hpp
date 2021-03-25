@@ -45,8 +45,8 @@ inline constexpr NonParametricType_c const &abstract_type_of (PlaceholderType_c 
 inline constexpr PlaceholderType_c const &abstract_type_of (Placeholder_c const &) { return PlaceholderType; }
 inline constexpr Placeholder_c const &abstract_type_of (PlaceholderTerm_c const &) { return Placeholder; }
 
-inline bool is_instance (PlaceholderTerm_c const &a, Placeholder_c const &t) { return true; }
-inline bool is_instance (Data_t<PlaceholderTerm_c> const &m, Placeholder_c const &t) { return true; }
-inline bool is_instance (Data const &value, Placeholder_c const &t) { return value.type() == typeid(PlaceholderTerm_c); }
+inline bool inhabits (PlaceholderTerm_c const &a, Placeholder_c const &t) { return true; }
+inline bool inhabits (Data_t<PlaceholderTerm_c> const &m, Placeholder_c const &t) { return true; }
+inline bool inhabits (Data const &value, Placeholder_c const &t) { return value.type() == typeid(PlaceholderTerm_c); }
 
 } // end namespace sept

@@ -87,7 +87,6 @@ set(libsept_HEADERS
     lib/sept/DataVector.hpp
     lib/sept/deserialize.hpp
     lib/sept/hash.hpp
-    lib/sept/is_instance.hpp
     lib/sept/NPTerm.hpp
     lib/sept/NPType.hpp
     lib/sept/OrderedMapTerm.hpp
@@ -155,7 +154,7 @@ if(BUILD_testlibsept)
         bin/test-libsept/test_Array.cpp
         bin/test-libsept/test_ctl.cpp
         bin/test-libsept/test_Data.cpp
-        bin/test-libsept/test_is_instance.cpp
+        bin/test-libsept/test_inhabits.cpp
         bin/test-libsept/test_NPTerm.cpp
         bin/test-libsept/test_NPType.cpp
         bin/test-libsept/test_OrderedMap.cpp

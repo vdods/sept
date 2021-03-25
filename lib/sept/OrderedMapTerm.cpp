@@ -2,7 +2,6 @@
 
 #include "sept/OrderedMapTerm.hpp"
 
-#include "sept/is_instance.hpp"
 #include "sept/OrderedMapType.hpp"
 #include <sstream> // Needed by LVD_FMT
 

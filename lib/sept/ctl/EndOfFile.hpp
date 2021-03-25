@@ -17,7 +17,7 @@ extern EndOfFile_c EndOfFile;
 
 } // end namespace ctl
 
-inline constexpr True_c is_instance (ctl::EndOfFile_c const &, ctl::EndOfFileType_c const &) { return True; }
+inline constexpr True_c inhabits (ctl::EndOfFile_c const &, ctl::EndOfFileType_c const &) { return True; }
 
 inline constexpr NonParametricType_c const &abstract_type_of (ctl::EndOfFileType_c const &) { return NonParametricType; }
 inline constexpr ctl::EndOfFileType_c const &abstract_type_of (ctl::EndOfFile_c const &) { return ctl::EndOfFileType; }

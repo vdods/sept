@@ -61,7 +61,7 @@ void serialize (ctl::RequestSyncInputTerm_c const &v, std::ostream &out);
 // has already been read in; that value is passed in as abstract_type.
 ctl::RequestSyncInputTerm_c deserialize_value_RequestSyncInputTerm (Data &&abstract_type, std::istream &in);
 
-inline constexpr True_c is_instance (ctl::RequestSyncInput_c const &, ctl::RequestSyncInputType_c const &) { return True; }
+inline constexpr True_c inhabits (ctl::RequestSyncInput_c const &, ctl::RequestSyncInputType_c const &) { return True; }
 
 inline constexpr NonParametricType_c const &abstract_type_of (ctl::RequestSyncInputType_c const &) { return NonParametricType; }
 inline constexpr ctl::RequestSyncInputType_c const &abstract_type_of (ctl::RequestSyncInput_c const &) { return ctl::RequestSyncInputType; }
