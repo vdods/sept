@@ -32,11 +32,11 @@ int run (std::istream &in, std::ostream &out) {
         if (value == sept::ctl::EndOfFile) {
 //             std::cerr << "front: " << value << " -- exiting.\n";
             return 0;
-        } else if (sept::inhabits(value, sept::ctl::Output)) {
+        } else if (sept::inhabits_data(value, sept::ctl::Output)) {
             std::cerr << "front: output : " << value.cast<sept::ctl::OutputTerm_c const &>().value() << '\n';
         } else if (value == sept::ctl::ClearOutput) {
             std::cerr << "front: clearing output\n";
-        } else if (sept::inhabits(value, sept::ctl::RequestSyncInput)) {
+        } else if (sept::inhabits_data(value, sept::ctl::RequestSyncInput)) {
             std::cerr << "\n\nfront: requesting input > ";
             std::string s;
             std::getline(std::cin, s, '\n');
