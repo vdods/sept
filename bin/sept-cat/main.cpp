@@ -1,6 +1,5 @@
 #include <iostream>
 #include "sept/ctl/EndOfFile.hpp"
-#include "sept/deserialize.hpp"
 
 // TODO: Make two modes -- one where it reads in serialized data and prints human-readable,
 // the other where it reads in ascii strings and outputs serialized ArrayE(uint8_t) terms,

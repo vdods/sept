@@ -9,7 +9,6 @@
 #include "sept/ctl/EndOfFile.hpp"
 #include "sept/ctl/Output.hpp"
 #include "sept/ctl/RequestSyncInput.hpp"
-#include "sept/deserialize.hpp"
 #include <system_error>
 
 sept::ArrayTerm_c Array_from_string (std::string const &s) {

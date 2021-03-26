@@ -7,7 +7,6 @@
 #include <lvd/OstreamDelegate.hpp>
 #include "sept/core.hpp"
 #include "sept/Data.hpp"
-#include "sept/deserialize.hpp"
 #include "sept/hash.hpp"
 #include "sept/OrderedMapType.hpp"
 #include <sstream>

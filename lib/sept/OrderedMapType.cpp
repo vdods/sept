@@ -202,4 +202,14 @@ SEPT_SERIALIZE_DATA_REGISTER_TYPE_DEFAULT(OrderedMapDCTerm_c)
 SEPT_SERIALIZE_DATA_REGISTER_TYPE_DEFAULT(OrderedMapDTerm_c)
 SEPT_SERIALIZE_DATA_REGISTER_TYPE_DEFAULT(OrderedMapCTerm_c)
 
+
+SEPT_DESERIALIZE_DATA_REGISTER_TYPE(OrderedMapDC_c, return deserialize_value_OrderedMapDCTerm(std::move(abstract_type), in);)
+SEPT_DESERIALIZE_DATA_REGISTER_TYPE(OrderedMapD_c, return deserialize_value_OrderedMapDTerm(std::move(abstract_type), in);)
+SEPT_DESERIALIZE_DATA_REGISTER_TYPE(OrderedMapC_c, return deserialize_value_OrderedMapCTerm(std::move(abstract_type), in);)
+
+SEPT_DESERIALIZE_DATA_REGISTER_TYPE(OrderedMapDCTerm_c, return deserialize_value_OrderedMapTerm(std::move(abstract_type), in);)
+SEPT_DESERIALIZE_DATA_REGISTER_TYPE(OrderedMapDTerm_c, return deserialize_value_OrderedMapTerm(std::move(abstract_type), in);)
+SEPT_DESERIALIZE_DATA_REGISTER_TYPE(OrderedMapCTerm_c, return deserialize_value_OrderedMapTerm(std::move(abstract_type), in);)
+SEPT_DESERIALIZE_DATA_REGISTER_TYPE(OrderedMap_c, return deserialize_value_OrderedMapTerm(std::move(abstract_type), in);)
+
 } // end namespace sept

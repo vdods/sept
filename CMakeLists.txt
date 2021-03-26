@@ -83,7 +83,6 @@ set(libsept_HEADERS
     lib/sept/Data_t.hpp
     lib/sept/DataArray_t.hpp
     lib/sept/DataVector.hpp
-    lib/sept/deserialize.hpp
     lib/sept/hash.hpp
     lib/sept/NPTerm.hpp
     lib/sept/NPType.hpp
@@ -110,7 +109,6 @@ set(libsept_SOURCES
     lib/sept/core.cpp
     lib/sept/Data.cpp
     lib/sept/DataVector.cpp
-    lib/sept/deserialize.cpp
     lib/sept/NPTerm.cpp
     lib/sept/NPType.cpp
     lib/sept/OrderedMapTerm.cpp

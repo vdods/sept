@@ -10,7 +10,6 @@
 #include "sept/ctl/EndOfFile.hpp"
 #include "sept/ctl/Output.hpp"
 #include "sept/ctl/RequestSyncInput.hpp"
-#include "sept/deserialize.hpp"
 #include "sept/OrderedMapTerm.hpp"
 #include <sstream>
 

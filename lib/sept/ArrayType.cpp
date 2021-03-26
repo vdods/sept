@@ -205,4 +205,14 @@ SEPT_SERIALIZE_DATA_REGISTER_TYPE_DEFAULT(ArrayESTerm_c)
 SEPT_SERIALIZE_DATA_REGISTER_TYPE_DEFAULT(ArrayETerm_c)
 SEPT_SERIALIZE_DATA_REGISTER_TYPE_DEFAULT(ArraySTerm_c)
 
+
+SEPT_DESERIALIZE_DATA_REGISTER_TYPE(ArrayES_c, return deserialize_value_ArrayESTerm(std::move(abstract_type), in);)
+SEPT_DESERIALIZE_DATA_REGISTER_TYPE(ArrayE_c, return deserialize_value_ArrayETerm(std::move(abstract_type), in);)
+SEPT_DESERIALIZE_DATA_REGISTER_TYPE(ArrayS_c, return deserialize_value_ArraySTerm(std::move(abstract_type), in);)
+
+SEPT_DESERIALIZE_DATA_REGISTER_TYPE(ArrayESTerm_c, return deserialize_value_ArrayTerm(std::move(abstract_type), in);)
+SEPT_DESERIALIZE_DATA_REGISTER_TYPE(ArrayETerm_c, return deserialize_value_ArrayTerm(std::move(abstract_type), in);)
+SEPT_DESERIALIZE_DATA_REGISTER_TYPE(ArraySTerm_c, return deserialize_value_ArrayTerm(std::move(abstract_type), in);)
+SEPT_DESERIALIZE_DATA_REGISTER_TYPE(Array_c, return deserialize_value_ArrayTerm(std::move(abstract_type), in);)
+
 } // end namespace sept

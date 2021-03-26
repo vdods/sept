@@ -2,8 +2,6 @@
 
 #include "sept/ctl/RequestSyncInput.hpp"
 
-#include "sept/deserialize.hpp"
-
 namespace sept {
 namespace ctl {
 
@@ -48,6 +46,8 @@ SEPT_INHABITS_DATA_REGISTER_TYPE_TRIVIAL(RequestSyncInputTerm_c, RequestSyncInpu
 SEPT_SERIALIZE_DATA_REGISTER_TYPE_DEFAULT(RequestSyncInputType_c)
 SEPT_SERIALIZE_DATA_REGISTER_TYPE_DEFAULT(RequestSyncInput_c)
 SEPT_SERIALIZE_DATA_REGISTER_TYPE_DEFAULT(RequestSyncInputTerm_c)
+
+SEPT_DESERIALIZE_DATA_REGISTER_TYPE(RequestSyncInput_c, return deserialize_value_RequestSyncInputTerm(std::move(abstract_type), in);)
 
 } // end namespace ctl
 } // end namespace sept
