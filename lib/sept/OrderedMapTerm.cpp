@@ -88,4 +88,6 @@ SEPT_EQ_DATA_REGISTER_TYPE(OrderedMapTerm_c)
 
 SEPT_COMPARE_DATA_REGISTER_DEFAULT_TYPE(OrderedMapTerm_c, OrderedMapTerm_c)
 
+SEPT_SERIALIZE_DATA_REGISTER_TYPE_DEFAULT(OrderedMapTerm_c)
+
 } // end namespace sept

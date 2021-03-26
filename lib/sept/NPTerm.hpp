@@ -377,6 +377,7 @@ inline constexpr int compare (False_c const &lhs, True_c const &rhs) {
 
 using SerializedTopLevelCodeRepr = uint8_t;
 
+// TODO: Could put a lot more into here, in particular commonly-used values/types.
 enum class SerializedTopLevelCode : SerializedTopLevelCodeRepr {
     NON_PARAMETRIC_TERM = 0,    // A term having no parameters, and therefore fixed size.
     PARAMETRIC_TERM,            // A term that has parameters.

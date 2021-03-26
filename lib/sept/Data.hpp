@@ -467,6 +467,55 @@ LVD_STATIC_ASSOCIATION_DEFINE(CompareData, CompareDataEvaluatorMap)
 int compare_data (Data const &lhs, Data const &rhs);
 
 //
+// StaticAssociation_t for serialize_data
+//
+
+using SerializeFunction = std::function<void(Data const &,std::ostream &)>;
+using SerializeDataFunctionMap = std::unordered_map<std::type_index,SerializeFunction>;
+// This defines a static instance of SerializeDataFunctionMap that the Data serialization functions are registered into.
+LVD_STATIC_ASSOCIATION_DEFINE(SerializeData, SerializeDataFunctionMap)
+// This macro must be used when `Type` is not a C identifier (meaning that it can't automatically go into
+// the static variable name that is used in the registration).
+// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
+#define SEPT_SERIALIZE_DATA_REGISTER_TYPE_EXPLICIT_IMPL(Type, unique_id, evaluator) \
+    LVD_STATIC_ASSOCIATION_REGISTER( \
+        SerializeData, \
+        unique_id, \
+        std::type_index(typeid(Type)), \
+        evaluator \
+    )
+// This macro can be used if `Type` is a C identifier (meaning that it can automatically go into
+// the static variable name that is used in the registration).
+// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
+#define SEPT_SERIALIZE_DATA_REGISTER_TYPE_IMPL(Type, evaluator) \
+    SEPT_SERIALIZE_DATA_REGISTER_TYPE_EXPLICIT_IMPL(Type, __##Lhs##___##Rhs##__, evaluator)
+
+// This macro must be used when `Lhs` or `Rhs` is not a C identifier (meaning that it can't automatically go into
+// the static variable name that is used in the registration).
+// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
+#define SEPT_SERIALIZE_DATA_REGISTER_TYPE_DEFAULT_EXPLICIT(Type, unique_id) \
+    SEPT_SERIALIZE_DATA_REGISTER_TYPE_EXPLICIT_IMPL( \
+        Type, \
+        unique_id, \
+        [](Data const &value_data, std::ostream &out){ \
+            Type const &value = value_data.cast<Type const &>(); \
+            std::ignore = value; \
+            serialize(value, out); \
+        } \
+    )
+// This macro can be used when `Lhs` and `Rhs` is a C identifier (meaning that it can automatically go into
+// the static variable name that is used in the registration).
+// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
+#define SEPT_SERIALIZE_DATA_REGISTER_TYPE_DEFAULT(Type) \
+    SEPT_SERIALIZE_DATA_REGISTER_TYPE_DEFAULT_EXPLICIT(Type, Type)
+
+void serialize_data (Data const &value, std::ostream &out);
+
+// This causes anything but an explicit Data to be passed into serialize_data.
+template <typename T_>
+void serialize_data (T_ const &, std::ostream &) = delete;
+
+//
 // Other stuff
 //
 

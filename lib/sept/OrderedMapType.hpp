@@ -10,7 +10,6 @@
 #include "sept/Data_t.hpp"
 #include "sept/hash.hpp"
 #include "sept/NPType.hpp"
-#include "sept/serialize.hpp"
 
 namespace sept {
 

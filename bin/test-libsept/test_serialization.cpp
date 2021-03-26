@@ -12,7 +12,6 @@
 #include "sept/ctl/RequestSyncInput.hpp"
 #include "sept/deserialize.hpp"
 #include "sept/OrderedMapTerm.hpp"
-#include "sept/serialize.hpp"
 #include <sstream>
 
 class AsHex {

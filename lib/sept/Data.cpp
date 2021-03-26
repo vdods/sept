@@ -70,6 +70,21 @@ int compare_data (Data const &lhs, Data const &rhs) {
     return evaluator(lhs, rhs);
 }
 
+void serialize_data (Data const &value, std::ostream &out) {
+    // Look up the type in the serialization function map.
+    auto const &serialize_function_map = lvd::static_association_singleton<sept::SerializeData>();
+    auto it = serialize_function_map.find(std::type_index(value.type()));
+    if (it == serialize_function_map.end())
+        throw std::runtime_error(LVD_FMT("no serialize function registered for type " << value.type()));
+
+    // At this point we know the type of the data, and should serialize it, but the existing implementation
+    // doesn't do that, which seems wrong.  TODO: Figure this out -- probably serialize the type here before
+    // serializing the value.
+
+    auto const &serialize_function = it->second;
+    serialize_function(value, out);
+}
+
 bool is_member (Data const &value, Data const &container) {
 //     assert(value.has_value());
     assert(container.has_value());

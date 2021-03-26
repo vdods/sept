@@ -9,7 +9,6 @@
 #include "sept/NPType.hpp"
 #include "sept/OrderedMapTerm.hpp"
 #include "sept/OrderedMapType.hpp"
-#include "sept/serialize.hpp"
 
 int do_stuff (std::istream &in, std::ostream &out, std::ostream &err) {
     sept::serialize(sept::True, out);

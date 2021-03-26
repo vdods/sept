@@ -5,7 +5,6 @@
 #include "sept/core.hpp"
 #include "sept/hash.hpp"
 #include "sept/NPTerm.hpp"
-#include "sept/serialize.hpp"
 
 namespace sept {
 

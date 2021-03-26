@@ -93,7 +93,6 @@ set(libsept_HEADERS
     lib/sept/Projection.hpp
     lib/sept/proj/ElementExtraction.hpp
     lib/sept/proj/TypeFunctor.hpp
-    lib/sept/serialize.hpp
     lib/sept/TreeNode_t.hpp
     lib/sept/type/Conversion.hpp
     lib/sept/type/Conversions.hpp
@@ -119,7 +118,6 @@ set(libsept_SOURCES
     lib/sept/Placeholder.cpp
     lib/sept/proj/ElementExtraction.cpp
     lib/sept/proj/TypeFunctor.cpp
-    lib/sept/serialize.cpp
     lib/sept/type/Conversion.cpp
     lib/sept/type/Conversions.cpp
 )
