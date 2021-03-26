@@ -146,6 +146,7 @@ if(BUILD_testlibsept)
         bin/test-libsept/test_Array.cpp
         bin/test-libsept/test_ctl.cpp
         bin/test-libsept/test_Data.cpp
+        bin/test-libsept/test_element_of.cpp
         bin/test-libsept/test_inhabits.cpp
         bin/test-libsept/test_NPTerm.cpp
         bin/test-libsept/test_NPType.cpp

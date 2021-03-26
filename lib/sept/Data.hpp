@@ -36,6 +36,7 @@ class Data_t;
 // Forward declaration of print_data, with necessary forward declaration of Data.
 class Data;
 void print_data (std::ostream &out, Data const &data);
+Data element_of_data (Data const &param);
 
 // Data is the fundamental unit of currency in sept; this is how each data node is represented in C++.
 // TODO: Should this be called Data or Node?  Or what?
@@ -174,6 +175,14 @@ public:
             print_data(out, *this);
         });
     }
+
+    //
+    // Data model methods
+    // TODO: Potentially include things like abstract_type(), serialize(), etc.
+    //
+
+    // This calls element_of_data(param).
+    Data operator[] (Data const &param) const { return element_of_data(param); }
 };
 
 // TODO: Implement specialization for std::swap(Data &, Data &)
@@ -565,6 +574,78 @@ LVD_STATIC_ASSOCIATION_DEFINE(DeserializeData, DeserializeDataFunctionMap)
     )
 
 Data deserialize_data (std::istream &in);
+
+//
+// StaticAssociation_t for element_of_data
+//
+
+using ElementOfDataFunction = std::function<Data(Data const &container_data, Data const &param_data)>;
+
+// This is the type of the map that ElementOfDataFunction is registered into.
+using ElementOfDataFunctionMap = std::unordered_map<TypeIndexPair,ElementOfDataFunction>;
+// This defines a static instance of ElementOfDataFunctionMap that each ElementOfDataFunction is registered into.
+LVD_STATIC_ASSOCIATION_DEFINE(ElementOfData, ElementOfDataFunctionMap)
+
+#define SEPT__REGISTER__ELEMENT_OF_DATA__NAME__EVALUATOR(ContainerType, ParamType, unique_id, evaluator) \
+    LVD_STATIC_ASSOCIATION_REGISTER( \
+        ElementOfData, \
+        unique_id, \
+        TypeIndexPair{std::type_index(typeid(ContainerType)), std::type_index(typeid(ParamType))}, \
+        evaluator \
+    )
+#define SEPT__REGISTER__ELEMENT_OF_DATA__EVALUATOR(ContainerType, ParamType, evaluator) \
+    SEPT__REGISTER__ELEMENT_OF_DATA__NAME__EVALUATOR(ContainerType, ParamType, __##ContainerType##___##ParamType##__, evaluator)
+
+// This macro must be used when `type` is not a C identifier (meaning that it can't automatically go into
+// the static variable name that is used in the registration).
+// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
+#define SEPT__REGISTER__ELEMENT_OF_DATA__NAME__DEFAULTEVALUATOR_NONDATA(ContainerType, ParamType, unique_id) \
+    SEPT__REGISTER__ELEMENT_OF_DATA__NAME__EVALUATOR( \
+        ContainerType, \
+        ParamType, \
+        unique_id, \
+        [](Data const &container_data, Data const &param_data) -> Data { \
+            auto const &container = container_data.cast<ContainerType const &>(); \
+            static_assert(!std::is_same_v<ParamType,Data>); \
+            auto const &param = param_data.cast<ParamType const &>(); \
+            std::ignore = container; \
+            std::ignore = param; \
+            return element_of(container, param); \
+        } \
+    )
+#define SEPT__REGISTER__ELEMENT_OF_DATA__NAME__DEFAULTEVALUATOR_DATA(ContainerType, ParamType, unique_id) \
+    SEPT__REGISTER__ELEMENT_OF_DATA__NAME__EVALUATOR( \
+        ContainerType, \
+        ParamType, \
+        unique_id, \
+        [](Data const &container_data, Data const &param_data) -> Data { \
+            auto const &container = container_data.cast<ContainerType const &>(); \
+            std::ignore = container; \
+            static_assert(std::is_same_v<ParamType,Data>); \
+            return element_of(container, param_data); \
+        } \
+    )
+// This macro can be used when `type` is a C identifier (meaning that it can automatically go into
+// the static variable name that is used in the registration).
+// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
+#define SEPT__REGISTER__ELEMENT_OF_DATA__DEFAULTEVALUATOR_NONDATA(ContainerType, ParamType) \
+    SEPT__REGISTER__ELEMENT_OF_DATA__NAME__DEFAULTEVALUATOR_NONDATA(ContainerType, ParamType, __##ContainerType##___##ParamType##__)
+#define SEPT__REGISTER__ELEMENT_OF_DATA__DEFAULTEVALUATOR_DATA(ContainerType, ParamType) \
+    SEPT__REGISTER__ELEMENT_OF_DATA__NAME__DEFAULTEVALUATOR_DATA(ContainerType, ParamType, __##ContainerType##___##ParamType##__)
+
+inline Data element_of_data (Data const &container_data, Data const &param_data) {
+    // Look up the type pair in the evaluator map.
+    auto const &evaluator_map = lvd::static_association_singleton<sept::ElementOfData>();
+    auto it = evaluator_map.find(TypeIndexPair{std::type_index(container_data.type()), std::type_index(param_data.type())});
+    if (it == evaluator_map.end()) {
+        // TEMP HACK: Check if there's an evaluator registered that accepts Data as its param type.
+        it = evaluator_map.find(TypeIndexPair{std::type_index(container_data.type()), std::type_index(typeid(Data))});
+        if (it == evaluator_map.end())
+            throw std::runtime_error(LVD_FMT("Data type pairs (" << container_data.type().name() << ", " << param_data.type().name() << ") and (" << container_data.type().name() << ", " << std::type_index(typeid(Data)).name() << ") are both not registered in ElementOfData for use in element_of_data"));
+    }
+
+    return it->second(container_data, param_data);
+}
 
 //
 // Other stuff

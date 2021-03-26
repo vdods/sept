@@ -58,8 +58,23 @@ int compare_data (Data const &lhs, Data const &rhs) {
     // If the (lhs,rhs) type pair isn't found, then it's assumed that lhs and rhs are incomparable.
     // TODO: For a total order, this is an error.  But for a partial order, this would just return
     // "incomparable".
-    if (it == evaluator_map.end())
-        throw std::runtime_error(LVD_FMT("no compare evaluator registered for LHS type " << lhs.type() << " and RHS type " << rhs.type()));
+    // NOTE TEMP HACK: For now, if the pair isn't found, then order them based on the type name pointers.
+    // NOTE that this is implementation dependent.
+    if (it == evaluator_map.end()) {
+        auto const *lhs_type_name = lhs.type().name();
+        auto const *rhs_type_name = rhs.type().name();
+        if (lhs_type_name < rhs_type_name)
+            return -1;
+        else if (lhs_type_name == rhs_type_name)
+            return 0;
+        else
+            return 1;
+    }
+//     // If the (lhs,rhs) type pair isn't found, then it's assumed that lhs and rhs are incomparable.
+//     // TODO: For a total order, this is an error.  But for a partial order, this would just return
+//     // "incomparable".
+//     if (it == evaluator_map.end())
+//         throw std::runtime_error(LVD_FMT("no compare evaluator registered for LHS type " << lhs.type() << " and RHS type " << rhs.type()));
 
     auto const &evaluator = it->second;
     // If evaluator == nullptr, then by convention, the values always compare as equal, and it doesn't depend on any runtime value.

@@ -38,6 +38,19 @@ ArrayTerm_c deserialize_value_ArrayTerm (Data &&abstract_type, std::istream &in)
     return ArrayTerm_c(std::move(elements)).with_constraint(std::move(abstract_type));
 }
 
+// Do fancy "from the end" indexing for negative numbers.  An index of -1 will be the last element
+// and an index of -a.size() will be the first element.  However, an index of -a.size()-1 will
+// throw std::out_of_range.
+Data element_of (ArrayTerm_c const &a, int8_t index) { return index >= 0 ? a[index] : a[a.size()+size_t(index)]; }
+Data element_of (ArrayTerm_c const &a, int16_t index) { return index >= 0 ? a[index] : a[a.size()+size_t(index)]; }
+Data element_of (ArrayTerm_c const &a, int32_t index) { return index >= 0 ? a[index] : a[a.size()+size_t(index)]; }
+Data element_of (ArrayTerm_c const &a, int64_t index) { return index >= 0 ? a[index] : a[a.size()+size_t(index)]; }
+
+Data element_of (ArrayTerm_c const &a, uint8_t index) { return a[index]; }
+Data element_of (ArrayTerm_c const &a, uint16_t index) { return a[index]; }
+Data element_of (ArrayTerm_c const &a, uint32_t index) { return a[index]; }
+Data element_of (ArrayTerm_c const &a, uint64_t index) { return a[index]; }
+
 //
 // Registrations for Data functions
 //
@@ -49,5 +62,14 @@ SEPT_EQ_DATA_REGISTER_TYPE(ArrayTerm_c)
 SEPT_COMPARE_DATA_REGISTER_DEFAULT_TYPE(ArrayTerm_c, ArrayTerm_c)
 
 SEPT_SERIALIZE_DATA_REGISTER_TYPE_DEFAULT(ArrayTerm_c)
+
+SEPT__REGISTER__ELEMENT_OF_DATA__DEFAULTEVALUATOR_NONDATA(ArrayTerm_c, int8_t)
+SEPT__REGISTER__ELEMENT_OF_DATA__DEFAULTEVALUATOR_NONDATA(ArrayTerm_c, int16_t)
+SEPT__REGISTER__ELEMENT_OF_DATA__DEFAULTEVALUATOR_NONDATA(ArrayTerm_c, int32_t)
+SEPT__REGISTER__ELEMENT_OF_DATA__DEFAULTEVALUATOR_NONDATA(ArrayTerm_c, int64_t)
+SEPT__REGISTER__ELEMENT_OF_DATA__DEFAULTEVALUATOR_NONDATA(ArrayTerm_c, uint8_t)
+SEPT__REGISTER__ELEMENT_OF_DATA__DEFAULTEVALUATOR_NONDATA(ArrayTerm_c, uint16_t)
+SEPT__REGISTER__ELEMENT_OF_DATA__DEFAULTEVALUATOR_NONDATA(ArrayTerm_c, uint32_t)
+SEPT__REGISTER__ELEMENT_OF_DATA__DEFAULTEVALUATOR_NONDATA(ArrayTerm_c, uint64_t)
 
 } // end namespace sept

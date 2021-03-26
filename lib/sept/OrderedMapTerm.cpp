@@ -78,6 +78,9 @@ int compare (OrderedMapTerm_c const &lhs, OrderedMapTerm_c const &rhs) {
     return lhs.size() < rhs.size() ? -1 : (lhs.size() == rhs.size() ? 0 : 1);
 }
 
+// This has to accept Data, because the domain of the map isn't known at compile time.
+Data element_of (OrderedMapTerm_c const &m, Data const &key) { return m[key]; }
+
 //
 // Registrations for Data functions
 //
@@ -89,5 +92,7 @@ SEPT_EQ_DATA_REGISTER_TYPE(OrderedMapTerm_c)
 SEPT_COMPARE_DATA_REGISTER_DEFAULT_TYPE(OrderedMapTerm_c, OrderedMapTerm_c)
 
 SEPT_SERIALIZE_DATA_REGISTER_TYPE_DEFAULT(OrderedMapTerm_c)
+
+SEPT__REGISTER__ELEMENT_OF_DATA__DEFAULTEVALUATOR_DATA(OrderedMapTerm_c, Data)
 
 } // end namespace sept
