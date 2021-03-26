@@ -2,8 +2,6 @@
 
 #include "sept/DataVector.hpp"
 
-#include "sept/compare.hpp"
-
 namespace sept {
 
 std::ostream &operator << (std::ostream &out, DataVector const &v) {

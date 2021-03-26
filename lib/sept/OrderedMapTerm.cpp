@@ -86,4 +86,6 @@ SEPT_DATA_PRINTING_REGISTER_TYPE(OrderedMapTerm_c)
 
 SEPT_EQ_DATA_REGISTER_TYPE(OrderedMapTerm_c)
 
+SEPT_COMPARE_DATA_REGISTER_DEFAULT_TYPE(OrderedMapTerm_c, OrderedMapTerm_c)
+
 } // end namespace sept

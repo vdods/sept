@@ -185,4 +185,14 @@ SEPT_INHABITS_DATA_REGISTER_TYPE(ArrayTerm_c, ArrayETerm_c, return type.constrai
 SEPT_INHABITS_DATA_REGISTER_TYPE(ArrayTerm_c, ArraySTerm_c, return type.constraint_is_satisfied(value.elements()); )
 SEPT_INHABITS_DATA_REGISTER_TYPE(ArrayTerm_c, Array_c, return type.constraint_is_satisfied(value.elements()); )
 
+
+SEPT_COMPARE_DATA_REGISTER_SINGLETON_TYPE(ArrayType_c)
+SEPT_COMPARE_DATA_REGISTER_SINGLETON_TYPE(ArrayES_c)
+SEPT_COMPARE_DATA_REGISTER_SINGLETON_TYPE(ArrayE_c)
+SEPT_COMPARE_DATA_REGISTER_SINGLETON_TYPE(ArrayS_c)
+SEPT_COMPARE_DATA_REGISTER_SINGLETON_TYPE(Array_c)
+SEPT_COMPARE_DATA_REGISTER_DEFAULT_TYPE(ArrayESTerm_c, ArrayESTerm_c)
+SEPT_COMPARE_DATA_REGISTER_DEFAULT_TYPE(ArrayETerm_c, ArrayETerm_c)
+SEPT_COMPARE_DATA_REGISTER_DEFAULT_TYPE(ArraySTerm_c, ArraySTerm_c)
+
 } // end namespace sept

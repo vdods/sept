@@ -4,7 +4,6 @@
 
 #include <cassert>
 #include <lvd/OstreamDelegate.hpp>
-#include "sept/compare.hpp"
 #include "sept/core.hpp"
 #include "sept/Data.hpp"
 #include "sept/Data_t.hpp"

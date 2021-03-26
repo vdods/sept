@@ -74,7 +74,6 @@ set(libsept_HEADERS
     lib/sept/BaseArray_t.hpp
     lib/sept/BaseArrayT_t.hpp
     lib/sept/BaseArray_S_t.hpp
-    lib/sept/compare.hpp
     lib/sept/ctl/ClearOutput.hpp
     lib/sept/ctl/EndOfFile.hpp
     lib/sept/ctl/Output.hpp
@@ -105,7 +104,6 @@ set(libsept_SOURCES
     lib/sept/BaseArray_t.cpp
     lib/sept/BaseArrayT_t.cpp
     lib/sept/BaseArray_S_t.cpp
-    lib/sept/compare.cpp
     lib/sept/ctl/ClearOutput.cpp
     lib/sept/ctl/EndOfFile.cpp
     lib/sept/ctl/Output.cpp

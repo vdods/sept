@@ -36,26 +36,46 @@ bool inhabits_data (Data const &value_data, Data const &type_data) {
         return true;
 
     // Look up the type pair in the predicate map.
-    auto const &inhabits_data_predicate_map = lvd::static_association_singleton<sept::InhabitsData>();
-    auto it = inhabits_data_predicate_map.find(InhabitsDataKey{std::type_index(value_data.type()), std::type_index(type_data.type())});
+    auto const &predicate_map = lvd::static_association_singleton<sept::InhabitsData>();
+    auto it = predicate_map.find(TypeIndexPair{std::type_index(value_data.type()), std::type_index(type_data.type())});
     // If the (value,type) type pair isn't found, then it's assumed that value does not inhabit type.
-    if (it == inhabits_data_predicate_map.end())
+    if (it == predicate_map.end())
         return false;
 
-    auto const &inhabits_evaluator = it->second;
-    // If inhabits_evaluator == nullptr, then by convention, value always inhabits type, and it doesn't depend on any runtime value.
-    if (inhabits_evaluator == nullptr)
+    auto const &predicate = it->second;
+    // If predicate == nullptr, then by convention, value always inhabits type, and it doesn't depend on any runtime value.
+    if (predicate == nullptr)
         return true;
 
-    // Otherwise delegate to inhabits_evaluator.
-    return inhabits_evaluator(value_data, type_data);
+    // Otherwise delegate to predicate.
+    return predicate(value_data, type_data);
+}
+
+int compare_data (Data const &lhs, Data const &rhs) {
+    // Look up the type pair in the evaluator map.
+    auto const &evaluator_map = lvd::static_association_singleton<sept::CompareData>();
+    auto it = evaluator_map.find(TypeIndexPair{std::type_index(lhs.type()), std::type_index(rhs.type())});
+    // If the (lhs,rhs) type pair isn't found, then it's assumed that lhs and rhs are incomparable.
+    // TODO: For a total order, this is an error.  But for a partial order, this would just return
+    // "incomparable".
+    if (it == evaluator_map.end())
+        throw std::runtime_error(LVD_FMT("no compare evaluator registered for LHS type " << lhs.type() << " and RHS type " << rhs.type()));
+
+    auto const &evaluator = it->second;
+    // If evaluator == nullptr, then by convention, the values always compare as equal, and it doesn't depend on any runtime value.
+    if (evaluator == nullptr)
+        return 0;
+
+    // Otherwise delegate to evaluator.
+    return evaluator(lhs, rhs);
 }
 
 bool is_member (Data const &value, Data const &container) {
 //     assert(value.has_value());
     assert(container.has_value());
 
-    #define SEPT_HANDLE_TYPE_BY_VALUE(T) else if (container.type() == typeid(T)) return is_member(value, container.cast<T>());
+//     #define SEPT_HANDLE_TYPE_BY_VALUE(T) else if (container.type() == typeid(T)) return is_member(value, container.cast<T>());
+    #define SEPT_HANDLE_TYPE_BY_VALUE(T) else if (container.type() == typeid(T)) return is_member(value, container.cast<T const &>());
     #define SEPT_HANDLE_TYPE_BY_CREF(T) else if (container.type() == typeid(T)) return is_member(value, container.cast<T const &>());
 
     if (false) { }
@@ -227,7 +247,8 @@ namespace std {
 size_t std::hash<sept::Data>::operator () (sept::Data const &data) const {
     assert(data.has_value());
 
-    #define SEPT_HANDLE_TYPE_BY_VALUE(T) else if (data.type() == typeid(T)) return sept::hash(data.cast<T>());
+//     #define SEPT_HANDLE_TYPE_BY_VALUE(T) else if (data.type() == typeid(T)) return sept::hash(data.cast<T>());
+    #define SEPT_HANDLE_TYPE_BY_VALUE(T) else if (data.type() == typeid(T)) return sept::hash(data.cast<T const &>());
     #define SEPT_HANDLE_TYPE_BY_CREF(T) else if (data.type() == typeid(T)) return sept::hash(data.cast<T const &>());
 
     if (false) { }

@@ -46,4 +46,6 @@ SEPT_DATA_PRINTING_REGISTER_TYPE(ArrayTerm_c)
 
 SEPT_EQ_DATA_REGISTER_TYPE(ArrayTerm_c)
 
+SEPT_COMPARE_DATA_REGISTER_DEFAULT_TYPE(ArrayTerm_c, ArrayTerm_c)
+
 } // end namespace sept

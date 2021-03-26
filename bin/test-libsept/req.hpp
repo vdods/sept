@@ -12,7 +12,6 @@
 #include "sept/BaseArray_t.hpp"
 #include "sept/BaseArrayT_t.hpp"
 #include "sept/BaseArray_S_t.hpp"
-#include "sept/compare.hpp"
 #include "sept/core.hpp"
 #include "sept/DataArray_t.hpp"
 #include "sept/DataVector.hpp"

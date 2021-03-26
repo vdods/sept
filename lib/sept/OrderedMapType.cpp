@@ -182,4 +182,14 @@ SEPT_INHABITS_DATA_REGISTER_TYPE(OrderedMapTerm_c, OrderedMapDTerm_c, return typ
 SEPT_INHABITS_DATA_REGISTER_TYPE(OrderedMapTerm_c, OrderedMapCTerm_c, return type.constraint_is_satisfied(value.pairs()); )
 SEPT_INHABITS_DATA_REGISTER_TYPE(OrderedMapTerm_c, OrderedMap_c, return type.constraint_is_satisfied(value.pairs()); )
 
+
+SEPT_COMPARE_DATA_REGISTER_SINGLETON_TYPE(OrderedMapType_c)
+SEPT_COMPARE_DATA_REGISTER_SINGLETON_TYPE(OrderedMapDC_c)
+SEPT_COMPARE_DATA_REGISTER_SINGLETON_TYPE(OrderedMapD_c)
+SEPT_COMPARE_DATA_REGISTER_SINGLETON_TYPE(OrderedMapC_c)
+SEPT_COMPARE_DATA_REGISTER_SINGLETON_TYPE(OrderedMap_c)
+SEPT_COMPARE_DATA_REGISTER_DEFAULT_TYPE(OrderedMapDCTerm_c, OrderedMapDCTerm_c)
+SEPT_COMPARE_DATA_REGISTER_DEFAULT_TYPE(OrderedMapDTerm_c, OrderedMapDTerm_c)
+SEPT_COMPARE_DATA_REGISTER_DEFAULT_TYPE(OrderedMapCTerm_c, OrderedMapCTerm_c)
+
 } // end namespace sept

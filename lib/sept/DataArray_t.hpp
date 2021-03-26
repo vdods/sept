@@ -4,7 +4,6 @@
 
 #include <array>
 #include <experimental/array> // for std::make_array
-#include "sept/compare.hpp"
 #include "sept/core.hpp"
 #include "sept/Data.hpp"
 #include "sept/hash.hpp"

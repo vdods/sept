@@ -249,14 +249,12 @@ inline bool eq_data (Data const &lhs, Data const &rhs) {
     return it->second(lhs, rhs);
 }
 
-inline bool neq_data (Data const &lhs, Data const &rhs) { return !eq_data(lhs, rhs); }
-
 // TODO: Maybe use an explicitly named equals function instead, otherwise the fact that type can be converted into
 // Data greatly interferes with finding legitimately missing overloads for operator== for specific types.
 inline bool operator == (Data const &lhs, Data const &rhs) { return eq_data(lhs, rhs); }
 
 // TODO: Maybe use an explicitly named not_equals function instead
-inline bool operator != (Data const &lhs, Data const &rhs) { return neq_data(lhs, rhs); }
+inline bool operator != (Data const &lhs, Data const &rhs) { return !eq_data(lhs, rhs); }
 
 //
 // StaticAssociation_t for abstract_type_of_data -- abstract_type_of_data(x) should return the most-specific
@@ -320,29 +318,29 @@ Data abstract_type_of_data (Data const &value_data);
 // many different, overlapping abstract types.
 //
 
-struct InhabitsDataKey {
+struct TypeIndexPair {
     std::type_index m_value_ti;
     std::type_index m_type_ti;
 
-    InhabitsDataKey (std::type_index value_ti, std::type_index type_ti)
+    TypeIndexPair (std::type_index value_ti, std::type_index type_ti)
         :   m_value_ti(value_ti)
         ,   m_type_ti(type_ti)
     { }
 
-    bool operator == (InhabitsDataKey const &other) const {
+    bool operator == (TypeIndexPair const &other) const {
         return m_value_ti == other.m_value_ti && m_type_ti == other.m_type_ti;
     }
 };
 
 } // end namespace sept
 
-// This has to go before std::unordered_map<InhabitsDataKey,...>
+// This has to go before std::unordered_map<TypeIndexPair,...>
 namespace std {
 
-// Template specialization to define std::hash<sept::InhabitsDataKey>.
+// Template specialization to define std::hash<sept::TypeIndexPair>.
 template <>
-struct hash<sept::InhabitsDataKey> {
-    size_t operator () (sept::InhabitsDataKey const &k) const {
+struct hash<sept::TypeIndexPair> {
+    size_t operator () (sept::TypeIndexPair const &k) const {
         return sept::hash(k.m_value_ti, k.m_type_ti);
     }
 };
@@ -352,8 +350,7 @@ struct hash<sept::InhabitsDataKey> {
 namespace sept {
 
 // This is the type of the map that the Data equality predicates are registered into.
-// using InhabitsDataKey = std::pair<std::type_index,std::type_index>;
-using InhabitsDataPredicateMap = std::unordered_map<InhabitsDataKey,DataPredicateBinary>;
+using InhabitsDataPredicateMap = std::unordered_map<TypeIndexPair,DataPredicateBinary>;
 // This defines a static instance of InhabitsDataPredicateMap that the inhabits predicates are registered into.
 LVD_STATIC_ASSOCIATION_DEFINE(InhabitsData, InhabitsDataPredicateMap)
 // This macro must be used when any of `Value` or `Type` is not a C identifier (meaning that it can't automatically go into
@@ -363,7 +360,7 @@ LVD_STATIC_ASSOCIATION_DEFINE(InhabitsData, InhabitsDataPredicateMap)
     LVD_STATIC_ASSOCIATION_REGISTER( \
         InhabitsData, \
         unique_id, \
-        InhabitsDataKey{std::type_index(typeid(Value)), std::type_index(typeid(Type))}, \
+        TypeIndexPair{std::type_index(typeid(Value)), std::type_index(typeid(Type))}, \
         inhabits_evaluator \
     )
 // This macro can be used when both of `Value` and `Type` are C identifiers (meaning that it can automatically go into
@@ -408,6 +405,66 @@ LVD_STATIC_ASSOCIATION_DEFINE(InhabitsData, InhabitsDataPredicateMap)
     SEPT_INHABITS_DATA_REGISTER_TYPE_IMPL(Value, Type, DataPredicateBinary{nullptr})
 
 bool inhabits_data (Data const &value_data, Data const &type_data);
+
+//
+// StaticAssociation_t for compare_data -- compare_data(lhs, rhs) should return:
+// -    A negative value if lhs < rhs
+// -    0 if lhs == rhs
+// -    A positive value if lhs > rhs
+//
+// TODO: Change this into TotalOrder, and also implement PartialOrder
+//
+
+using CompareEvaluatorFunction = std::function<int(Data const &,Data const &)>;
+using CompareDataEvaluatorMap = std::unordered_map<TypeIndexPair,CompareEvaluatorFunction>;
+// This defines a static instance of EqDataPredicateMap that the Data equality predicates are registered into.
+LVD_STATIC_ASSOCIATION_DEFINE(CompareData, CompareDataEvaluatorMap)
+// This macro must be used when `Lhs` or `Rhs` is not a C identifier (meaning that it can't automatically go into
+// the static variable name that is used in the registration).
+// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
+#define SEPT_COMPARE_DATA_REGISTER_TYPE_EXPLICIT_IMPL(Lhs, Rhs, unique_id, evaluator) \
+    LVD_STATIC_ASSOCIATION_REGISTER( \
+        CompareData, \
+        unique_id, \
+        TypeIndexPair{std::type_index(typeid(Lhs)), std::type_index(typeid(Rhs))}, \
+        evaluator \
+    )
+// This macro can be used `Lhs` and `Rhs` is a C identifier (meaning that it can automatically go into
+// the static variable name that is used in the registration).
+// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
+#define SEPT_COMPARE_DATA_REGISTER_TYPE_IMPL(Lhs, Rhs, evaluator) \
+    SEPT_COMPARE_DATA_REGISTER_TYPE_EXPLICIT_IMPL(Lhs, Rhs, __##Lhs##___##Rhs##__, evaluator)
+
+// This macro must be used when `Lhs` or `Rhs` is not a C identifier (meaning that it can't automatically go into
+// the static variable name that is used in the registration).
+// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
+#define SEPT_COMPARE_DATA_REGISTER_TYPE_SINGLETON_EXPLICIT(Type, unique_id) \
+    SEPT_COMPARE_DATA_REGISTER_TYPE_EXPLICIT_IMPL(Type, Type, unique_id, nullptr)
+// This macro can be used when `Lhs` and `Rhs` is a C identifier (meaning that it can automatically go into
+// the static variable name that is used in the registration).
+// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
+#define SEPT_COMPARE_DATA_REGISTER_SINGLETON_TYPE(Type) \
+    SEPT_COMPARE_DATA_REGISTER_TYPE_EXPLICIT_IMPL(Type, Type, Type, nullptr)
+
+// This macro must be used when `Lhs` or `Rhs` is not a C identifier (meaning that it can't automatically go into
+// the static variable name that is used in the registration).
+// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
+#define SEPT_COMPARE_DATA_REGISTER_TYPE_DEFAULT_EXPLICIT(Lhs, Rhs, unique_id) \
+    SEPT_COMPARE_DATA_REGISTER_TYPE_EXPLICIT_IMPL( \
+        Lhs, \
+        Rhs, \
+        unique_id, \
+        [](Data const &lhs_data, Data const &rhs_data)->int{ \
+            return sept::compare(lhs_data.cast<Lhs const &>(), rhs_data.cast<Rhs const &>()); \
+        } \
+    )
+// This macro can be used when `Lhs` and `Rhs` is a C identifier (meaning that it can automatically go into
+// the static variable name that is used in the registration).
+// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
+#define SEPT_COMPARE_DATA_REGISTER_DEFAULT_TYPE(Lhs, Rhs) \
+    SEPT_COMPARE_DATA_REGISTER_TYPE_DEFAULT_EXPLICIT(Lhs, Rhs, __##Lhs##___##Rhs##__)
+
+int compare_data (Data const &lhs, Data const &rhs);
 
 //
 // Other stuff
