@@ -112,7 +112,7 @@ enum class NPTerm : NPTermRepr {
     REQUEST_SYNC_INPUT_TYPE, // Sole inhabitant is RequestSyncInput
     REQUEST_SYNC_INPUT, // Inhabitants have the form RequestSyncInput(T) for some type T
 
-    __HIGHEST__ = CLEAR_OUTPUT
+    __HIGHEST__ = REQUEST_SYNC_INPUT
 };
 
 std::string const &as_string (NPTerm t);
