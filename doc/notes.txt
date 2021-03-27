@@ -4871,3 +4871,61 @@ Structured Expression Project Toolkit Design Document
         number of child nodes, it might still make sense to use a scroll area, even if this
         breaks the simplicity of the hyperbolic layout.  Perhaps the scroll area itself can just
         be a window into another hyperbolic half plane.
+
+2021.03.26
+
+-   TODO
+    -   Collect data model methods together and do a bit more to formalize it
+        -   non-parametric term registration (maybe also allow registration of specific inhabitants of parametric types)
+        x   print
+        x   eq
+        x   compare (maybe rename this to something more specific like lexiographical_compare)
+        x   inhabits
+        x   abstract_type_of
+        -   element_type_of
+        -   domain_of
+        -   codomain_of
+        -   is_member (maybe get rid of this in preference of set/map specific methods)
+        x   serialize (does this belong here in the data model?)
+        x   deserialize (does this belong here in the data model?)
+        -   convert (transformations; controlling lossy vs non-lossy)
+        -   project (lossy transformations)
+        -   embed (type-widening transformations)
+        -   size
+        -   hash
+        -   make_random_inhabitant (needs a notion of RNG)
+        -   unary operators
+        -   binary operators
+        -   operator()
+        x   element_of aka operator[]
+        -   maybe construction should happen via a method `make`?  but maybe operator() is sufficient.
+    -   Start using terms to actually do stuff (e.g. as AST types, using them in ordinary C++ code)
+        -   POC: Implement "query/fragment strings" so e.g. particular elements of data can be referenced
+            via URIs, e.g. "http://fancysite.com/important/data/bob-info#['address'].size" or something
+            -   This requires operator[] at bare minimum
+        -   POC: Pattern-matching-based type definitions.  E.g.
+            -   `Tuple($X, Add, $Y)` matches any Tuple with 3 elements whose middle element is `Add`.
+                Here, $X and $Y represent free variables.
+            -   `Tuple($X, Add, $X)` similar, except that the first and last elements must be equal.
+            -   Ideally something like `$T($X, $Y, 1)` could be possible, where $T is perhaps constrained.
+            -   Additional constraints should be specifiable outside of the expression syntax, perhaps
+                denoted with a `where` clause.  Though that's only a syntax thing, the abstract concept
+                isn't bound by the syntax.
+        -   Make a struct metatype?
+            -   This would be a tuple whose elements are named
+            -   Would this require defining a tuple type first?  Since right now there's
+                only Array, which can't force different elements to have distinct types.
+        -   POC: Make a simple AST hierarchy (ideally without introducing any new types)
+            and a simple interpreter for a simple functional language (no state, only pure
+            functions)
+        -   POC: Start implementing the (algebra? of) diffs and branching/merging
+    -   Make sept GUI program accept input (from stdin or from a child process) so it can
+        render and manipulate the output of headless sept programs
+    -   Implement hyperbolic tree view
+    -   Create vector_any so that ArrayE can be correctly implemented.  Similarly, implement map_any,
+        unordered_map_any, set_any, and unordered_set_any.
+    -   Think about how references and URIs can work (especially within serialization and
+        in the context of fast in-memory implementation -- via a reference cache or something)
+    -   Terms use std::any (via sept::Data), which is not ideal.  Is there a better
+        way to do this?  For terms that have constraints on their component values,
+        more-specific types could be used, but in general, it would be std::any.
