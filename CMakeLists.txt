@@ -4,6 +4,7 @@ project(sept)
 # the deb packages produced while developing are distinguished from the actual tagged release.
 set(sept_VERSION 0.0.1-DEV)
 
+option(BUILD_septast "Build sept-ast binary" ON)
 option(BUILD_septcat "Build sept-cat binary" ON)
 option(BUILD_testlibsept "Build test-libsept binary" ON)
 option(BUILD_sept "Build sept binary (requires Qt5)" ON)
@@ -192,6 +193,18 @@ if(BUILD_septcat)
     add_executable(sept-cat ${septcat_SOURCES})
     target_include_directories(sept-cat PUBLIC ${sept_SOURCE_DIR}/bin/sept-cat)
     target_link_libraries(sept-cat PUBLIC Strict CppStdFilesystem libsept)
+endif()
+
+# sept-ast -- a proof-of-concept showing that sept data types can be used for real purposes.  In
+# this case, abstract syntax trees.
+
+if(BUILD_septast)
+    set(septast_SOURCES
+        bin/sept-ast/main.cpp
+    )
+    add_executable(sept-ast ${septast_SOURCES})
+    target_include_directories(sept-ast PUBLIC ${sept_SOURCE_DIR}/bin/sept-ast)
+    target_link_libraries(sept-ast PUBLIC Strict CppStdFilesystem libsept)
 endif()
 
 # sept
