@@ -11,12 +11,12 @@ Placeholder_c Placeholder;
 // Registrations for Data functions
 //
 
-SEPT_DATA_PRINTING_REGISTER_TYPE(PlaceholderType_c)
-SEPT_DATA_PRINTING_REGISTER_TYPE(Placeholder_c)
-SEPT_DATA_PRINTING_REGISTER_TYPE(PlaceholderTerm_c)
+SEPT__REGISTER__PRINT(PlaceholderType_c)
+SEPT__REGISTER__PRINT(Placeholder_c)
+SEPT__REGISTER__PRINT(PlaceholderTerm_c)
 
-SEPT_EQ_DATA_REGISTER_TYPE(PlaceholderType_c)
-SEPT_EQ_DATA_REGISTER_TYPE(Placeholder_c)
-SEPT_EQ_DATA_REGISTER_TYPE(PlaceholderTerm_c)
+SEPT__REGISTER__EQ(PlaceholderType_c)
+SEPT__REGISTER__EQ(Placeholder_c)
+SEPT__REGISTER__EQ(PlaceholderTerm_c)
 
 } // end namespace sept

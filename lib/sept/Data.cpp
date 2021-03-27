@@ -22,7 +22,7 @@ namespace sept {
 
 Data abstract_type_of_data (Data const &value_data) {
     // Look up the type in the evaluator map.
-    auto const &evaluator_map = lvd::static_association_singleton<sept::AbstractTypeOf>();
+    auto const &evaluator_map = lvd::static_association_singleton<sept::_Data_AbstractTypeOf>();
     auto it = evaluator_map.find(std::type_index(value_data.type()));
     if (it == evaluator_map.end())
         return Term; // Fallback is Term -- everything is a Term.
@@ -36,7 +36,7 @@ bool inhabits_data (Data const &value_data, Data const &type_data) {
         return true;
 
     // Look up the type pair in the predicate map.
-    auto const &predicate_map = lvd::static_association_singleton<sept::InhabitsData>();
+    auto const &predicate_map = lvd::static_association_singleton<sept::_Data_Inhabits>();
     auto it = predicate_map.find(TypeIndexPair{std::type_index(value_data.type()), std::type_index(type_data.type())});
     // If the (value,type) type pair isn't found, then it's assumed that value does not inhabit type.
     if (it == predicate_map.end())
@@ -53,7 +53,7 @@ bool inhabits_data (Data const &value_data, Data const &type_data) {
 
 int compare_data (Data const &lhs, Data const &rhs) {
     // Look up the type pair in the evaluator map.
-    auto const &evaluator_map = lvd::static_association_singleton<sept::CompareData>();
+    auto const &evaluator_map = lvd::static_association_singleton<sept::_Data_Compare>();
     auto it = evaluator_map.find(TypeIndexPair{std::type_index(lhs.type()), std::type_index(rhs.type())});
     // If the (lhs,rhs) type pair isn't found, then it's assumed that lhs and rhs are incomparable.
     // TODO: For a total order, this is an error.  But for a partial order, this would just return
@@ -87,7 +87,7 @@ int compare_data (Data const &lhs, Data const &rhs) {
 
 void serialize_data (Data const &value, std::ostream &out) {
     // Look up the type in the serialization function map.
-    auto const &serialize_function_map = lvd::static_association_singleton<sept::SerializeData>();
+    auto const &serialize_function_map = lvd::static_association_singleton<sept::_Data_Serialize>();
     auto it = serialize_function_map.find(std::type_index(value.type()));
     if (it == serialize_function_map.end())
         throw std::runtime_error(LVD_FMT("no serialize function registered for type " << value.type()));
@@ -362,33 +362,33 @@ Data codomain_of (Data &&ordered_map_type) {
 // Registrations for Data functions
 //
 
-SEPT_DATA_PRINTING_REGISTER_TYPE(bool)
-SEPT_DATA_PRINTING_REGISTER_TYPE(char)
-SEPT_DATA_PRINTING_REGISTER_TYPE(int8_t)
-SEPT_DATA_PRINTING_REGISTER_TYPE(int16_t)
-SEPT_DATA_PRINTING_REGISTER_TYPE(int32_t)
-SEPT_DATA_PRINTING_REGISTER_TYPE(int64_t)
-SEPT_DATA_PRINTING_REGISTER_TYPE(uint8_t)
-SEPT_DATA_PRINTING_REGISTER_TYPE(uint16_t)
-SEPT_DATA_PRINTING_REGISTER_TYPE(uint32_t)
-SEPT_DATA_PRINTING_REGISTER_TYPE(uint64_t)
-SEPT_DATA_PRINTING_REGISTER_TYPE(float)
-SEPT_DATA_PRINTING_REGISTER_TYPE(double)
-SEPT_DATA_PRINTING_REGISTER_TYPE_EXPLICIT(std::string, std__string)
+SEPT__REGISTER__PRINT(bool)
+SEPT__REGISTER__PRINT(char)
+SEPT__REGISTER__PRINT(int8_t)
+SEPT__REGISTER__PRINT(int16_t)
+SEPT__REGISTER__PRINT(int32_t)
+SEPT__REGISTER__PRINT(int64_t)
+SEPT__REGISTER__PRINT(uint8_t)
+SEPT__REGISTER__PRINT(uint16_t)
+SEPT__REGISTER__PRINT(uint32_t)
+SEPT__REGISTER__PRINT(uint64_t)
+SEPT__REGISTER__PRINT(float)
+SEPT__REGISTER__PRINT(double)
+SEPT__REGISTER__PRINT__GIVE_ID(std::string, std__string)
 
-SEPT_EQ_DATA_REGISTER_TYPE(bool)
-SEPT_EQ_DATA_REGISTER_TYPE(char)
-SEPT_EQ_DATA_REGISTER_TYPE(int8_t)
-SEPT_EQ_DATA_REGISTER_TYPE(int16_t)
-SEPT_EQ_DATA_REGISTER_TYPE(int32_t)
-SEPT_EQ_DATA_REGISTER_TYPE(int64_t)
-SEPT_EQ_DATA_REGISTER_TYPE(uint8_t)
-SEPT_EQ_DATA_REGISTER_TYPE(uint16_t)
-SEPT_EQ_DATA_REGISTER_TYPE(uint32_t)
-SEPT_EQ_DATA_REGISTER_TYPE(uint64_t)
-SEPT_EQ_DATA_REGISTER_TYPE(float)
-SEPT_EQ_DATA_REGISTER_TYPE(double)
-SEPT_EQ_DATA_REGISTER_TYPE_EXPLICIT(std::string, std__string)
+SEPT__REGISTER__EQ(bool)
+SEPT__REGISTER__EQ(char)
+SEPT__REGISTER__EQ(int8_t)
+SEPT__REGISTER__EQ(int16_t)
+SEPT__REGISTER__EQ(int32_t)
+SEPT__REGISTER__EQ(int64_t)
+SEPT__REGISTER__EQ(uint8_t)
+SEPT__REGISTER__EQ(uint16_t)
+SEPT__REGISTER__EQ(uint32_t)
+SEPT__REGISTER__EQ(uint64_t)
+SEPT__REGISTER__EQ(float)
+SEPT__REGISTER__EQ(double)
+SEPT__REGISTER__EQ__GIVE_ID(std::string, std__string)
 
 } // end namespace sept
 

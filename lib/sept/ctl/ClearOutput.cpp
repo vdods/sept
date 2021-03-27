@@ -12,19 +12,19 @@ ClearOutput_c ClearOutput;
 // Registrations for Data functions
 //
 
-SEPT_DATA_PRINTING_REGISTER_TYPE(ClearOutputType_c)
-SEPT_DATA_PRINTING_REGISTER_TYPE(ClearOutput_c)
+SEPT__REGISTER__PRINT(ClearOutputType_c)
+SEPT__REGISTER__PRINT(ClearOutput_c)
 
-SEPT_EQ_DATA_REGISTER_TYPE(ClearOutputType_c)
-SEPT_EQ_DATA_REGISTER_TYPE(ClearOutput_c)
+SEPT__REGISTER__EQ(ClearOutputType_c)
+SEPT__REGISTER__EQ(ClearOutput_c)
 
-SEPT_ABSTRACT_TYPE_OF_DATA_REGISTER_TYPE_DEFAULT(ClearOutputType_c)
-SEPT_ABSTRACT_TYPE_OF_DATA_REGISTER_TYPE_DEFAULT(ClearOutput_c)
+SEPT__REGISTER__ABSTRACT_TYPE_OF(ClearOutputType_c)
+SEPT__REGISTER__ABSTRACT_TYPE_OF(ClearOutput_c)
 
-SEPT_INHABITS_DATA_REGISTER_TYPE_TRIVIAL(ClearOutput_c, ClearOutputType_c)
+SEPT__REGISTER__INHABITS(ClearOutput_c, ClearOutputType_c)
 
-SEPT_SERIALIZE_DATA_REGISTER_TYPE_DEFAULT(ClearOutputType_c)
-SEPT_SERIALIZE_DATA_REGISTER_TYPE_DEFAULT(ClearOutput_c)
+SEPT__REGISTER__SERIALIZE(ClearOutputType_c)
+SEPT__REGISTER__SERIALIZE(ClearOutput_c)
 
 } // end namespace ctl
 } // end namespace sept

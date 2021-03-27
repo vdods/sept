@@ -197,27 +197,28 @@ Data make_data (Args_&&... args) {
 // StaticAssociation_t for Data::operator lvd::OstreamDelegate
 //
 
-using DataPrintingFunction = std::function<void(std::ostream &, Data const &)>;
+using DataPrintFunction = std::function<void(std::ostream &, Data const &)>;
+using DataPrintFunctionMap = std::unordered_map<std::type_index,DataPrintFunction>;
+LVD_STATIC_ASSOCIATION_DEFINE(_Data_Print, DataPrintFunctionMap)
 
-// This is the type of the map that the Data printing functions are registered into.
-using DataPrintingFunctionMap = std::unordered_map<std::type_index,DataPrintingFunction>;
-// This defines a static instance of EqDataPredicateMap that the Data equality predicates are registered into.
-LVD_STATIC_ASSOCIATION_DEFINE(DataPrinting, DataPrintingFunctionMap)
-// This macro must be used when `type` is not a C identifier (meaning that it can't automatically go into
-// the static variable name that is used in the registration).
-// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
-#define SEPT_DATA_PRINTING_REGISTER_TYPE_EXPLICIT(type, unique_id) LVD_STATIC_ASSOCIATION_REGISTER(DataPrinting, unique_id, std::type_index(typeid(type)), [](std::ostream &out, Data const &data){ out << data.cast<type const &>(); })
-// This macro can be used when `type` is a C identifier (meaning that it can automatically go into
-// the static variable name that is used in the registration).
-// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
-#define SEPT_DATA_PRINTING_REGISTER_TYPE(type) SEPT_DATA_PRINTING_REGISTER_TYPE_EXPLICIT(type, type)
+#define SEPT__REGISTER__PRINT__GIVE_ID(Type, unique_id) \
+    LVD_STATIC_ASSOCIATION_REGISTER( \
+        _Data_Print, \
+        unique_id, \
+        std::type_index(typeid(Type)), \
+        [](std::ostream &out, Data const &data){ \
+            out << data.cast<Type const &>(); \
+        } \
+    )
+#define SEPT__REGISTER__PRINT(Type) \
+    SEPT__REGISTER__PRINT__GIVE_ID(Type, Type)
 
 inline void print_data (std::ostream &out, Data const &data) {
     // Look up the type in the predicate map.
-    auto const &data_printing_function_map = lvd::static_association_singleton<sept::DataPrinting>();
+    auto const &data_printing_function_map = lvd::static_association_singleton<sept::_Data_Print>();
     auto it = data_printing_function_map.find(std::type_index(data.type()));
     if (it == data_printing_function_map.end())
-        throw std::runtime_error(LVD_FMT("Data type " << data.type().name() << " not registered in DataPrinting for use in print_data"));
+        throw std::runtime_error(LVD_FMT("Data type " << data.type().name() << " not registered in _Data_Print for use in print_data"));
 
     it->second(out, data);
 }
@@ -229,18 +230,20 @@ inline void print_data (std::ostream &out, Data const &data) {
 using DataPredicateUnary = std::function<bool(Data const &)>;
 using DataPredicateBinary = std::function<bool(Data const &, Data const &)>;
 
-// This is the type of the map that the Data equality predicates are registered into.
-using EqDataPredicateMap = std::unordered_map<std::type_index,DataPredicateBinary>;
-// This defines a static instance of EqDataPredicateMap that the Data equality predicates are registered into.
-LVD_STATIC_ASSOCIATION_DEFINE(EqData, EqDataPredicateMap)
-// This macro must be used when `type` is not a C identifier (meaning that it can't automatically go into
-// the static variable name that is used in the registration).
-// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
-#define SEPT_EQ_DATA_REGISTER_TYPE_EXPLICIT(type, unique_id) LVD_STATIC_ASSOCIATION_REGISTER(EqData, unique_id, std::type_index(typeid(type)), [](Data const &lhs, Data const &rhs){ return lhs.cast<type const &>() == rhs.cast<type const &>(); })
-// This macro can be used when `type` is a C identifier (meaning that it can automatically go into
-// the static variable name that is used in the registration).
-// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
-#define SEPT_EQ_DATA_REGISTER_TYPE(type) SEPT_EQ_DATA_REGISTER_TYPE_EXPLICIT(type, type)
+using DataEqPredicateMap = std::unordered_map<std::type_index,DataPredicateBinary>;
+LVD_STATIC_ASSOCIATION_DEFINE(_Data_Eq, DataEqPredicateMap)
+
+#define SEPT__REGISTER__EQ__GIVE_ID(Type, unique_id) \
+    LVD_STATIC_ASSOCIATION_REGISTER( \
+        _Data_Eq, \
+        unique_id, \
+        std::type_index(typeid(Type)), \
+        [](Data const &lhs, Data const &rhs){ \
+            return lhs.cast<Type const &>() == rhs.cast<Type const &>(); \
+        } \
+    )
+#define SEPT__REGISTER__EQ(Type) \
+    SEPT__REGISTER__EQ__GIVE_ID(Type, Type)
 
 // Only allow definitions of equality where the data are the same type.  This means that for values of
 // different types to be equal (i.e. different int sizes), their conversion has to be explicit.
@@ -250,10 +253,10 @@ inline bool eq_data (Data const &lhs, Data const &rhs) {
         return false;
 
     // Otherwise look up the type in the predicate map.
-    auto const &data_operator_eq_predicate_map = lvd::static_association_singleton<sept::EqData>();
+    auto const &data_operator_eq_predicate_map = lvd::static_association_singleton<sept::_Data_Eq>();
     auto it = data_operator_eq_predicate_map.find(std::type_index(lhs.type()));
     if (it == data_operator_eq_predicate_map.end())
-        throw std::runtime_error(LVD_FMT("Data type " << lhs.type().name() << " not registered in EqData for use in eq_data"));
+        throw std::runtime_error(LVD_FMT("Data type " << lhs.type().name() << " not registered in _Data_Eq for use in eq_data"));
 
     return it->second(lhs, rhs);
 }
@@ -270,31 +273,21 @@ inline bool operator != (Data const &lhs, Data const &rhs) { return !eq_data(lhs
 // type that x belongs to.
 //
 
-using DataEvaluatorFunction = std::function<Data(Data const &)>;
-using AbstractTypeOfDataEvaluatorMap = std::unordered_map<std::type_index,DataEvaluatorFunction>;
-// This defines a static instance of EqDataPredicateMap that the Data equality predicates are registered into.
-LVD_STATIC_ASSOCIATION_DEFINE(AbstractTypeOf, AbstractTypeOfDataEvaluatorMap)
-// This macro must be used when `Value` is not a C identifier (meaning that it can't automatically go into
-// the static variable name that is used in the registration).
-// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
-#define SEPT_ABSTRACT_TYPE_OF_DATA_REGISTER_TYPE_EXPLICIT_IMPL(Value, unique_id, evaluator) \
+using DataFunction = std::function<Data(Data const &)>;
+using DataAbstractTypeOfEvaluatorMap = std::unordered_map<std::type_index,DataFunction>;
+LVD_STATIC_ASSOCIATION_DEFINE(_Data_AbstractTypeOf, DataAbstractTypeOfEvaluatorMap)
+
+#define SEPT__REGISTER__ABSTRACT_TYPE_OF__GIVE_ID__EVALUATOR(Value, unique_id, evaluator) \
     LVD_STATIC_ASSOCIATION_REGISTER( \
-        AbstractTypeOf, \
+        _Data_AbstractTypeOf, \
         unique_id, \
         std::type_index(typeid(Value)), \
         evaluator \
     )
-// This macro can be used `Value` is a C identifier (meaning that it can automatically go into
-// the static variable name that is used in the registration).
-// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
-#define SEPT_ABSTRACT_TYPE_OF_DATA_REGISTER_TYPE_IMPL(Value, evaluator) \
-    SEPT_ABSTRACT_TYPE_OF_DATA_REGISTER_TYPE_EXPLICIT_IMPL(Value, Value, evaluator)
-
-// This macro must be used when `Value` is not a C identifier (meaning that it can't automatically go into
-// the static variable name that is used in the registration).
-// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
-#define SEPT_ABSTRACT_TYPE_OF_DATA_REGISTER_TYPE_EXPLICIT(Value, unique_id, evaluator_body) \
-    SEPT_ABSTRACT_TYPE_OF_DATA_REGISTER_TYPE_EXPLICIT_IMPL( \
+#define SEPT__REGISTER__ABSTRACT_TYPE_OF__EVALUATOR(Value, evaluator) \
+    SEPT__REGISTER__ABSTRACT_TYPE_OF__GIVE_ID__EVALUATOR(Value, Value, evaluator)
+#define SEPT__REGISTER__ABSTRACT_TYPE_OF__GIVE_ID__EVALUATOR_BODY(Value, unique_id, evaluator_body) \
+    SEPT__REGISTER__ABSTRACT_TYPE_OF__GIVE_ID__EVALUATOR( \
         Value, \
         unique_id, \
         [](Data const &value_data)->Data{ \
@@ -303,21 +296,10 @@ LVD_STATIC_ASSOCIATION_DEFINE(AbstractTypeOf, AbstractTypeOfDataEvaluatorMap)
             evaluator_body \
         } \
     )
-// This macro can be used `Value` is a C identifier (meaning that it can automatically go into
-// the static variable name that is used in the registration).
-// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
-#define SEPT_ABSTRACT_TYPE_OF_DATA_REGISTER_TYPE(Value, evaluator_body) \
-    SEPT_ABSTRACT_TYPE_OF_DATA_REGISTER_TYPE_EXPLICIT(Value, Value, evaluator_body)
-// This macro must be used when `Value` is not a C identifier (meaning that it can't automatically go into
-// the static variable name that is used in the registration).
-// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
-#define SEPT_ABSTRACT_TYPE_OF_DATA_REGISTER_TYPE_EXPLICIT_DEFAULT(Value, unique_id) \
-    SEPT_ABSTRACT_TYPE_OF_DATA_REGISTER_TYPE_EXPLICIT(Value, unique_id, return abstract_type_of(value);)
-// This macro can be used `Value` is a C identifier (meaning that it can automatically go into
-// the static variable name that is used in the registration).
-// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
-#define SEPT_ABSTRACT_TYPE_OF_DATA_REGISTER_TYPE_DEFAULT(Value) \
-    SEPT_ABSTRACT_TYPE_OF_DATA_REGISTER_TYPE_EXPLICIT(Value, Value, return abstract_type_of(value);)
+#define SEPT__REGISTER__ABSTRACT_TYPE_OF___GIVE_ID(Value, unique_id) \
+    SEPT__REGISTER__ABSTRACT_TYPE_OF__GIVE_ID__EVALUATOR_BODY(Value, unique_id, return abstract_type_of(value);)
+#define SEPT__REGISTER__ABSTRACT_TYPE_OF(Value) \
+    SEPT__REGISTER__ABSTRACT_TYPE_OF__GIVE_ID__EVALUATOR_BODY(Value, Value, return abstract_type_of(value);)
 
 Data abstract_type_of_data (Data const &value_data);
 
@@ -358,31 +340,20 @@ struct hash<sept::TypeIndexPair> {
 
 namespace sept {
 
-// This is the type of the map that the Data equality predicates are registered into.
-using InhabitsDataPredicateMap = std::unordered_map<TypeIndexPair,DataPredicateBinary>;
-// This defines a static instance of InhabitsDataPredicateMap that the inhabits predicates are registered into.
-LVD_STATIC_ASSOCIATION_DEFINE(InhabitsData, InhabitsDataPredicateMap)
-// This macro must be used when any of `Value` or `Type` is not a C identifier (meaning that it can't automatically go into
-// the static variable name that is used in the registration).
-// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
-#define SEPT_INHABITS_DATA_REGISTER_TYPE_EXPLICIT_IMPL(Value, Type, unique_id, inhabits_evaluator) \
+using DataInhabitsPredicateMap = std::unordered_map<TypeIndexPair,DataPredicateBinary>;
+LVD_STATIC_ASSOCIATION_DEFINE(_Data_Inhabits, DataInhabitsPredicateMap)
+
+#define SEPT__REGISTER__INHABITS__GIVE_ID__EVALUATOR(Value, Type, unique_id, evaluator) \
     LVD_STATIC_ASSOCIATION_REGISTER( \
-        InhabitsData, \
+        _Data_Inhabits, \
         unique_id, \
         TypeIndexPair{std::type_index(typeid(Value)), std::type_index(typeid(Type))}, \
-        inhabits_evaluator \
+        evaluator \
     )
-// This macro can be used when both of `Value` and `Type` are C identifiers (meaning that it can automatically go into
-// the static variable name that is used in the registration).
-// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
-#define SEPT_INHABITS_DATA_REGISTER_TYPE_IMPL(Value, Type, inhabits_evaluator) \
-    SEPT_INHABITS_DATA_REGISTER_TYPE_EXPLICIT_IMPL(Value, Type, __##Value##___##Type##__, inhabits_evaluator)
-
-// This macro must be used when any of `Value` or `Type` is not a C identifier (meaning that it can't automatically go into
-// the static variable name that is used in the registration).
-// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
-#define SEPT_INHABITS_DATA_REGISTER_TYPE_EXPLICIT(Value, Type, unique_id, inhabits_evaluator_body) \
-    SEPT_INHABITS_DATA_REGISTER_TYPE_EXPLICIT_IMPL( \
+#define SEPT__REGISTER__INHABITS__EVALUATOR(Value, Type, evaluator) \
+    SEPT__REGISTER__INHABITS__GIVE_ID__EVALUATOR(Value, Type, __##Value##___##Type##__, evaluator)
+#define SEPT__REGISTER__INHABITS__GIVE_ID__EVALUATOR_BODY(Value, Type, unique_id, evaluator_body) \
+    SEPT__REGISTER__INHABITS__GIVE_ID__EVALUATOR( \
         Value, \
         Type, \
         unique_id, \
@@ -391,27 +362,15 @@ LVD_STATIC_ASSOCIATION_DEFINE(InhabitsData, InhabitsDataPredicateMap)
             auto const &type = type_data.cast<Type const &>(); \
             std::ignore = value; \
             std::ignore = type; \
-            inhabits_evaluator_body \
+            evaluator_body \
         } \
     )
-// This macro can be used when both of `Value` and `Type` are C identifiers (meaning that it can automatically go into
-// the static variable name that is used in the registration).
-// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
-#define SEPT_INHABITS_DATA_REGISTER_TYPE(Value, Type, inhabits_evaluator_body) \
-    SEPT_INHABITS_DATA_REGISTER_TYPE_EXPLICIT(Value, Type, __##Value##___##Type##__, inhabits_evaluator_body )
-
-// This macro must be used when any of `Value` or `Type` is not a C identifier (meaning that it can't automatically go into
-// the static variable name that is used in the registration).  This should be used when inhabits_evaluator_body would
-// always return true, meaning it doesn't depend on any runtime state of value or type.
-// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
-#define SEPT_INHABITS_DATA_REGISTER_TYPE_EXPLICIT_TRIVIAL(Value, Type, unique_id) \
-    SEPT_INHABITS_DATA_REGISTER_TYPE_EXPLICIT_IMPL(Value, Type, unique_id, DataPredicateBinary{nullptr})
-// This macro can be used when both of `Value` and `Type` are C identifiers (meaning that it can automatically go into
-// the static variable name that is used in the registration).  This should be used when inhabits_evaluator_body would
-// always return true, meaning it doesn't depend on any runtime state of value or type.
-// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
-#define SEPT_INHABITS_DATA_REGISTER_TYPE_TRIVIAL(Value, Type) \
-    SEPT_INHABITS_DATA_REGISTER_TYPE_IMPL(Value, Type, DataPredicateBinary{nullptr})
+#define SEPT__REGISTER__INHABITS__EVALUATOR_BODY(Value, Type, evaluator_body) \
+    SEPT__REGISTER__INHABITS__GIVE_ID__EVALUATOR_BODY(Value, Type, __##Value##___##Type##__, evaluator_body )
+#define SEPT__REGISTER__INHABITS__GIVE_ID(Value, Type, unique_id) \
+    SEPT__REGISTER__INHABITS__GIVE_ID__EVALUATOR(Value, Type, unique_id, DataPredicateBinary{nullptr})
+#define SEPT__REGISTER__INHABITS(Value, Type) \
+    SEPT__REGISTER__INHABITS__EVALUATOR(Value, Type, DataPredicateBinary{nullptr})
 
 bool inhabits_data (Data const &value_data, Data const &type_data);
 
@@ -424,54 +383,34 @@ bool inhabits_data (Data const &value_data, Data const &type_data);
 // TODO: Change this into TotalOrder, and also implement PartialOrder
 //
 
-using CompareEvaluatorFunction = std::function<int(Data const &,Data const &)>;
-using CompareDataEvaluatorMap = std::unordered_map<TypeIndexPair,CompareEvaluatorFunction>;
-// This defines a static instance of EqDataPredicateMap that the Data equality predicates are registered into.
-LVD_STATIC_ASSOCIATION_DEFINE(CompareData, CompareDataEvaluatorMap)
-// This macro must be used when `Lhs` or `Rhs` is not a C identifier (meaning that it can't automatically go into
-// the static variable name that is used in the registration).
-// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
-#define SEPT_COMPARE_DATA_REGISTER_TYPE_EXPLICIT_IMPL(Lhs, Rhs, unique_id, evaluator) \
+using CompareFunction = std::function<int(Data const &,Data const &)>;
+using DataCompareEvaluatorMap = std::unordered_map<TypeIndexPair,CompareFunction>;
+LVD_STATIC_ASSOCIATION_DEFINE(_Data_Compare, DataCompareEvaluatorMap)
+
+#define SEPT__REGISTER__COMPARE__GIVE_ID__EVALUATOR(Lhs, Rhs, unique_id, evaluator) \
     LVD_STATIC_ASSOCIATION_REGISTER( \
-        CompareData, \
+        _Data_Compare, \
         unique_id, \
         TypeIndexPair{std::type_index(typeid(Lhs)), std::type_index(typeid(Rhs))}, \
         evaluator \
     )
-// This macro can be used `Lhs` and `Rhs` is a C identifier (meaning that it can automatically go into
-// the static variable name that is used in the registration).
-// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
-#define SEPT_COMPARE_DATA_REGISTER_TYPE_IMPL(Lhs, Rhs, evaluator) \
-    SEPT_COMPARE_DATA_REGISTER_TYPE_EXPLICIT_IMPL(Lhs, Rhs, __##Lhs##___##Rhs##__, evaluator)
-
-// This macro must be used when `Lhs` or `Rhs` is not a C identifier (meaning that it can't automatically go into
-// the static variable name that is used in the registration).
-// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
-#define SEPT_COMPARE_DATA_REGISTER_TYPE_SINGLETON_EXPLICIT(Type, unique_id) \
-    SEPT_COMPARE_DATA_REGISTER_TYPE_EXPLICIT_IMPL(Type, Type, unique_id, nullptr)
-// This macro can be used when `Lhs` and `Rhs` is a C identifier (meaning that it can automatically go into
-// the static variable name that is used in the registration).
-// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
-#define SEPT_COMPARE_DATA_REGISTER_SINGLETON_TYPE(Type) \
-    SEPT_COMPARE_DATA_REGISTER_TYPE_EXPLICIT_IMPL(Type, Type, Type, nullptr)
-
-// This macro must be used when `Lhs` or `Rhs` is not a C identifier (meaning that it can't automatically go into
-// the static variable name that is used in the registration).
-// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
-#define SEPT_COMPARE_DATA_REGISTER_TYPE_DEFAULT_EXPLICIT(Lhs, Rhs, unique_id) \
-    SEPT_COMPARE_DATA_REGISTER_TYPE_EXPLICIT_IMPL( \
+#define SEPT__REGISTER__COMPARE__EVALUATOR(Lhs, Rhs, evaluator) \
+    SEPT__REGISTER__COMPARE__GIVE_ID__EVALUATOR(Lhs, Rhs, __##Lhs##___##Rhs##__, evaluator)
+#define SEPT__REGISTER__COMPARE__GIVE_ID__SINGLETON(Type, unique_id) \
+    SEPT__REGISTER__COMPARE__GIVE_ID__EVALUATOR(Type, Type, unique_id, nullptr)
+#define SEPT__REGISTER__COMPARE__SINGLETON(Type) \
+    SEPT__REGISTER__COMPARE__GIVE_ID__EVALUATOR(Type, Type, Type, nullptr)
+#define SEPT__REGISTER__COMPARE__GIVE_ID(Lhs, Rhs, unique_id) \
+    SEPT__REGISTER__COMPARE__GIVE_ID__EVALUATOR( \
         Lhs, \
         Rhs, \
         unique_id, \
         [](Data const &lhs_data, Data const &rhs_data)->int{ \
-            return sept::compare(lhs_data.cast<Lhs const &>(), rhs_data.cast<Rhs const &>()); \
+            return compare(lhs_data.cast<Lhs const &>(), rhs_data.cast<Rhs const &>()); \
         } \
     )
-// This macro can be used when `Lhs` and `Rhs` is a C identifier (meaning that it can automatically go into
-// the static variable name that is used in the registration).
-// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
-#define SEPT_COMPARE_DATA_REGISTER_DEFAULT_TYPE(Lhs, Rhs) \
-    SEPT_COMPARE_DATA_REGISTER_TYPE_DEFAULT_EXPLICIT(Lhs, Rhs, __##Lhs##___##Rhs##__)
+#define SEPT__REGISTER__COMPARE(Lhs, Rhs) \
+    SEPT__REGISTER__COMPARE__GIVE_ID(Lhs, Rhs, __##Lhs##___##Rhs##__)
 
 int compare_data (Data const &lhs, Data const &rhs);
 
@@ -479,31 +418,21 @@ int compare_data (Data const &lhs, Data const &rhs);
 // StaticAssociation_t for serialize_data
 //
 
-using SerializeFunction = std::function<void(Data const &value, std::ostream &out)>;
-using SerializeDataFunctionMap = std::unordered_map<std::type_index,SerializeFunction>;
-// This defines a static instance of SerializeDataFunctionMap that the Data serialization functions are registered into.
-LVD_STATIC_ASSOCIATION_DEFINE(SerializeData, SerializeDataFunctionMap)
-// This macro must be used when `Type` is not a C identifier (meaning that it can't automatically go into
-// the static variable name that is used in the registration).
-// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
-#define SEPT_SERIALIZE_DATA_REGISTER_TYPE_EXPLICIT_IMPL(Type, unique_id, evaluator) \
+using SerializeProcedure = std::function<void(Data const &value, std::ostream &out)>;
+using DataSerializeProcedureMap = std::unordered_map<std::type_index,SerializeProcedure>;
+LVD_STATIC_ASSOCIATION_DEFINE(_Data_Serialize, DataSerializeProcedureMap)
+
+#define SEPT__REGISTER_SERIALIZE__GIVE_ID__EVALUATOR(Type, unique_id, evaluator) \
     LVD_STATIC_ASSOCIATION_REGISTER( \
-        SerializeData, \
+        _Data_Serialize, \
         unique_id, \
         std::type_index(typeid(Type)), \
         evaluator \
     )
-// This macro can be used if `Type` is a C identifier (meaning that it can automatically go into
-// the static variable name that is used in the registration).
-// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
-#define SEPT_SERIALIZE_DATA_REGISTER_TYPE_IMPL(Type, evaluator) \
-    SEPT_SERIALIZE_DATA_REGISTER_TYPE_EXPLICIT_IMPL(Type, __##Lhs##___##Rhs##__, evaluator)
-
-// This macro must be used when `Lhs` or `Rhs` is not a C identifier (meaning that it can't automatically go into
-// the static variable name that is used in the registration).
-// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
-#define SEPT_SERIALIZE_DATA_REGISTER_TYPE_DEFAULT_EXPLICIT(Type, unique_id) \
-    SEPT_SERIALIZE_DATA_REGISTER_TYPE_EXPLICIT_IMPL( \
+#define SEPT__REGISTER__SERIALIZE__EVALUATOR(Type, evaluator) \
+    SEPT__REGISTER_SERIALIZE__GIVE_ID__EVALUATOR(Type, __##Lhs##___##Rhs##__, evaluator)
+#define SEPT__REGISTER__SERIALIZE__GIVE_ID(Type, unique_id) \
+    SEPT__REGISTER_SERIALIZE__GIVE_ID__EVALUATOR( \
         Type, \
         unique_id, \
         [](Data const &value_data, std::ostream &out){ \
@@ -512,11 +441,8 @@ LVD_STATIC_ASSOCIATION_DEFINE(SerializeData, SerializeDataFunctionMap)
             serialize(value, out); \
         } \
     )
-// This macro can be used when `Lhs` and `Rhs` is a C identifier (meaning that it can automatically go into
-// the static variable name that is used in the registration).
-// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
-#define SEPT_SERIALIZE_DATA_REGISTER_TYPE_DEFAULT(Type) \
-    SEPT_SERIALIZE_DATA_REGISTER_TYPE_DEFAULT_EXPLICIT(Type, Type)
+#define SEPT__REGISTER__SERIALIZE(Type) \
+    SEPT__REGISTER__SERIALIZE__GIVE_ID(Type, Type)
 
 void serialize_data (Data const &value, std::ostream &out);
 
@@ -528,47 +454,32 @@ void serialize_data (T_ const &, std::ostream &) = delete;
 // StaticAssociation_t for deserialize_data
 //
 
-using DeserializeFunction = std::function<Data(Data &&type, std::istream &in)>;
-using DeserializeDataFunctionMap = std::unordered_map<std::type_index,DeserializeFunction>;
-// This defines a static instance of DeserializeDataFunctionMap that the Data serialization functions are registered into.
-LVD_STATIC_ASSOCIATION_DEFINE(DeserializeData, DeserializeDataFunctionMap)
-// This macro must be used when `Type` is not a C identifier (meaning that it can't automatically go into
-// the static variable name that is used in the registration).
-// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
-#define SEPT_DESERIALIZE_DATA_REGISTER_TYPE_EXPLICIT_IMPL(Type, unique_id, evaluator) \
+using DeserializeProcedure = std::function<Data(Data &&type, std::istream &in)>;
+using DataDeserializeProcedureMap = std::unordered_map<std::type_index,DeserializeProcedure>;
+LVD_STATIC_ASSOCIATION_DEFINE(DeserializeData, DataDeserializeProcedureMap)
+
+#define SEPT__REGISTER__DESERIALIZE__GIVE_ID__EVALUATOR(Type, unique_id, evaluator) \
     LVD_STATIC_ASSOCIATION_REGISTER( \
         DeserializeData, \
         unique_id, \
         std::type_index(typeid(Type)), \
         evaluator \
     )
-// This macro can be used if `Type` is a C identifier (meaning that it can automatically go into
-// the static variable name that is used in the registration).
-// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
-#define SEPT_DESERIALIZE_DATA_REGISTER_TYPE_IMPL(Type, evaluator) \
-    SEPT_DESERIALIZE_DATA_REGISTER_TYPE_EXPLICIT_IMPL(Type, Type, evaluator)
-
-// This macro must be used when `Lhs` or `Rhs` is not a C identifier (meaning that it can't automatically go into
-// the static variable name that is used in the registration).
-// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
-#define SEPT_DESERIALIZE_DATA_REGISTER_TYPE_POD_EXPLICIT(Value, Type, unique_id) \
-    SEPT_DESERIALIZE_DATA_REGISTER_TYPE_EXPLICIT_IMPL( \
+#define SEPT__REGISTER__DESERIALIZE__EVALUATOR(Type, evaluator) \
+    SEPT__REGISTER__DESERIALIZE__GIVE_ID__EVALUATOR(Type, Type, evaluator)
+#define SEPT__REGISTER__DESERIALIZE__GIVE_ID__POD(Value, Type, unique_id) \
+    SEPT__REGISTER__DESERIALIZE__GIVE_ID__EVALUATOR( \
         Type, \
         unique_id, \
         [](Data &&abstract_type, std::istream &in) -> Data { \
             return SerializationForPOD<Value>::deserialize_value(in); \
         } \
     )
-// This macro can be used when `Lhs` and `Rhs` is a C identifier (meaning that it can automatically go into
-// the static variable name that is used in the registration).
-// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
-#define SEPT_DESERIALIZE_DATA_REGISTER_TYPE_POD(Value, Type) \
-    SEPT_DESERIALIZE_DATA_REGISTER_TYPE_POD_EXPLICIT(Value, Type, Type)
-// This macro can be used if `Type` is a C identifier (meaning that it can automatically go into
-// the static variable name that is used in the registration).
-// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
-#define SEPT_DESERIALIZE_DATA_REGISTER_TYPE(Type, evaluator_body) \
-    SEPT_DESERIALIZE_DATA_REGISTER_TYPE_IMPL( \
+#define SEPT__REGISTER__DESERIALIZE__POD(Value, Type) \
+    SEPT__REGISTER__DESERIALIZE__GIVE_ID__POD(Value, Type, Type)
+// TODO: Maybe define a template that is specialized for each type, similar to SerializationForPOD
+#define SEPT__REGISTER__DESERIALIZE(Type, evaluator_body) \
+    SEPT__REGISTER__DESERIALIZE__EVALUATOR( \
         Type, \
         [](Data &&abstract_type, std::istream &in) -> Data { evaluator_body } \
     )
@@ -580,27 +491,22 @@ Data deserialize_data (std::istream &in);
 //
 
 using ElementOfDataFunction = std::function<Data(Data const &container_data, Data const &param_data)>;
+using DataElementOfFunctionMap = std::unordered_map<TypeIndexPair,ElementOfDataFunction>;
+LVD_STATIC_ASSOCIATION_DEFINE(ElementOfData, DataElementOfFunctionMap)
 
-// This is the type of the map that ElementOfDataFunction is registered into.
-using ElementOfDataFunctionMap = std::unordered_map<TypeIndexPair,ElementOfDataFunction>;
-// This defines a static instance of ElementOfDataFunctionMap that each ElementOfDataFunction is registered into.
-LVD_STATIC_ASSOCIATION_DEFINE(ElementOfData, ElementOfDataFunctionMap)
-
-#define SEPT__REGISTER__ELEMENT_OF_DATA__NAME__EVALUATOR(ContainerType, ParamType, unique_id, evaluator) \
+#define SEPT__REGISTER__ELEMENT_OF__GIVE_ID__EVALUATOR(ContainerType, ParamType, unique_id, evaluator) \
     LVD_STATIC_ASSOCIATION_REGISTER( \
         ElementOfData, \
         unique_id, \
         TypeIndexPair{std::type_index(typeid(ContainerType)), std::type_index(typeid(ParamType))}, \
         evaluator \
     )
-#define SEPT__REGISTER__ELEMENT_OF_DATA__EVALUATOR(ContainerType, ParamType, evaluator) \
-    SEPT__REGISTER__ELEMENT_OF_DATA__NAME__EVALUATOR(ContainerType, ParamType, __##ContainerType##___##ParamType##__, evaluator)
-
-// This macro must be used when `type` is not a C identifier (meaning that it can't automatically go into
-// the static variable name that is used in the registration).
-// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
-#define SEPT__REGISTER__ELEMENT_OF_DATA__NAME__DEFAULTEVALUATOR_NONDATA(ContainerType, ParamType, unique_id) \
-    SEPT__REGISTER__ELEMENT_OF_DATA__NAME__EVALUATOR( \
+#define SEPT__REGISTER__ELEMENT_OF__EVALUATOR(ContainerType, ParamType, evaluator) \
+    SEPT__REGISTER__ELEMENT_OF__GIVE_ID__EVALUATOR(ContainerType, ParamType, __##ContainerType##___##ParamType##__, evaluator)
+// NONDATA indicates that the parameter of element_of_data will be converted to the given ParamType,
+// e.g. as in `Data element_of (ArrayTerm_c const &a, uint32_t index)`.
+#define SEPT__REGISTER__ELEMENT_OF__GIVE_ID__NONDATA(ContainerType, ParamType, unique_id) \
+    SEPT__REGISTER__ELEMENT_OF__GIVE_ID__EVALUATOR( \
         ContainerType, \
         ParamType, \
         unique_id, \
@@ -613,8 +519,10 @@ LVD_STATIC_ASSOCIATION_DEFINE(ElementOfData, ElementOfDataFunctionMap)
             return element_of(container, param); \
         } \
     )
-#define SEPT__REGISTER__ELEMENT_OF_DATA__NAME__DEFAULTEVALUATOR_DATA(ContainerType, ParamType, unique_id) \
-    SEPT__REGISTER__ELEMENT_OF_DATA__NAME__EVALUATOR( \
+// DATA indicates that the parameter of element_of_data will not be converted, and will be passed as Data,
+// e.g. as in `Data element_of (OrderedMapTerm_c const &m, Data const &key)`.
+#define SEPT__REGISTER__ELEMENT_OF__GIVE_ID__DATA(ContainerType, ParamType, unique_id) \
+    SEPT__REGISTER__ELEMENT_OF__GIVE_ID__EVALUATOR( \
         ContainerType, \
         ParamType, \
         unique_id, \
@@ -625,13 +533,14 @@ LVD_STATIC_ASSOCIATION_DEFINE(ElementOfData, ElementOfDataFunctionMap)
             return element_of(container, param_data); \
         } \
     )
-// This macro can be used when `type` is a C identifier (meaning that it can automatically go into
-// the static variable name that is used in the registration).
-// NOTE: Usage of this macro must be within a cpp file, not an hpp file (otherwise there will be a double-registration error at runtime init)
-#define SEPT__REGISTER__ELEMENT_OF_DATA__DEFAULTEVALUATOR_NONDATA(ContainerType, ParamType) \
-    SEPT__REGISTER__ELEMENT_OF_DATA__NAME__DEFAULTEVALUATOR_NONDATA(ContainerType, ParamType, __##ContainerType##___##ParamType##__)
-#define SEPT__REGISTER__ELEMENT_OF_DATA__DEFAULTEVALUATOR_DATA(ContainerType, ParamType) \
-    SEPT__REGISTER__ELEMENT_OF_DATA__NAME__DEFAULTEVALUATOR_DATA(ContainerType, ParamType, __##ContainerType##___##ParamType##__)
+// NONDATA indicates that the parameter of element_of_data will be converted to the given ParamType,
+// e.g. as in `Data element_of (ArrayTerm_c const &a, uint32_t index)`.
+#define SEPT__REGISTER__ELEMENT_OF__NONDATA(ContainerType, ParamType) \
+    SEPT__REGISTER__ELEMENT_OF__GIVE_ID__NONDATA(ContainerType, ParamType, __##ContainerType##___##ParamType##__)
+// DATA indicates that the parameter of element_of_data will not be converted, and will be passed as Data,
+// e.g. as in `Data element_of (OrderedMapTerm_c const &m, Data const &key)`.
+#define SEPT__REGISTER__ELEMENT_OF__DATA(ContainerType, ParamType) \
+    SEPT__REGISTER__ELEMENT_OF__GIVE_ID__DATA(ContainerType, ParamType, __##ContainerType##___##ParamType##__)
 
 inline Data element_of_data (Data const &container_data, Data const &param_data) {
     // Look up the type pair in the evaluator map.

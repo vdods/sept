@@ -85,14 +85,14 @@ Data element_of (OrderedMapTerm_c const &m, Data const &key) { return m[key]; }
 // Registrations for Data functions
 //
 
-SEPT_DATA_PRINTING_REGISTER_TYPE(OrderedMapTerm_c)
+SEPT__REGISTER__PRINT(OrderedMapTerm_c)
 
-SEPT_EQ_DATA_REGISTER_TYPE(OrderedMapTerm_c)
+SEPT__REGISTER__EQ(OrderedMapTerm_c)
 
-SEPT_COMPARE_DATA_REGISTER_DEFAULT_TYPE(OrderedMapTerm_c, OrderedMapTerm_c)
+SEPT__REGISTER__COMPARE(OrderedMapTerm_c, OrderedMapTerm_c)
 
-SEPT_SERIALIZE_DATA_REGISTER_TYPE_DEFAULT(OrderedMapTerm_c)
+SEPT__REGISTER__SERIALIZE(OrderedMapTerm_c)
 
-SEPT__REGISTER__ELEMENT_OF_DATA__DEFAULTEVALUATOR_DATA(OrderedMapTerm_c, Data)
+SEPT__REGISTER__ELEMENT_OF__DATA(OrderedMapTerm_c, Data)
 
 } // end namespace sept
