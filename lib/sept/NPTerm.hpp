@@ -96,6 +96,9 @@ enum class NPTerm : NPTermRepr {
     ORDERED_MAP_C, // Inhabitants have the form OrderedMapC(Codomain) -- implemented by class OrderedMapCTerm_c
     ORDERED_MAP, // Inhabitants have the form OrderedMap(...) -- implemented by class OrderedMapTerm_c
 
+    TUPLE_TYPE, // Inhabitant is Tuple.
+    TUPLE, // Inhabitants have the form Tuple(...) -- implemented by class TupleTerm_c.
+
     PLACEHOLDER_TYPE,
     PLACEHOLDER,
 

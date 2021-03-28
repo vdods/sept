@@ -4929,3 +4929,9 @@ Structured Expression Project Toolkit Design Document
     -   Terms use std::any (via sept::Data), which is not ideal.  Is there a better
         way to do this?  For terms that have constraints on their component values,
         more-specific types could be used, but in general, it would be std::any.
+
+2021.03.27
+
+-   Now that Tuple is implemented, there's clearly a specific need for concrete type vs abstract type.
+    In particular, concrete_type_of(Tuple(...)) should be Tuple, and abstract_type_of(Tuple(x,y,z))
+    should be Tuple(abstract_type_of(x), abstract_type_of(y), abstract_type_of(z)).

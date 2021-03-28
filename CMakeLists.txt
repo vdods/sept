@@ -94,6 +94,8 @@ set(libsept_HEADERS
     lib/sept/proj/ElementExtraction.hpp
     lib/sept/proj/TypeFunctor.hpp
     lib/sept/TreeNode_t.hpp
+    lib/sept/Tuple.hpp
+    lib/sept/TupleTerm.hpp
     lib/sept/type/Conversion.hpp
     lib/sept/type/Conversions.hpp
 )
@@ -117,6 +119,8 @@ set(libsept_SOURCES
     lib/sept/Placeholder.cpp
     lib/sept/proj/ElementExtraction.cpp
     lib/sept/proj/TypeFunctor.cpp
+    lib/sept/Tuple.cpp
+    lib/sept/TupleTerm.cpp
     lib/sept/type/Conversion.cpp
     lib/sept/type/Conversions.cpp
 )
@@ -156,6 +160,7 @@ if(BUILD_testlibsept)
         bin/test-libsept/test_proj.cpp
         bin/test-libsept/test_serialization.cpp
         bin/test-libsept/test_TreeNode_t.cpp
+        bin/test-libsept/test_Tuple.cpp
         bin/test-libsept/test_type_Conversion.cpp
         bin/test-libsept/test_type_Conversions.cpp
     )
