@@ -40,11 +40,15 @@ AST design notes
     that a type without a semantic subtype tag (e.g. LogicalParenExpr(LogicalExpr)) can be used.
 -   Now that the type system is much more free and flexible, can define Expr and CondExpr to not
     be Numeric- or Logical-, but rather form a type that overlaps both.
-    -   ExprKind := Set(LogicalExpr, NumericExpr)
-    -   Expr := UnionOfSets(ExprKind)
+    -   ExprKind := TypeSet(LogicalExpr, NumericExpr)
+    -   Expr := UnionOfTypeSet(ExprKind)
     -   CondExpr := Tuple(LogicalExpr, X, X) where X:ExprKind
     The latter definition, for CondExpr, is not possible (yet) declaratively, but it is possible
     by a definition of `inhabits`.
+-   Other stuff that could be useful
+    -   LogicalThing := Union(LogicalBinOp, LogicalBinOpExpr, LogicalCondExpr, LogicalExpr, LogicalParenExpr, LogicalUnOp, LogicalUnOpExpr)
+    -   NumericThing := Union(NumericBinOp, NumericBinOpExpr, NumericCondExpr, NumericExpr, NumericParenExpr, NumericUnOp, NumericUnOpExpr)
+
 #endif
 
 //
@@ -108,8 +112,9 @@ public:
 
     // TODO: Template types, use non-Data version of inhabits
     // TODO: Another way this could work is that it applies the abstract type LogicalBinOpExpr to the concrete value returned.
-    sept::ArrayTerm_c operator() (sept::Data &&lhs, sept::Data &&bin_op, sept::Data &&rhs) const {
-        auto retval = sept::Array(std::move(lhs), std::move(bin_op), std::move(rhs));
+    template <typename T0_, typename T1_, typename T2_>
+    sept::ArrayTerm_c operator() (T0_ &&lhs, T1_ &&bin_op, T2_ &&rhs) const {
+        auto retval = sept::Array(std::forward<T0_>(lhs), std::forward<T1_>(bin_op), std::forward<T2_>(rhs));
         if (!inhabits_data(retval, LogicalBinOpExpr_c{}))
             throw std::runtime_error(LVD_FMT("ill-formed LogicalBinOpExpr: " << retval));
         return retval;
@@ -290,8 +295,9 @@ public:
 
     // TODO: Template types, use non-Data version of inhabits
     // TODO: Another way this could work is that it applies the abstract type NumericBinOpExpr to the concrete value returned.
-    sept::ArrayTerm_c operator() (sept::Data &&lhs, sept::Data &&bin_op, sept::Data &&rhs) const {
-        auto retval = sept::Array(std::move(lhs), std::move(bin_op), std::move(rhs));
+    template <typename T0_, typename T1_, typename T2_>
+    sept::ArrayTerm_c operator() (T0_ &&lhs, T1_ &&bin_op, T2_ &&rhs) const {
+        auto retval = sept::Array(std::forward<T0_>(lhs), std::forward<T1_>(bin_op), std::forward<T2_>(rhs));
         if (!inhabits_data(retval, NumericBinOpExpr_c{}))
             throw std::runtime_error(LVD_FMT("ill-formed NumericBinOpExpr: " << retval));
         return retval;
@@ -723,8 +729,8 @@ double evaluate_expr__as_NumericBinOpExpr (sept::ArrayTerm_c const &a) {
     assert(inhabits(a, NumericBinOpExpr));
 
     // This is a bit silly
-    auto const &lhs = evaluate_expr_data(a[0]).cast<double const &>();
-    auto const &rhs = evaluate_expr_data(a[2]).cast<double const &>();
+    auto lhs = evaluate_expr_data(a[0]).cast<double>();
+    auto rhs = evaluate_expr_data(a[2]).cast<double>();
     switch (a[1].cast<NumericBinOpTerm_c const &>()) {
         case NumericBinOpTerm_c::ADD: return lhs + rhs;
         case NumericBinOpTerm_c::SUB: return lhs - rhs;
@@ -740,14 +746,14 @@ double evaluate_expr__as_NumericCondExpr (sept::ArrayTerm_c const &a) {
 
     // This is a bit silly
     bool condition = evaluate_expr_data(a[0]) == sept::True || evaluate_expr_data(a[0]) == sept::Data{true};
-    return evaluate_expr_data(a[condition ? 1 : 2]).cast<double const &>();
+    return evaluate_expr_data(a[condition ? 1 : 2]).cast<double>();
 }
 
 double evaluate_expr__as_NumericUnOpExpr (sept::ArrayTerm_c const &a) {
     assert(inhabits(a, NumericUnOpExpr));
 
     // This is a bit silly
-    auto const &operand = evaluate_expr_data(a[1]).cast<double const &>();
+    auto operand = evaluate_expr_data(a[1]).cast<double>();
     switch (a[0].cast<NumericUnOpTerm_c const &>()) {
         case NumericUnOpTerm_c::NEG: return -operand;
         default: LVD_ABORT("invalid NumericUnOpTerm_c");
@@ -1044,6 +1050,58 @@ int main (int argc, char **argv) {
         << LVD_REFLECT(evaluate_expr(NumericCondExpr(false, 5.5, 10.25))) << '\n'
         << LVD_REFLECT(evaluate_expr(NumericCondExpr(LogicalBinOpExpr(sept::True, Xor, sept::False), 5.5, 10.25))) << '\n'
         << '\n';
+
+    // Silly, but hey.
+    auto x = 0.1;
+    auto three_factorial = 3.0*2.0*1.0;
+    auto five_factorial = 5.0*4.0*three_factorial;
+    auto seven_factorial = 7.0*6.0*five_factorial;
+    auto nine_factorial = 9.0*8.0*seven_factorial;
+    std::cout << LVD_REFLECT(x) << '\n'
+              << LVD_REFLECT(three_factorial) << '\n'
+              << LVD_REFLECT(five_factorial) << '\n'
+              << LVD_REFLECT(seven_factorial) << '\n'
+              << LVD_REFLECT(nine_factorial) << '\n'
+              << LVD_REFLECT(NumericBinOpExpr(x, Pow, 3.0)) << '\n'
+              << LVD_REFLECT(evaluate_expr(NumericBinOpExpr(x, Pow, 3.0))) << '\n'
+              << '\n';
+    // sin(x) = x - x^3 / 3! + x^5 / 5! - x^7 / 7! + x^9 / 9! - ...
+    std::cout << evaluate_expr(
+        NumericBinOpExpr(
+            NumericBinOpExpr(
+                NumericBinOpExpr(
+                    NumericBinOpExpr(
+                        x,
+                        Sub,
+                        NumericBinOpExpr(
+                            NumericBinOpExpr(x, Pow, 3.0),
+                            Div,
+                            three_factorial
+                        )
+                    ),
+                    Add,
+                    NumericBinOpExpr(
+                        NumericBinOpExpr(x, Pow, 5.0),
+                        Div,
+                        five_factorial
+                    )
+                ),
+                Sub,
+                NumericBinOpExpr(
+                    NumericBinOpExpr(x, Pow, 7.0),
+                    Div,
+                    seven_factorial
+                )
+            ),
+            Add,
+            NumericBinOpExpr(
+                NumericBinOpExpr(x, Pow, 9.0),
+                Div,
+                nine_factorial
+            )
+        )
+    ) << '\n';
+    std::cout << LVD_REFLECT(std::sin(x)) << '\n';
 
     return 0;
 }
