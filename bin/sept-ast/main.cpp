@@ -19,8 +19,8 @@ AST design notes
         -   Not
     -   LogicalBinOpExpr := Tuple(LogicalExpr, LogicalBinOp, LogicalExpr)
     -   LogicalUnOpExpr := Tuple(LogicalUnOp, LogicalExpr)
-    -   LogicalParenExpr := Tuple(LogicalExpr) // TODO: There really needs to be a semantic type "tag" to distinguish it
-    -   LogicalCondExpr := Tuple(LogicalExpr, LogicalExpr, LogicalExpr) // (condition, positive_expr, negative_expr) // TODO: There really needs to be a semantic type "tag" to distinguish it
+    -   LogicalParenExpr := Tuple(LogicalExpr)
+    -   LogicalCondExpr := Tuple(LogicalExpr, LogicalExpr, LogicalExpr) // (condition, positive_expr, negative_expr)
     -   LogicalExpr := Union(Bool, LogicalBinOpExpr, LogicalCondExpr, LogicalParenExpr, LogicalUnOpExpr)
     -   NumericBinOp, which has inhabitants (this could be made into a Rust-style enum)
         -   Add
@@ -33,8 +33,18 @@ AST design notes
     -   NumericBinOpExpr := Tuple(NumericExpr, NumericBinOp, NumericExpr)
     -   NumericUnOpExpr := Tuple(NumericUnOp, NumericExpr)
     -   NumericParenExpr := Tuple(NumericExpr)
-    -   NumericCondExpr := Tuple(LogicalExpr, NumericExpr, NumericExpr) // (condition, positive_expr, negative_expr)
+    -   NumericCondExpr := Tuple(LogicalExpr, NumericExpr, NumericExpr)
     -   NumericExpr := Union(Float64, NumericBinOpExpr, NumericUnOpExpr, NumericParenExpr)
+-   Can use Array instead of Tuple for now, since Array is a weakly-typed Tuple.
+    Note that it is only because the various Tuple-based type definitions are mutually disjoint
+    that a type without a semantic subtype tag (e.g. LogicalParenExpr(LogicalExpr)) can be used.
+-   Now that the type system is much more free and flexible, can define Expr and CondExpr to not
+    be Numeric- or Logical-, but rather form a type that overlaps both.
+    -   ExprKind := Set(LogicalExpr, NumericExpr)
+    -   Expr := UnionOfSets(ExprKind)
+    -   CondExpr := Tuple(LogicalExpr, X, X) where X:ExprKind
+    The latter definition, for CondExpr, is not possible (yet) declaratively, but it is possible
+    by a definition of `inhabits`.
 #endif
 
 //
@@ -108,6 +118,28 @@ public:
 
 std::ostream &operator<< (std::ostream &out, LogicalBinOpExpr_c const &) {
     return out << "LogicalBinOpExpr";
+}
+
+//
+// LogicalCondExpr_c
+//
+
+class LogicalCondExpr_c {
+public:
+
+    // Really all this does is verify that expr:LogicalCondExpr
+    // TODO: Template types, use non-Data version of inhabits
+    // TODO: Another way this could work is that it applies the abstract type LogicalCondExpr to the concrete value returned.
+    sept::ArrayTerm_c operator() (sept::Data &&conditional, sept::Data &&positive_expr, sept::Data &&negative_expr) const {
+        auto retval = sept::Array(std::move(conditional), std::move(positive_expr), std::move(negative_expr));
+        if (!inhabits_data(retval, LogicalCondExpr_c{}))
+            throw std::runtime_error(LVD_FMT("ill-formed LogicalCondExpr: " << retval));
+        return retval;
+    }
+};
+
+std::ostream &operator<< (std::ostream &out, LogicalCondExpr_c const &) {
+    return out << "LogicalCondExpr";
 }
 
 //
@@ -271,6 +303,28 @@ std::ostream &operator<< (std::ostream &out, NumericBinOpExpr_c const &) {
 }
 
 //
+// NumericCondExpr_c
+//
+
+class NumericCondExpr_c {
+public:
+
+    // Really all this does is verify that expr:NumericCondExpr
+    // TODO: Template types, use non-Data version of inhabits
+    // TODO: Another way this could work is that it applies the abstract type NumericCondExpr to the concrete value returned.
+    sept::ArrayTerm_c operator() (sept::Data &&conditional, sept::Data &&positive_expr, sept::Data &&negative_expr) const {
+        auto retval = sept::Array(std::move(conditional), std::move(positive_expr), std::move(negative_expr));
+        if (!inhabits_data(retval, NumericCondExpr_c{}))
+            throw std::runtime_error(LVD_FMT("ill-formed NumericCondExpr: " << retval));
+        return retval;
+    }
+};
+
+std::ostream &operator<< (std::ostream &out, NumericCondExpr_c const &) {
+    return out << "NumericCondExpr";
+}
+
+//
 // NumericExpr_c
 //
 
@@ -359,6 +413,7 @@ std::ostream &operator<< (std::ostream &out, NumericUnOpExpr_c const &) {
 
 LogicalBinOp_c const LogicalBinOp;
 LogicalBinOpExpr_c const LogicalBinOpExpr;
+LogicalCondExpr_c const LogicalCondExpr;
 LogicalExpr_c const LogicalExpr;
 LogicalUnOp_c const LogicalUnOp;
 LogicalUnOpExpr_c const LogicalUnOpExpr;
@@ -371,6 +426,7 @@ LogicalUnOpTerm_c const Not{LogicalUnOpTerm_c::NOT};
 
 NumericBinOp_c const NumericBinOp;
 NumericBinOpExpr_c const NumericBinOpExpr;
+NumericCondExpr_c const NumericCondExpr;
 NumericExpr_c const NumericExpr;
 NumericUnOp_c const NumericUnOp;
 NumericUnOpExpr_c const NumericUnOpExpr;
@@ -387,6 +443,7 @@ inline constexpr LogicalBinOp_c const &abstract_type_of (LogicalBinOpTerm_c cons
 inline constexpr LogicalUnOp_c const &abstract_type_of (LogicalUnOpTerm_c const &) { return LogicalUnOp; }
 inline constexpr sept::NonParametricType_c const &abstract_type_of (LogicalBinOp_c const &) { return sept::NonParametricType; }
 inline constexpr sept::NonParametricType_c const &abstract_type_of (LogicalBinOpExpr_c const &) { return sept::NonParametricType; }
+inline constexpr sept::NonParametricType_c const &abstract_type_of (LogicalCondExpr_c const &) { return sept::NonParametricType; }
 inline constexpr sept::NonParametricType_c const &abstract_type_of (LogicalExpr_c const &) { return sept::NonParametricType; }
 inline constexpr sept::NonParametricType_c const &abstract_type_of (LogicalUnOp_c const &) { return sept::NonParametricType; }
 inline constexpr sept::NonParametricType_c const &abstract_type_of (LogicalUnOpExpr_c const &) { return sept::NonParametricType; }
@@ -395,6 +452,7 @@ inline constexpr NumericBinOp_c const &abstract_type_of (NumericBinOpTerm_c cons
 inline constexpr NumericUnOp_c const &abstract_type_of (NumericUnOpTerm_c const &) { return NumericUnOp; }
 inline constexpr sept::NonParametricType_c const &abstract_type_of (NumericBinOp_c const &) { return sept::NonParametricType; }
 inline constexpr sept::NonParametricType_c const &abstract_type_of (NumericBinOpExpr_c const &) { return sept::NonParametricType; }
+inline constexpr sept::NonParametricType_c const &abstract_type_of (NumericCondExpr_c const &) { return sept::NonParametricType; }
 inline constexpr sept::NonParametricType_c const &abstract_type_of (NumericExpr_c const &) { return sept::NonParametricType; }
 inline constexpr sept::NonParametricType_c const &abstract_type_of (NumericUnOp_c const &) { return sept::NonParametricType; }
 inline constexpr sept::NonParametricType_c const &abstract_type_of (NumericUnOpExpr_c const &) { return sept::NonParametricType; }
@@ -429,6 +487,13 @@ bool inhabits (sept::ArrayTerm_c const &value, LogicalBinOpExpr_c const &type) {
         && inhabits_data(value[2], LogicalExpr);
 }
 
+bool inhabits (sept::ArrayTerm_c const &value, LogicalCondExpr_c const &type) {
+    return value.size() == 3
+        && inhabits_data(value[0], LogicalExpr)
+        && inhabits_data(value[1], LogicalExpr)
+        && inhabits_data(value[2], LogicalExpr);
+}
+
 bool inhabits (sept::ArrayTerm_c const &value, LogicalUnOpExpr_c const &type) {
     return value.size() == 2
         && inhabits_data(value[0], LogicalUnOp)
@@ -438,6 +503,7 @@ bool inhabits (sept::ArrayTerm_c const &value, LogicalUnOpExpr_c const &type) {
 bool inhabits (sept::ArrayTerm_c const &value, LogicalExpr_c const &type) {
     return inhabits_data(value, sept::Bool)
         || inhabits_data(value, LogicalBinOpExpr)
+        || inhabits_data(value, LogicalCondExpr)
 //         || inhabits_data(value, LogicalParenExpr)
         || inhabits_data(value, LogicalUnOpExpr);
 }
@@ -455,9 +521,17 @@ bool inhabits (sept::ArrayTerm_c const &value, NumericUnOpExpr_c const &type) {
         && inhabits_data(value[1], NumericExpr);
 }
 
+bool inhabits (sept::ArrayTerm_c const &value, NumericCondExpr_c const &type) {
+    return value.size() == 3
+        && inhabits_data(value[0], LogicalExpr)
+        && inhabits_data(value[1], NumericExpr)
+        && inhabits_data(value[2], NumericExpr);
+}
+
 bool inhabits (sept::ArrayTerm_c const &value, NumericExpr_c const &type) {
     return inhabits_data(value, sept::Float64)
         || inhabits_data(value, NumericBinOpExpr)
+        || inhabits_data(value, NumericCondExpr)
 //         || inhabits_data(value, NumericParenExpr)
         || inhabits_data(value, NumericUnOpExpr);
 }
@@ -469,6 +543,7 @@ namespace sept {
 SEPT__REGISTER__PRINT(LogicalBinOp_c)
 SEPT__REGISTER__PRINT(LogicalBinOpExpr_c)
 SEPT__REGISTER__PRINT(LogicalBinOpTerm_c)
+SEPT__REGISTER__PRINT(LogicalCondExpr_c)
 SEPT__REGISTER__PRINT(LogicalExpr_c)
 SEPT__REGISTER__PRINT(LogicalUnOp_c)
 SEPT__REGISTER__PRINT(LogicalUnOpExpr_c)
@@ -476,6 +551,7 @@ SEPT__REGISTER__PRINT(LogicalUnOpTerm_c)
 SEPT__REGISTER__PRINT(NumericBinOp_c)
 SEPT__REGISTER__PRINT(NumericBinOpExpr_c)
 SEPT__REGISTER__PRINT(NumericBinOpTerm_c)
+SEPT__REGISTER__PRINT(NumericCondExpr_c)
 SEPT__REGISTER__PRINT(NumericExpr_c)
 SEPT__REGISTER__PRINT(NumericUnOp_c)
 SEPT__REGISTER__PRINT(NumericUnOpExpr_c)
@@ -484,6 +560,7 @@ SEPT__REGISTER__PRINT(NumericUnOpTerm_c)
 SEPT__REGISTER__EQ(LogicalBinOp_c)
 SEPT__REGISTER__EQ(LogicalBinOpExpr_c)
 SEPT__REGISTER__EQ(LogicalBinOpTerm_c)
+SEPT__REGISTER__EQ(LogicalCondExpr_c)
 SEPT__REGISTER__EQ(LogicalExpr_c)
 SEPT__REGISTER__EQ(LogicalUnOp_c)
 SEPT__REGISTER__EQ(LogicalUnOpExpr_c)
@@ -491,6 +568,7 @@ SEPT__REGISTER__EQ(LogicalUnOpTerm_c)
 SEPT__REGISTER__EQ(NumericBinOp_c)
 SEPT__REGISTER__EQ(NumericBinOpExpr_c)
 SEPT__REGISTER__EQ(NumericBinOpTerm_c)
+SEPT__REGISTER__EQ(NumericCondExpr_c)
 SEPT__REGISTER__EQ(NumericExpr_c)
 SEPT__REGISTER__EQ(NumericUnOp_c)
 SEPT__REGISTER__EQ(NumericUnOpExpr_c)
@@ -499,6 +577,7 @@ SEPT__REGISTER__EQ(NumericUnOpTerm_c)
 SEPT__REGISTER__ABSTRACT_TYPE_OF(LogicalBinOp_c)
 SEPT__REGISTER__ABSTRACT_TYPE_OF(LogicalBinOpExpr_c)
 SEPT__REGISTER__ABSTRACT_TYPE_OF(LogicalBinOpTerm_c)
+SEPT__REGISTER__ABSTRACT_TYPE_OF(LogicalCondExpr_c)
 SEPT__REGISTER__ABSTRACT_TYPE_OF(LogicalExpr_c)
 SEPT__REGISTER__ABSTRACT_TYPE_OF(LogicalUnOp_c)
 SEPT__REGISTER__ABSTRACT_TYPE_OF(LogicalUnOpExpr_c)
@@ -506,6 +585,7 @@ SEPT__REGISTER__ABSTRACT_TYPE_OF(LogicalUnOpTerm_c)
 SEPT__REGISTER__ABSTRACT_TYPE_OF(NumericBinOp_c)
 SEPT__REGISTER__ABSTRACT_TYPE_OF(NumericBinOpExpr_c)
 SEPT__REGISTER__ABSTRACT_TYPE_OF(NumericBinOpTerm_c)
+SEPT__REGISTER__ABSTRACT_TYPE_OF(NumericCondExpr_c)
 SEPT__REGISTER__ABSTRACT_TYPE_OF(NumericExpr_c)
 SEPT__REGISTER__ABSTRACT_TYPE_OF(NumericUnOp_c)
 SEPT__REGISTER__ABSTRACT_TYPE_OF(NumericUnOpExpr_c)
@@ -514,6 +594,7 @@ SEPT__REGISTER__ABSTRACT_TYPE_OF(NumericUnOpTerm_c)
 SEPT__REGISTER__INHABITS(LogicalBinOp_c, NonParametricType_c)
 SEPT__REGISTER__INHABITS(LogicalBinOpExpr_c, NonParametricType_c)
 SEPT__REGISTER__INHABITS(LogicalBinOpTerm_c, LogicalBinOp_c)
+SEPT__REGISTER__INHABITS__EVALUATOR_BODY(ArrayTerm_c, LogicalCondExpr_c, return inhabits(value, type);)
 SEPT__REGISTER__INHABITS(LogicalExpr_c, NonParametricType_c)
 // TODO: Could just use `sept::Tuple_c const LogicalBinOpExpr = sept::Tuple(LogicalExpr, LogicalBinOp, LogicalExpr);`
 SEPT__REGISTER__INHABITS__EVALUATOR_BODY(ArrayTerm_c, LogicalBinOpExpr_c, return inhabits(value, type);)
@@ -531,6 +612,7 @@ SEPT__REGISTER__INHABITS(LogicalUnOpTerm_c, LogicalUnOp_c)
 SEPT__REGISTER__INHABITS(NumericBinOp_c, NonParametricType_c)
 SEPT__REGISTER__INHABITS(NumericBinOpExpr_c, NonParametricType_c)
 SEPT__REGISTER__INHABITS(NumericBinOpTerm_c, NumericBinOp_c)
+SEPT__REGISTER__INHABITS__EVALUATOR_BODY(ArrayTerm_c, NumericCondExpr_c, return inhabits(value, type);)
 SEPT__REGISTER__INHABITS(NumericExpr_c, NonParametricType_c)
 // TODO: Could just use `sept::Tuple_c const NumericBinOpExpr = sept::Tuple(NumericExpr, NumericBinOp, NumericExpr);`
 SEPT__REGISTER__INHABITS__EVALUATOR_BODY(ArrayTerm_c, NumericBinOpExpr_c, return inhabits(value, type);)
@@ -546,6 +628,7 @@ SEPT__REGISTER__INHABITS(NumericUnOpTerm_c, NumericUnOp_c)
 SEPT__REGISTER__COMPARE__SINGLETON(LogicalBinOp_c)
 SEPT__REGISTER__COMPARE__SINGLETON(LogicalBinOpExpr_c)
 SEPT__REGISTER__COMPARE(LogicalBinOpTerm_c, LogicalBinOpTerm_c)
+SEPT__REGISTER__COMPARE__SINGLETON(LogicalCondExpr_c)
 SEPT__REGISTER__COMPARE__SINGLETON(LogicalExpr_c)
 SEPT__REGISTER__COMPARE__SINGLETON(LogicalUnOp_c)
 SEPT__REGISTER__COMPARE__SINGLETON(LogicalUnOpExpr_c)
@@ -553,6 +636,7 @@ SEPT__REGISTER__COMPARE(LogicalUnOpTerm_c, LogicalUnOpTerm_c)
 SEPT__REGISTER__COMPARE__SINGLETON(NumericBinOp_c)
 SEPT__REGISTER__COMPARE__SINGLETON(NumericBinOpExpr_c)
 SEPT__REGISTER__COMPARE(NumericBinOpTerm_c, NumericBinOpTerm_c)
+SEPT__REGISTER__COMPARE__SINGLETON(NumericCondExpr_c)
 SEPT__REGISTER__COMPARE__SINGLETON(NumericExpr_c)
 SEPT__REGISTER__COMPARE__SINGLETON(NumericUnOp_c)
 SEPT__REGISTER__COMPARE__SINGLETON(NumericUnOpExpr_c)
@@ -614,6 +698,16 @@ bool evaluate_expr__as_LogicalBinOpExpr (sept::ArrayTerm_c const &a) {
     }
 }
 
+bool evaluate_expr__as_LogicalCondExpr (sept::ArrayTerm_c const &a) {
+    assert(inhabits(a, LogicalCondExpr));
+
+    // This is a bit silly
+    bool condition = evaluate_expr_data(a[0]) == sept::True || evaluate_expr_data(a[0]) == sept::Data{true};
+    auto evaluation = evaluate_expr_data(a[condition ? 1 : 2]);
+    // This is silly.
+    return evaluation == sept::True || evaluation == sept::Data{true};
+}
+
 bool evaluate_expr__as_LogicalUnOpExpr (sept::ArrayTerm_c const &a) {
     assert(inhabits(a, LogicalUnOpExpr));
 
@@ -641,6 +735,14 @@ double evaluate_expr__as_NumericBinOpExpr (sept::ArrayTerm_c const &a) {
     }
 }
 
+double evaluate_expr__as_NumericCondExpr (sept::ArrayTerm_c const &a) {
+    assert(inhabits(a, NumericCondExpr));
+
+    // This is a bit silly
+    bool condition = evaluate_expr_data(a[0]) == sept::True || evaluate_expr_data(a[0]) == sept::Data{true};
+    return evaluate_expr_data(a[condition ? 1 : 2]).cast<double const &>();
+}
+
 double evaluate_expr__as_NumericUnOpExpr (sept::ArrayTerm_c const &a) {
     assert(inhabits(a, NumericUnOpExpr));
 
@@ -661,6 +763,8 @@ bool evaluate_expr__as_LogicalExpr (sept::ArrayTerm_c const &a) {
     // This is a bit silly, but hey.
     if (inhabits(a, LogicalBinOpExpr))
         return evaluate_expr__as_LogicalBinOpExpr(a);
+    else if (inhabits(a, LogicalCondExpr))
+        return evaluate_expr__as_LogicalCondExpr(a);
     else if (inhabits(a, LogicalUnOpExpr))
         return evaluate_expr__as_LogicalUnOpExpr(a);
     else
@@ -671,6 +775,8 @@ double evaluate_expr__as_NumericExpr (sept::ArrayTerm_c const &a) {
     // This is a bit silly, but hey.
     if (inhabits(a, NumericBinOpExpr))
         return evaluate_expr__as_NumericBinOpExpr(a);
+    else if (inhabits(a, NumericCondExpr))
+        return evaluate_expr__as_NumericCondExpr(a);
     else if (inhabits(a, NumericUnOpExpr))
         return evaluate_expr__as_NumericUnOpExpr(a);
     else
@@ -683,10 +789,14 @@ sept::Data evaluate_expr (sept::ArrayTerm_c const &a) {
     // This is a bit silly, but hey.
     if (inhabits(a, LogicalBinOpExpr))
         return evaluate_expr__as_LogicalBinOpExpr(a);
+    else if (inhabits(a, LogicalCondExpr))
+        return evaluate_expr__as_LogicalCondExpr(a);
     else if (inhabits(a, LogicalUnOpExpr))
         return evaluate_expr__as_LogicalUnOpExpr(a);
     else if (inhabits(a, NumericBinOpExpr))
         return evaluate_expr__as_NumericBinOpExpr(a);
+    else if (inhabits(a, NumericCondExpr))
+        return evaluate_expr__as_NumericCondExpr(a);
     else if (inhabits(a, NumericUnOpExpr))
         return evaluate_expr__as_NumericUnOpExpr(a);
     else
@@ -906,6 +1016,33 @@ int main (int argc, char **argv) {
         << '\n'
         << LVD_REFLECT(evaluate_expr_data(NumericUnOpExpr(Neg, 5.5))) << '\n'
         << LVD_REFLECT(evaluate_expr_data(NumericUnOpExpr(Neg, 10.25))) << '\n'
+        << '\n';
+    std::cout
+        << LVD_REFLECT(LogicalCondExpr(true, true, false)) << '\n'
+        << LVD_REFLECT(LogicalCondExpr(true, true, sept::False)) << '\n'
+        << LVD_REFLECT(LogicalCondExpr(true, sept::True, sept::False)) << '\n'
+        << LVD_REFLECT(LogicalCondExpr(true, sept::True, false)) << '\n'
+        << LVD_REFLECT(LogicalCondExpr(LogicalBinOpExpr(sept::True, Xor, sept::False), true, false)) << '\n'
+        << '\n';
+    std::cout
+        << LVD_REFLECT(evaluate_expr(LogicalCondExpr(true, true, false))) << '\n'
+        << LVD_REFLECT(evaluate_expr(LogicalCondExpr(true, true, sept::False))) << '\n'
+        << LVD_REFLECT(evaluate_expr(LogicalCondExpr(true, sept::True, sept::False))) << '\n'
+        << LVD_REFLECT(evaluate_expr(LogicalCondExpr(true, sept::True, false))) << '\n'
+        << LVD_REFLECT(evaluate_expr(LogicalCondExpr(false, true, false))) << '\n'
+        << LVD_REFLECT(evaluate_expr(LogicalCondExpr(false, true, sept::False))) << '\n'
+        << LVD_REFLECT(evaluate_expr(LogicalCondExpr(false, sept::True, sept::False))) << '\n'
+        << LVD_REFLECT(evaluate_expr(LogicalCondExpr(false, sept::True, false))) << '\n'
+        << LVD_REFLECT(evaluate_expr(LogicalCondExpr(LogicalBinOpExpr(sept::True, Xor, sept::False), true, false))) << '\n'
+        << '\n';
+    std::cout
+        << LVD_REFLECT(NumericCondExpr(true, 5.5, 10.25)) << '\n'
+        << LVD_REFLECT(NumericCondExpr(LogicalBinOpExpr(sept::True, Xor, sept::False), 5.5, 10.25)) << '\n'
+        << '\n';
+    std::cout
+        << LVD_REFLECT(evaluate_expr(NumericCondExpr(true, 5.5, 10.25))) << '\n'
+        << LVD_REFLECT(evaluate_expr(NumericCondExpr(false, 5.5, 10.25))) << '\n'
+        << LVD_REFLECT(evaluate_expr(NumericCondExpr(LogicalBinOpExpr(sept::True, Xor, sept::False), 5.5, 10.25))) << '\n'
         << '\n';
 
     return 0;
