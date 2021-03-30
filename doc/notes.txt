@@ -4911,6 +4911,9 @@ Structured Expression Project Toolkit Design Document
             -   Additional constraints should be specifiable outside of the expression syntax, perhaps
                 denoted with a `where` clause.  Though that's only a syntax thing, the abstract concept
                 isn't bound by the syntax.
+        -   POC: Basic strong documentation -- to make this have significant value, some sort of reference
+            mechanism is needed, e.g. symbolic references into a symbol table, some pointer-like references
+            into local memory, or URI references (which would also need a table to function efficiently).
         -   Make a struct metatype?
             -   This would be a tuple whose elements are named
             -   Would this require defining a tuple type first?  Since right now there's
@@ -4935,3 +4938,207 @@ Structured Expression Project Toolkit Design Document
 -   Now that Tuple is implemented, there's clearly a specific need for concrete type vs abstract type.
     In particular, concrete_type_of(Tuple(...)) should be Tuple, and abstract_type_of(Tuple(x,y,z))
     should be Tuple(abstract_type_of(x), abstract_type_of(y), abstract_type_of(z)).
+-   Is Tuple actually necessary?  Could Array function in place of Tuple?  If the concrete/abstract
+    (or rather concrete/semantic) type distinction is made, then Array is basically exactly Tuple.
+    In particular:
+    -   Array(Uint32(123), Float64(89.0123), True) has:
+        -   Concrete type `Array` (this is currently how Array(...)'s abstract type is defined)
+        -   Abstract (semantic) type Array(Uint32, Float64, TrueType) (this is how tuple_type_of is defined)
+-   Some notes on various kinds of types:
+    -   The concrete type of a term defines the representation of that term.  This comes in two parts:
+        -   The "format" of the concrete type, which defines how it's represented as a bit sequence
+            (independent of the particular architecture or byte/word size), e.g:
+            -   IEEE754 double precision floating point number
+            -   32-bit integer in two's complement
+            -   Fixed point number with M whole bits and N fractional bits
+            -   Length-encoded integer (e.g. https://en.wikipedia.org/wiki/LEB128)
+            -   boolean value, being precisely 1 bit
+        -   The mapping/layout of the format bit sequence into storage (which usually means how it
+            maps into a sequence of bytes based on CPU architecture, but should be dealt with at the level
+            of bit sequence, since this should include the ability to render into a size-minimized serialized
+            form) which consists of:
+            -   Overall size of the necessary storage (including any necessary padding), including whether
+                the size is parametric (e.g. length-encoded values)
+            -   Alignment requirement on the storage
+            -   Endianness of the storage
+            This does not include compression, which should be considered a transformation of data, since
+            it isn't a direct mapping of bits.
+
+            As an example, a C-style union lives at the "memory layout" level of abstraction; the memory
+            layout is held constant and the format is varied, i.e. interpreting the memory using different
+            formats.
+
+        A given format doesn't have a defined storage layout until other choices are made, in particular
+        including but not limited to:
+        -   CPU architecture, which determines byte size, word size, alignment requirements, endianness, etc.
+        -   Serialized form
+            -   Size-minimizing (i.e.. bit packing; length-encoded values).
+            -   Some sort of network order serialization.
+            -   In a form in which the data structures can be accessed efficiently in-situ.
+            -   In a form that can be read directly into memory in one operation.
+            -   In a compact form that makes reading easy and fast, but writing difficult or impossible.
+                E.g. an ordered map being rendered as a sequence of (key,value) pairs ordered by
+                key, instead of as a binary tree or red-black tree.
+
+    -   The abstract type / semantic subtype -- information about what the value actually means, e.g.
+        dimensional units for numeric quantities, categorizations (e.g. of strings; email address,
+        legal name, phone number, etc), conditions (e.g. positive, negative, "open file", uninitialized,
+        etc).
+
+        Some semantic subtypes imply a particular concrete type or family of concrete types (e.g.
+        "positive" applies only to types for which "positive" is a well-defined concept, e.g. numeric
+        values).  Some semantic types are independent of concrete type, such as "undefined" (i.e. no
+        known value assigned [yet]), "uninitialized" (similar to "undefined"), "unvalidated" (e.g. input
+        that must be validated before use), "untrusted" (e.g. a value that is from a potentially malicious
+        source), "trusted", "private" (e.g. a value that shouldn't be logged, or must be encrypted at
+        rest), or "public".  Also useful could be "unused", which could be used to indicate padding
+        within a storage layout.
+
+        These names (e.g. "positive", "unvalidated", etc) should be called "semantic classes", because by
+        themselves they don't define a type.
+
+        Semantic subtypes basically have set theoretic properties because they define subsets of values.
+        Thus it's natural to consider intersections and unions of semantic subtypes.
+
+        How does this concept relate to, for example, C++ classes?  A C++ class defines a struct (and
+        therefore a format and layout) and an associated collection of functions of a particular form,
+        potentially where one of the struct members is the virtual method table.  This is a particular
+        type construction that is more-specific than the discussed concrete/abstract types.
+
+    -   Summarizing, a type has components (ConcreteType, SemanticClass), where ConcreteType is
+        (DataFormat, StorageLayout).
+        -   Concrete type : Defines the kind of quantity, but not necessarily anything about its semantics.
+            -   Data format : Defines the bit representation of the data (e.g. double-precision float, 13-bit
+                unsigned int in two's complement), independent of any CPU architecture or other storage medium.
+            -   Storage layout : Defines how the bit representation is mapped into storage, accounting
+                for endianness, byte size, alignment, etc.
+        -   Semantic class : Defines the semantics for the type that go beyond the raw data value itself,
+            e.g. "kilograms", "positive", "nonnull", "unvalidated", etc.
+
+    -   How does this manifest e.g. in a programming language, or in a serialization format?
+
+        In a programming language, typically there is some notion of a target architecture, which
+        defines byte size, word size, alignment requirements, etc, and therefore given a data format,
+        the storage layout is partially or fully determined.
+
+        In a serialization format, the storage layout is arbitrary, and must be specified based on
+        usage requirements.  Some example requirements:
+        -   Endianness convention (e.g. "network order" is big endian by convention)
+        -   Storage-size vs access-speed optimization.  For example, certain data structures can
+            be represented using layouts that admit of efficient queries/access, which typically
+            trade off size for speed.  Conversely, data that is to be streamed linearly, and not
+            randomly accessed, could be represented in a small but "slow" format.
+        -   Packed values vs aligned values (e.g. if bytes are the unit of serialization, then
+            boolean values might be aligned at byte boundaries to limit complexity of serialization)
+
+    -   A big question is about how to formalize this type system.  Is there set theoretic, algebraic,
+        or category-theoretic structure that can be exploited?
+
+        For semantic classes, there is at least set-theoretic structure:
+        -   A semantic class defines a subset of values (out of the universe of possible values; this
+            carries an implicit definition of which values the semantic class is valid for), and therefore
+            semantic classes have a natural poset structure (derived from the poset structure on the
+            subsets of values).  If A and B are semantic classes, then
+            -   Let `ValuesOf(A)` denote the subset of values satisfying A.
+            -   Let `A < B` denote `ValuesOf(A) \subset ValuesOf(B)` (strict subset).
+            -   Let `A <= B` denote `ValuesOf(A) \subseteq ValuesOf(B)` (non-strict subset)
+            -   Let `A == B` denote `ValuesOf(A) == ValuesOf(B)` (sets have the same members)
+            -   Let `A ~/~ B` denote `not(A <= B) and not(B <= A)`.
+        -   There are natural semantic classes "empty" and "any" corresponding to the empty set and
+            the set of all values (which may or may not be a well-defined concept).
+        -   Given semantic classes A, B, A1, A2, ..., An, the following semantic classes can be constructed:
+            -   Not(A) -- The complement of A.
+            -   I := And(A1, ..., An) -- The intersection of A1, ..., An (the value must satisfy all of the
+                listed semantic classes.  In particular, I <= Ai for all i \in {1, ..., n}.
+            -   U := Or(A1, ..., An) -- The union of A1, ..., An (the value must satisfy at least one of
+                the listed semantic classes.  In particular, Ai <= U for all i \in {1, ..., n}.
+            -   S := Sum(A1, ..., An) -- The "tagged union" of A1, ..., An, where a value of type S
+                satisfies Ai for some well-defined i \in {1, ..., n}.  E.g. Rust enums
+
+            Function types are related, but aren't really data types, because they come with a lot more
+            baggage.  They have their own analogs of concrete type, such as calling convention.
+            -   A -> B -- The function type with domain A and codomain B.  A function is a set of
+                (domain_element, codomain_element) mapping pairs.  Note that if A != empty, then
+                    C <= B      if and only if     (A -> C) <= (A -> B)
+                and similarly,
+                    C < B       if and only if     (A -> C) < (A -> B)
+
+                However if A == empty, then (A -> C) == empty and (A -> B) == empty, which are equal.
+
+            -   (x:A) -> B(x) -- Dependent function type (this is different notation than standard)
+
+            TODO: Refer to a more-complete type system:
+            https://en.wikipedia.org/wiki/Type_system#Specialized_type_systems
+
+        For data formats, because they're dealing with [particular representations of] the data values
+        themselves, the relevant structure will be data-specific.  For example, there are canonical
+        identifications, embeddings, and projections between various numeric types.
+
+            1-bit boolean           is identical with   1-bit unsigned int
+            1-bit boolean           embeds into         N-bit TC int            *TC = two's complement
+            M-bit unsigned int      embeds into         N-bit unsigned int      if M < N
+            M-bit unsigned int      projects to         N-bit unsigned int      if M > N
+            X-precision float       embeds into         Y-precision float       if X < Y
+            X-precision float       projects to         Y-precision float       if X > Y
+
+        For canonical identifications, embeddings, and projections, it would be sensible to require
+        that they form commutative diagrams over the space of data formats.  This suggests that there's
+        probably a functor at work here.
+
+2021.03.29
+
+-   More notes on concrete type vs semantic [sub]type.
+
+    There's a subtle distinction to be made in semantic types.  A semantic type can be "abstract" in
+    the sense that it underdetermines the concrete type of a value (e.g. "positive" can apply to any integer
+    or floating point number, or arbitrary precision number).  A semantic type that determines the
+    concrete type of a value might be called a "concrete semantic type", at the risk of overloading the
+    word "concrete".  Although I had been using the term "semantic class" to refer to the abstract,
+    underdetermining ones (e.g. "positive").  "Concrete" would be fair here because it determines the
+    concrete type of a term of that semantic type.  And it could also be fair to use "abstract" here
+    (in the sense of C++) because an abstract semantic type only carries semantic meaning, but no
+    concretization.  Though an abstract semantic type plays a different role than an interface.
+
+    Another important case is nominal subtyping, where a "sigil" N is applied to an existing type T, and
+    this establishes a new type N(T) which has the same concrete type, but is distinct from the existing
+    type T.  In this case, N(T) is a concrete semantic type (assuming that T is a concrete type).
+    `N(T)` itself is vague syntax, and should be written as `NominalSubtype(N,T)` or some such.
+    Perhaps there could also be `StructuralSubtype(N,T)` which would be considered to be semantically
+    equivalent to T.
+
+    "Concrete type" is what goes into the machine code (e.g. via producing and compiling LLVM IR) or
+    data storage.  "Semantic type" is the meaning of that code/data.
+
+    Specific examples of concrete types
+    -   Float32(1.0101) has type:
+        -   ConcreteType := Float32
+            -   DataFormat := IEEE743 single precision
+            -   StorageLayout := context-dependent (on CPU arch, serialization format, etc)
+    -   True has type
+        -   ConcreteType := TrueType            -- maybe this should be Bool and SemanticClass should be TrueType
+            -   DataFormat := 1bit unsigned int
+            -   StorageLayout := context-dependent (on CPU arch, serialization format, etc)
+    -   Bool(b) has type
+        -   ConcreteType := Bool
+            -   DataFormat := 1bit unsigned int
+            -   StorageLayout := context-dependent (on CPU arch, serialization format, etc)
+    -   Array(Uint32(123), Float64(56.78), True)
+        -   ConcreteType := Array := struct { size : Uint64, elements : Data[size] }
+            -   DataFormat := <data format for struct/tuple>
+            -   StorageLayout := context-dependent (on CPU arch, serialization format, etc), e.g.
+                -   0x00 - 0x08 : size; little-endian
+                -   0x08 - 0x10 : padding to achieve alignment
+                -   0x10 - 0x10+size*sizeof(Data) : elements; define StorageLayout recursively
+    -   Tuple(Uint32(123), Float64(56.78), True)
+        -   ConcreteType := Tuple(Uint32, Float64, TrueType) -- maybe this has to be primitive?
+            -   DataFormat := <data format for tuple>
+            -   StorageLayout := context-dependent
+    -   Struct(attr1 : Type1, attr2 : Type2)(attr1 := value1, attr2 := value2)
+        -   ConcreteType := Struct(attr1 : Type1, attr2 : Type2)
+            -   DataFormat := <data formal for struct>
+            -   StorageLayout := context-dependent
+
+    All of these concrete types have a semantic class of "Any".
+
+    Add a SemanticTerm type:
+    -   SemanticTerm(value, semantic_class) -- value can by any term.

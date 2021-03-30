@@ -46,8 +46,15 @@ AST design notes
     The latter definition, for CondExpr, is not possible (yet) declaratively, but it is possible
     by a definition of `inhabits`.
 -   Other stuff that could be useful
+    -   BinOp := Union(LogicalBinOp, NumericBinOp)
     -   LogicalThing := Union(LogicalBinOp, LogicalBinOpExpr, LogicalCondExpr, LogicalExpr, LogicalParenExpr, LogicalUnOp, LogicalUnOpExpr)
     -   NumericThing := Union(NumericBinOp, NumericBinOpExpr, NumericCondExpr, NumericExpr, NumericParenExpr, NumericUnOp, NumericUnOpExpr)
+-   Idea for improvement: Just make a single enum for BinOpTerm_c and a single enum for UnOpTerm_c,
+    containing all classes of BinOps and UnOps respectively, and then define semantic classes
+    that select out subsets of those binops.  Since there's no reason to have distinct concrete
+    types for these things.  In fact, because the ops are just non-parametric terms, there could
+    potentially be a single enum for all ops, and semantic classes are used to select different
+    semantic subtypes.
 
 #endif
 
