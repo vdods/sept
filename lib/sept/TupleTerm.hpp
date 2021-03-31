@@ -67,12 +67,12 @@ public:
     }
 };
 
-// This is used to construct TupleTerm_c more efficiently (std::initializer_list lacks move semantics for some dumb
-// reason), as well as to avoid a potential infinite loop in constructors between TupleTerm_c, Data, and std::any.
-template <typename... Args_>
-TupleTerm_c make_tuple (Args_&&... args) {
-    return TupleTerm_c(std::forward<Args_>(args)...);
-}
+// // This is used to construct TupleTerm_c more efficiently (std::initializer_list lacks move semantics for some dumb
+// // reason), as well as to avoid a potential infinite loop in constructors between TupleTerm_c, Data, and std::any.
+// template <typename... Args_>
+// TupleTerm_c make_tuple (Args_&&... args) {
+//     return TupleTerm_c(std::forward<Args_>(args)...);
+// }
 
 // TODO: This should be abstract_type_of, and concrete_type_of should be what returns Tuple.
 inline TupleTerm_c _tuple_type_of (TupleTerm_c const &t) {

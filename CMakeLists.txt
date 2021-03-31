@@ -98,6 +98,8 @@ set(libsept_HEADERS
     lib/sept/TupleTerm.hpp
     lib/sept/type/Conversion.hpp
     lib/sept/type/Conversions.hpp
+    lib/sept/Union.hpp
+    lib/sept/UnionTerm.hpp
 )
 set(libsept_SOURCES
     lib/sept/ArrayTerm.cpp
@@ -123,6 +125,8 @@ set(libsept_SOURCES
     lib/sept/TupleTerm.cpp
     lib/sept/type/Conversion.cpp
     lib/sept/type/Conversions.cpp
+    lib/sept/Union.cpp
+    lib/sept/UnionTerm.cpp
 )
 add_library(libsept ${libsept_HEADERS} ${libsept_SOURCES})
 # This is to prevent cmake from prepending `lib` to `libsept`.
@@ -164,6 +168,7 @@ if(BUILD_testlibsept)
         bin/test-libsept/test_Tuple.cpp
         bin/test-libsept/test_type_Conversion.cpp
         bin/test-libsept/test_type_Conversions.cpp
+        bin/test-libsept/test_Union.cpp
     )
     add_executable(test-libsept ${testlibsept_SOURCES})
     target_include_directories(test-libsept PUBLIC ${sept_SOURCE_DIR}/bin/test-libsept)

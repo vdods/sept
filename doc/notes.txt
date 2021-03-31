@@ -4909,9 +4909,23 @@ Structured Expression Project Toolkit Design Document
                 Here, $X and $Y represent free variables.
             -   `Tuple($X, Add, $X)` similar, except that the first and last elements must be equal.
             -   Ideally something like `$T($X, $Y, 1)` could be possible, where $T is perhaps constrained.
+                This requires having a type whose inhabitants represent the `construct inhabitant of`
+                expression itself.  Though if those constructors do any kind of nontrivial processing,
+                then it may not be possible to do this kind of matching in a tractable way.
             -   Additional constraints should be specifiable outside of the expression syntax, perhaps
                 denoted with a `where` clause.  Though that's only a syntax thing, the abstract concept
-                isn't bound by the syntax.
+                isn't bound by the syntax.  A potentially useful precedent is statistics' syntax for
+                https://en.wikipedia.org/wiki/Conditional_probability
+
+                    (x:X, y:Y, z:Z; where <expression in x,y,z>) -> (w:W; where <expression in w,x,y,z>)
+
+                could denote, for example, a function whose domain type involves a non-separable condition
+                on x,y,z, and whose codomain involves a non-separable condition on w,x,y,z.  The `;` here
+                stands in for `|` in the statistical syntax, since `|` usually means something different
+                in programming languages, and `;` would be an unsurprising choice as a separator.
+            -   Would need some way to define patterns on unbounded sequences, such as `Array(...)`.  An
+                example would be `Array($X, ..., $X)` which should match an Array having uniform elements.
+                Though this particular syntax is probably too vague.
         -   POC: Basic strong documentation -- to make this have significant value, some sort of reference
             mechanism is needed, e.g. symbolic references into a symbol table, some pointer-like references
             into local memory, or URI references (which would also need a table to function efficiently).
@@ -5143,3 +5157,36 @@ Structured Expression Project Toolkit Design Document
 
     Add a SemanticTerm type:
     -   SemanticTerm(value, semantic_class) -- value can by any term.
+
+2021.03.30
+
+-   Notes on Union types
+    -   BinOp = Union(LogicalBinOp, NumericBinOp)
+    -   Expr = Union(BinOpExpr, CondExpr, ParenExpr, UnOpExpr)
+    -   Logical = Union(LogicalExpr, LogicalOp)
+    -   LogicalExpr = Union(bool, FalseType, LogicalExpr, TrueType)
+    -   LogicalOp = Union(LogicalBinOp, LogicalUnOp)
+    -   Numeric = Union(NumericExpr, NumericOp)
+    -   NumericExpr = Union(bool, FalseType, NumericExpr, TrueType)
+    -   NumericOp = Union(NumericBinOp, NumericUnOp)
+    NOTE: Could potentially implement LogicalXyz as Intersection(Logical,Xyz), though those types
+    would need to be defined in a more fundamental way so there's no cyclic definition.
+
+    Question: How to maintain the C++-typed versions of inhabits(x, T) for when T is a Union?
+    Certainly the inhabits_data(x, T) case can be taken care of.
+
+    Two approaches: Define a templatized UnionTerm_t<T1,...,Tn> which has an inhabits function
+    which accepts a templatized x parameter and checks that against each of the Ti elements.
+
+    Maybe it's not worth having as C++ types, since the inhabits_data lookup is going to be
+    decently fast.
+
+    Regarding implementation of Union -- maybe it should take a Tuple(...) or Array(...) as its
+    argument.  This might ease certain expressions and constructions and would reduce code
+    duplication, though it would be extra syntax.
+
+    UnionTerm_c would be the DataVector-carrying implementation.  There could possibly also be
+    UnionTerm_t<T1,...,Tn> which would allow some tighter control on types.  This pattern could
+    be also used for arrays, tuples, maps, etc (though really it should just use C++ STL types
+    for those).
+

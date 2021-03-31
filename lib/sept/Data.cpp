@@ -18,6 +18,8 @@
 #include "sept/OrderedMapTerm.hpp"
 #include "sept/OrderedMapType.hpp"
 #include "sept/Placeholder.hpp"
+#include "sept/Tuple.hpp"
+#include "sept/Union.hpp"
 #include <sstream> // Needed by LVD_FMT
 
 namespace sept {
@@ -165,6 +167,9 @@ Data deserialize_NonParametricTerm (std::istream &in) {
         case NPTerm::FLOAT32_TYPE: return Float32Type;
         case NPTerm::FLOAT64_TYPE: return Float64Type;
 
+        case NPTerm::UNION_TYPE: return UnionType;
+        case NPTerm::UNION: return Union;
+
         case NPTerm::ARRAY_TYPE: return ArrayType;
         case NPTerm::ARRAY_ES: return ArrayES;
         case NPTerm::ARRAY_E: return ArrayE;
@@ -176,6 +181,9 @@ Data deserialize_NonParametricTerm (std::istream &in) {
         case NPTerm::ORDERED_MAP_D: return OrderedMapD;
         case NPTerm::ORDERED_MAP_C: return OrderedMapC;
         case NPTerm::ORDERED_MAP: return OrderedMap;
+
+        case NPTerm::TUPLE_TYPE: return TupleType;
+        case NPTerm::TUPLE: return Tuple;
 
         case NPTerm::OUTPUT_TYPE: return ctl::OutputType;
         case NPTerm::OUTPUT: return ctl::Output;

@@ -54,32 +54,33 @@ std::string const &as_string (NPTerm t) {
         "Float",                        // 0x29  41
         "PODType",                      // 0x2A  42
         "POD",                          // 0x2B  43
-        "Union",                        // 0x2C  44
-        "Intersection",                 // 0x2D  45
-        "Negation",                     // 0x2E  46
-        "Difference",                   // 0x2F  47
-        "ArrayType",                    // 0x30  48
-        "ArrayES",                      // 0x31  49
-        "ArrayE",                       // 0x32  50
-        "ArrayS",                       // 0x33  51
-        "Array",                        // 0x34  52
-        "OrderedMapType",               // 0x35  53
-        "OrderedMapES",                 // 0x36  54
-        "OrderedMapE",                  // 0x37  55
-        "OrderedMapS",                  // 0x38  56
-        "OrderedMap",                   // 0x39  57
-        "TupleType",                    // 0x3A  58
-        "Tuple",                        // 0x3B  59
-        "PlaceholderType",              // 0x3C  60
-        "Placeholder",                  // 0x3D  61
-        "OutputType",                   // 0x3E  62
-        "Output",                       // 0x3F  63
-        "ClearOutputType",              // 0x40  64
-        "ClearOutput",                  // 0x41  65
-        "EndOfFileType",                // 0x42  66
-        "EndOfFile",                    // 0x43  67
-        "RequestSyncInputType",         // 0x44  68
-        "RequestSyncInput",             // 0x45  69
+        "UnionType",                    // 0x2C  44
+        "Union",                        // 0x2D  45
+        "Intersection",                 // 0x2E  46
+        "Negation",                     // 0x2F  47
+        "Difference",                   // 0x30  48
+        "ArrayType",                    // 0x31  49
+        "ArrayES",                      // 0x32  50
+        "ArrayE",                       // 0x33  51
+        "ArrayS",                       // 0x34  52
+        "Array",                        // 0x35  53
+        "OrderedMapType",               // 0x36  54
+        "OrderedMapES",                 // 0x37  55
+        "OrderedMapE",                  // 0x38  56
+        "OrderedMapS",                  // 0x39  57
+        "OrderedMap",                   // 0x3A  58
+        "TupleType",                    // 0x3B  59
+        "Tuple",                        // 0x3C  60
+        "PlaceholderType",              // 0x3D  61
+        "Placeholder",                  // 0x3E  62
+        "OutputType",                   // 0x3F  63
+        "Output",                       // 0x40  64
+        "ClearOutputType",              // 0x41  65
+        "ClearOutput",                  // 0x42  66
+        "EndOfFileType",                // 0x43  67
+        "EndOfFile",                    // 0x44  68
+        "RequestSyncInputType",         // 0x45  69
+        "RequestSyncInput",             // 0x46  70
     };
     return TABLE.at(size_t(t));
 }

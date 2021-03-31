@@ -165,25 +165,27 @@ SEPT__REGISTER__ABSTRACT_TYPE_OF(ArraySTerm_c)
 SEPT__REGISTER__ABSTRACT_TYPE_OF(ArrayTerm_c)
 
 
-SEPT__REGISTER__INHABITS(ArrayES_c, Type_c)
-SEPT__REGISTER__INHABITS(ArrayE_c, Type_c)
-SEPT__REGISTER__INHABITS(ArrayS_c, Type_c)
-SEPT__REGISTER__INHABITS(Array_c, Type_c)
+SEPT__REGISTER__INHABITS__NONDATA__UNCONDITIONAL(ArrayES_c, Type_c)
+SEPT__REGISTER__INHABITS__NONDATA__UNCONDITIONAL(ArrayE_c, Type_c)
+SEPT__REGISTER__INHABITS__NONDATA__UNCONDITIONAL(ArrayS_c, Type_c)
+SEPT__REGISTER__INHABITS__NONDATA__UNCONDITIONAL(Array_c, Type_c)
 
-SEPT__REGISTER__INHABITS(ArrayES_c, ArrayType_c)
-SEPT__REGISTER__INHABITS(ArrayE_c, ArrayType_c)
-SEPT__REGISTER__INHABITS(ArrayS_c, ArrayType_c)
-SEPT__REGISTER__INHABITS(Array_c, ArrayType_c)
+SEPT__REGISTER__INHABITS__NONDATA__UNCONDITIONAL(ArrayES_c, ArrayType_c)
+SEPT__REGISTER__INHABITS__NONDATA__UNCONDITIONAL(ArrayE_c, ArrayType_c)
+SEPT__REGISTER__INHABITS__NONDATA__UNCONDITIONAL(ArrayS_c, ArrayType_c)
+SEPT__REGISTER__INHABITS__NONDATA__UNCONDITIONAL(Array_c, ArrayType_c)
 
-SEPT__REGISTER__INHABITS(ArrayESTerm_c, ArrayES_c)
-SEPT__REGISTER__INHABITS(ArrayETerm_c, ArrayE_c)
-SEPT__REGISTER__INHABITS(ArraySTerm_c, ArrayS_c)
+SEPT__REGISTER__INHABITS__NONDATA__UNCONDITIONAL(ArrayESTerm_c, ArrayES_c)
+SEPT__REGISTER__INHABITS__NONDATA__UNCONDITIONAL(ArrayETerm_c, ArrayE_c)
+SEPT__REGISTER__INHABITS__NONDATA__UNCONDITIONAL(ArraySTerm_c, ArrayS_c)
 
-// NOTE: This is a type-widening inhabitation; it's more accurate to say that there's a lossless, but type-widening conversion.
-SEPT__REGISTER__INHABITS__EVALUATOR_BODY(ArrayTerm_c, ArrayESTerm_c, return type.constraint_is_satisfied(value.elements()); )
-SEPT__REGISTER__INHABITS__EVALUATOR_BODY(ArrayTerm_c, ArrayETerm_c, return type.constraint_is_satisfied(value.elements()); )
-SEPT__REGISTER__INHABITS__EVALUATOR_BODY(ArrayTerm_c, ArraySTerm_c, return type.constraint_is_satisfied(value.elements()); )
-SEPT__REGISTER__INHABITS__EVALUATOR_BODY(ArrayTerm_c, Array_c, return type.constraint_is_satisfied(value.elements()); )
+// NOTE: These are type-widening inhabitation; it's more accurate to say that there are lossless,
+// but type-widening conversions
+SEPT__REGISTER__INHABITS__NONDATA(ArrayTerm_c, ArrayESTerm_c)
+SEPT__REGISTER__INHABITS__NONDATA(ArrayTerm_c, ArrayETerm_c)
+SEPT__REGISTER__INHABITS__NONDATA(ArrayTerm_c, ArraySTerm_c)
+// This one isn't type-widening.
+SEPT__REGISTER__INHABITS__NONDATA(ArrayTerm_c, Array_c)
 
 
 SEPT__REGISTER__COMPARE__SINGLETON(ArrayType_c)

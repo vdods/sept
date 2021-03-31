@@ -77,7 +77,8 @@ enum class NPTerm : NPTermRepr {
     POD, // Isomorphic to Union(Bool,Sint,Uint,Float).  Inhabitants are POD values.  POD : PODType.
     // TODO: Add stuff like Positive, Negative, NonPositive, NonNegative, Zero
 
-    UNION, // Inhabitants have the form Union(T1,...,TN)
+    UNION_TYPE, // Inhabitant is Union.
+    UNION, // Inhabitants have the form Union(T1,...,TN) -- implemented by class UnionTerm_c
     INTERSECTION, // Inhabitants have the form Intersection(T1,...,TN)
     NEGATION, // Inhabitants have the form Negation(T)
     DIFFERENCE, // Inhabitants have the form Difference(T,U1,...,UN)

@@ -1,6 +1,9 @@
 // 2021.03.27 - Victor Dods
 
-#include "sept/Tuple.hpp" // TODO: Rename to TupleTerm.hpp?
+#include "sept/TupleTerm.hpp"
+
+#include "sept/NPTerm.hpp"
+#include "sept/Tuple.hpp"
 
 namespace sept {
 
@@ -13,6 +16,8 @@ void serialize (TupleTerm_c const &t, std::ostream &out) {
 }
 
 TupleTerm_c deserialize_value_TupleTerm (Data &&abstract_type, std::istream &in) {
+    // TODO: Delegate to BaseArray_t
+
     size_t element_count = 0;
 
     auto size = deserialize_data(in);

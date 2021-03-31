@@ -355,26 +355,47 @@ LVD_STATIC_ASSOCIATION_DEFINE(_Data_Inhabits, DataInhabitsPredicateMap)
     )
 #define SEPT__REGISTER__INHABITS__EVALUATOR(Value, Type, evaluator) \
     SEPT__REGISTER__INHABITS__GIVE_ID__EVALUATOR(Value, Type, __##Value##___##Type##__, evaluator)
-// TODO: Probably don't offer EVALUATOR_BODY version, just assume there will be an overload for inhabits(value, type)
-#define SEPT__REGISTER__INHABITS__GIVE_ID__EVALUATOR_BODY(Value, Type, unique_id, evaluator_body) \
+// NONDATA indicates that the parameter of inhabits_data will be converted to the given ParamType,
+// e.g. as in `bool inhabits (uint32_t const &, Uint32 const &)`.
+#define SEPT__REGISTER__INHABITS__GIVE_ID__NONDATA(Value, Type, unique_id) \
     SEPT__REGISTER__INHABITS__GIVE_ID__EVALUATOR( \
         Value, \
         Type, \
         unique_id, \
-        [](Data const &value_data, Data const &type_data)->bool{ \
+        [](Data const &value_data, Data const &type_data) -> bool { \
             auto const &value = value_data.cast<Value const &>(); \
+            static_assert(!std::is_same_v<Type,Data>); \
             auto const &type = type_data.cast<Type const &>(); \
             std::ignore = value; \
             std::ignore = type; \
-            evaluator_body \
+            return inhabits(value, type); \
         } \
     )
-#define SEPT__REGISTER__INHABITS__EVALUATOR_BODY(Value, Type, evaluator_body) \
-    SEPT__REGISTER__INHABITS__GIVE_ID__EVALUATOR_BODY(Value, Type, __##Value##___##Type##__, evaluator_body )
-#define SEPT__REGISTER__INHABITS__GIVE_ID(Value, Type, unique_id) \
-    SEPT__REGISTER__INHABITS__GIVE_ID__EVALUATOR(Value, Type, unique_id, DataPredicateBinary{nullptr})
-// This one causes inhabits_data(value, type) (where decltype(value) == Value and decltype(type) == Type) to always return true.
-#define SEPT__REGISTER__INHABITS(Value, Type) \
+// DATA indicates that the parameter of element_of_data will not be converted, and will be passed as Data,
+// e.g. as in `bool inhabits (Data const &, Uint32 const &)`.
+#define SEPT__REGISTER__INHABITS__GIVE_ID__DATA(Value, Type, unique_id) \
+    SEPT__REGISTER__INHABITS__GIVE_ID__EVALUATOR( \
+        Value, \
+        Type, \
+        unique_id, \
+        [](Data const &value_data, Data const &type_data) -> Data { \
+            auto const &type = type_data.cast<Type const &>(); \
+            std::ignore = type; \
+            static_assert(std::is_same_v<Value,Data>); \
+            return inhabits(value_data, type); \
+        } \
+    )
+// NONDATA indicates that the parameter of inhabits_data will be converted to the given ParamType,
+// e.g. as in `bool inhabits (uint32_t const &, Uint32 const &)`.
+#define SEPT__REGISTER__INHABITS__NONDATA(Value, Type) \
+    SEPT__REGISTER__INHABITS__GIVE_ID__NONDATA(Value, Type, __##Value##___##Type##__)
+// DATA indicates that the parameter of element_of_data will not be converted, and will be passed as Data,
+// e.g. as in `bool inhabits (Data const &, Uint32 const &)`.
+#define SEPT__REGISTER__INHABITS__DATA(Value, Type) \
+    SEPT__REGISTER__INHABITS__GIVE_ID__DATA(Value, Type, __##Value##___##Type##__)
+// This one causes inhabits_data(value, type) (where decltype(value) == Value and decltype(type) == Type)
+// to always return true (i.e. it doesn't depend on the content of value, only its type, i.e. Value).
+#define SEPT__REGISTER__INHABITS__NONDATA__UNCONDITIONAL(Value, Type) \
     SEPT__REGISTER__INHABITS__EVALUATOR(Value, Type, DataPredicateBinary{nullptr})
 
 bool inhabits_data (Data const &value_data, Data const &type_data);
@@ -595,6 +616,7 @@ LVD_STATIC_ASSOCIATION_DEFINE(_Data_ConstructInhabitantOf, DataConstructInhabita
     SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__GIVE_ID__EVALUATOR_BODY(Type, Argument, unique_id, return type(argument);)
 #define SEPT__REGISTER__CONSTRUCT_INHABITANT_OF(Type, Argument) \
     SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__GIVE_ID__EVALUATOR_BODY(Type, Argument, __##Type##___##Argument##__, return type(argument);)
+// TODO: Need to make a version of this that accepts Data, just like SEPT__REGISTER__ELEMENT_OF__DATA etc
 #define SEPT__REGISTER__CONSTRUCT_INHABITANT_OF___GIVE_ID__ABSTRACT_TYPE(Type, Argument, unique_id) \
     SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__GIVE_ID__EVALUATOR(Type, Argument, unique_id, nullptr)
 #define SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(Type, Argument) \

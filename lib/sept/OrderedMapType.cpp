@@ -162,25 +162,27 @@ SEPT__REGISTER__ABSTRACT_TYPE_OF(OrderedMapCTerm_c)
 SEPT__REGISTER__ABSTRACT_TYPE_OF(OrderedMapTerm_c)
 
 
-SEPT__REGISTER__INHABITS(OrderedMapDC_c, Type_c)
-SEPT__REGISTER__INHABITS(OrderedMapD_c, Type_c)
-SEPT__REGISTER__INHABITS(OrderedMapC_c, Type_c)
-SEPT__REGISTER__INHABITS(OrderedMap_c, Type_c)
+SEPT__REGISTER__INHABITS__NONDATA__UNCONDITIONAL(OrderedMapDC_c, Type_c)
+SEPT__REGISTER__INHABITS__NONDATA__UNCONDITIONAL(OrderedMapD_c, Type_c)
+SEPT__REGISTER__INHABITS__NONDATA__UNCONDITIONAL(OrderedMapC_c, Type_c)
+SEPT__REGISTER__INHABITS__NONDATA__UNCONDITIONAL(OrderedMap_c, Type_c)
 
-SEPT__REGISTER__INHABITS(OrderedMapDC_c, OrderedMapType_c)
-SEPT__REGISTER__INHABITS(OrderedMapD_c, OrderedMapType_c)
-SEPT__REGISTER__INHABITS(OrderedMapC_c, OrderedMapType_c)
-SEPT__REGISTER__INHABITS(OrderedMap_c, OrderedMapType_c)
+SEPT__REGISTER__INHABITS__NONDATA__UNCONDITIONAL(OrderedMapDC_c, OrderedMapType_c)
+SEPT__REGISTER__INHABITS__NONDATA__UNCONDITIONAL(OrderedMapD_c, OrderedMapType_c)
+SEPT__REGISTER__INHABITS__NONDATA__UNCONDITIONAL(OrderedMapC_c, OrderedMapType_c)
+SEPT__REGISTER__INHABITS__NONDATA__UNCONDITIONAL(OrderedMap_c, OrderedMapType_c)
 
-SEPT__REGISTER__INHABITS(OrderedMapDCTerm_c, OrderedMapDC_c)
-SEPT__REGISTER__INHABITS(OrderedMapDTerm_c, OrderedMapD_c)
-SEPT__REGISTER__INHABITS(OrderedMapCTerm_c, OrderedMapC_c)
+SEPT__REGISTER__INHABITS__NONDATA__UNCONDITIONAL(OrderedMapDCTerm_c, OrderedMapDC_c)
+SEPT__REGISTER__INHABITS__NONDATA__UNCONDITIONAL(OrderedMapDTerm_c, OrderedMapD_c)
+SEPT__REGISTER__INHABITS__NONDATA__UNCONDITIONAL(OrderedMapCTerm_c, OrderedMapC_c)
 
-// NOTE: This is a type-widening inhabitation; it's more accurate to say that there's a lossless, but type-widening conversion.
-SEPT__REGISTER__INHABITS__EVALUATOR_BODY(OrderedMapTerm_c, OrderedMapDCTerm_c, return type.constraint_is_satisfied(value.pairs()); )
-SEPT__REGISTER__INHABITS__EVALUATOR_BODY(OrderedMapTerm_c, OrderedMapDTerm_c, return type.constraint_is_satisfied(value.pairs()); )
-SEPT__REGISTER__INHABITS__EVALUATOR_BODY(OrderedMapTerm_c, OrderedMapCTerm_c, return type.constraint_is_satisfied(value.pairs()); )
-SEPT__REGISTER__INHABITS__EVALUATOR_BODY(OrderedMapTerm_c, OrderedMap_c, return type.constraint_is_satisfied(value.pairs()); )
+// NOTE: These are type-widening inhabitation; it's more accurate to say that there are lossless,
+// but type-widening conversions
+SEPT__REGISTER__INHABITS__NONDATA(OrderedMapTerm_c, OrderedMapDCTerm_c)
+SEPT__REGISTER__INHABITS__NONDATA(OrderedMapTerm_c, OrderedMapDTerm_c)
+SEPT__REGISTER__INHABITS__NONDATA(OrderedMapTerm_c, OrderedMapCTerm_c)
+// This one isn't type-widening.
+SEPT__REGISTER__INHABITS__NONDATA(OrderedMapTerm_c, OrderedMap_c)
 
 
 SEPT__REGISTER__COMPARE__SINGLETON(OrderedMapType_c)

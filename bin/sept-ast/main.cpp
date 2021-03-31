@@ -114,6 +114,8 @@ int compare (uint8_t lhs, uint8_t rhs) {
 // Non-parametric terms for this AST POC
 //
 
+// TODO: Could potentially split these up to make them distinct C++ types,
+// which would make certain code be constexpr.
 using ASTNPTermRepr = uint8_t;
 enum class ASTNPTerm : ASTNPTermRepr {
     // LogicalBinOp
@@ -329,6 +331,8 @@ inline bool constexpr inhabits (ASTNPTerm t, Logical_c const &) {
     return inhabits(t, LogicalBinOp) || inhabits(t, LogicalUnOp);
 }
 inline sept::True_c constexpr inhabits (bool const &, Logical_c const &) { return sept::True; }
+inline sept::True_c constexpr inhabits (sept::True_c const &, Logical_c const &) { return sept::True; }
+inline sept::True_c constexpr inhabits (sept::False_c const &, Logical_c const &) { return sept::True; }
 inline sept::False_c constexpr inhabits (double const &, Logical_c const &) { return sept::False; }
 inline bool inhabits (sept::TupleTerm_c const &t, Logical_c const &) { return inhabits(t, LogicalExpr); }
 
@@ -338,6 +342,8 @@ inline bool constexpr inhabits (ASTNPTerm t, LogicalBinOp_c const &) {
 }
 
 inline sept::True_c constexpr inhabits (bool const &, LogicalExpr_c const &) { return sept::True; }
+inline sept::True_c constexpr inhabits (sept::True_c const &, LogicalExpr_c const &) { return sept::True; }
+inline sept::True_c constexpr inhabits (sept::False_c const &, LogicalExpr_c const &) { return sept::True; }
 inline sept::False_c constexpr inhabits (double const &, LogicalExpr_c const &) { return sept::False; }
 inline bool inhabits (sept::TupleTerm_c const &t, LogicalExpr_c const &) {
     return inhabits(t, LogicalBinOpExpr)
@@ -355,6 +361,8 @@ inline bool constexpr inhabits (ASTNPTerm t, Numeric_c const &) {
     return inhabits(t, NumericBinOp) || inhabits(t, NumericUnOp);
 }
 inline sept::False_c constexpr inhabits (bool const &, Numeric_c const &) { return sept::False; }
+inline sept::False_c constexpr inhabits (sept::True_c const &, Numeric_c const &) { return sept::False; }
+inline sept::False_c constexpr inhabits (sept::False_c const &, Numeric_c const &) { return sept::False; }
 inline sept::True_c constexpr inhabits (double const &, Numeric_c const &) { return sept::True; }
 inline bool inhabits (sept::TupleTerm_c const &t, Numeric_c const &) { return inhabits(t, NumericExpr); }
 
@@ -368,6 +376,8 @@ inline bool constexpr inhabits (ASTNPTerm t, NumericUnOp_c const &) {
 }
 
 inline sept::False_c constexpr inhabits (bool const &, NumericExpr_c const &) { return sept::False; }
+inline sept::False_c constexpr inhabits (sept::True_c const &, NumericExpr_c const &) { return sept::False; }
+inline sept::False_c constexpr inhabits (sept::False_c const &, NumericExpr_c const &) { return sept::False; }
 inline sept::True_c constexpr inhabits (double const &, NumericExpr_c const &) { return sept::True; }
 inline bool inhabits (sept::TupleTerm_c const &t, NumericExpr_c const &) {
     return inhabits(t, NumericBinOpExpr)
@@ -533,19 +543,19 @@ SEPT__REGISTER__ABSTRACT_TYPE_OF(NumericUnOp_c)
 SEPT__REGISTER__ABSTRACT_TYPE_OF(NumericExpr_c)
 SEPT__REGISTER__ABSTRACT_TYPE_OF(UnOp_c)
 
-SEPT__REGISTER__INHABITS__EVALUATOR_BODY(ASTNPTerm,     BinOp_c,        return inhabits(value, type);)
-SEPT__REGISTER__INHABITS(bool,          Expr_c)
-SEPT__REGISTER__INHABITS(double,        Expr_c)
-SEPT__REGISTER__INHABITS__EVALUATOR_BODY(TupleTerm_c,   Expr_c,         return inhabits(value, type);)
-SEPT__REGISTER__INHABITS(bool,          LogicalExpr_c)
-SEPT__REGISTER__INHABITS__EVALUATOR_BODY(TupleTerm_c,   LogicalExpr_c,  return inhabits(value, type);)
-SEPT__REGISTER__INHABITS(double,        NumericExpr_c)
-SEPT__REGISTER__INHABITS__EVALUATOR_BODY(TupleTerm_c,   NumericExpr_c,  return inhabits(value, type);)
-SEPT__REGISTER__INHABITS__EVALUATOR_BODY(ASTNPTerm,     LogicalBinOp_c, return inhabits(value, type);)
-SEPT__REGISTER__INHABITS__EVALUATOR_BODY(ASTNPTerm,     LogicalUnOp_c,  return inhabits(value, type);)
-SEPT__REGISTER__INHABITS__EVALUATOR_BODY(ASTNPTerm,     NumericBinOp_c, return inhabits(value, type);)
-SEPT__REGISTER__INHABITS__EVALUATOR_BODY(ASTNPTerm,     NumericUnOp_c,  return inhabits(value, type);)
-SEPT__REGISTER__INHABITS__EVALUATOR_BODY(ASTNPTerm,     UnOp_c,         return inhabits(value, type);)
+SEPT__REGISTER__INHABITS__NONDATA(ASTNPTerm,     BinOp_c)
+SEPT__REGISTER__INHABITS__NONDATA__UNCONDITIONAL(bool,          Expr_c)
+SEPT__REGISTER__INHABITS__NONDATA__UNCONDITIONAL(double,        Expr_c)
+SEPT__REGISTER__INHABITS__NONDATA(TupleTerm_c,   Expr_c)
+SEPT__REGISTER__INHABITS__NONDATA__UNCONDITIONAL(bool,          LogicalExpr_c)
+SEPT__REGISTER__INHABITS__NONDATA(TupleTerm_c,   LogicalExpr_c)
+SEPT__REGISTER__INHABITS__NONDATA__UNCONDITIONAL(double,        NumericExpr_c)
+SEPT__REGISTER__INHABITS__NONDATA(TupleTerm_c,   NumericExpr_c)
+SEPT__REGISTER__INHABITS__NONDATA(ASTNPTerm,     LogicalBinOp_c)
+SEPT__REGISTER__INHABITS__NONDATA(ASTNPTerm,     LogicalUnOp_c)
+SEPT__REGISTER__INHABITS__NONDATA(ASTNPTerm,     NumericBinOp_c)
+SEPT__REGISTER__INHABITS__NONDATA(ASTNPTerm,     NumericUnOp_c)
+SEPT__REGISTER__INHABITS__NONDATA(ASTNPTerm,     UnOp_c)
 // TODO there are probably some missing
 
 SEPT__REGISTER__COMPARE__SINGLETON(Any_c)
