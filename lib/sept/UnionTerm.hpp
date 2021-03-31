@@ -41,6 +41,12 @@ public:
             throw std::runtime_error(LVD_FMT("argument " << argument << " does not inhabit abstract type " << *this));
         return std::forward<Argument_>(argument);
     }
+
+    operator lvd::OstreamDelegate () const {
+        return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
+            out << "UnionTerm_c" << elements();
+        });
+    }
 };
 
 // // This is used to construct UnionTerm_c more efficiently (std::initializer_list lacks move semantics for some dumb
@@ -76,7 +82,7 @@ public:
 
 // A term must only inhabit a single element of the UnionTerm_c to inhabit the UnionTerm_c.
 // Templatized version.
-template <typename T_>
+template <typename T_, typename = std::enable_if_t<!std::is_same_v<T_,Data>>>
 bool inhabits (T_ const &value, UnionTerm_c const &type) {
     // NOTE: If UnionTerm_t is ever created, then this would call inhabits instead of inhabits_data.
     for (auto const &type_element : type.elements()) {

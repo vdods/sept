@@ -70,5 +70,6 @@ SEPT__REGISTER__ELEMENT_OF__NONDATA(UnionTerm_c, uint64_t)
 
 // TODO: This needs the DATA and NONDATA versions of the macro.
 // SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(UnionTerm_c, UnionTerm_c)
+SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(UnionTerm_c, Data)
 
 } // end namespace sept

@@ -9,6 +9,7 @@
 #include "sept/ArrayTerm.hpp"
 #include "sept/NPType.hpp"
 #include "sept/TupleTerm.hpp"
+#include "sept/UnionTerm.hpp"
 
 #if 0
 AST design notes
@@ -213,14 +214,10 @@ ASTNPTerm const Neg{ASTNPTerm::NEG};
     }
 
 struct Any_c { ABSTRACT_TYPE_CONSTRUCTOR };
-struct BinOp_c { ABSTRACT_TYPE_CONSTRUCTOR };
-struct Logical_c { ABSTRACT_TYPE_CONSTRUCTOR };
 struct LogicalBinOp_c { ABSTRACT_TYPE_CONSTRUCTOR };
 struct LogicalUnOp_c { ABSTRACT_TYPE_CONSTRUCTOR };
-struct Numeric_c { ABSTRACT_TYPE_CONSTRUCTOR };
 struct NumericBinOp_c { ABSTRACT_TYPE_CONSTRUCTOR };
 struct NumericUnOp_c { ABSTRACT_TYPE_CONSTRUCTOR };
-struct UnOp_c { ABSTRACT_TYPE_CONSTRUCTOR };
 // TODO: Type intersections (LogicalExpr := Intersection(Expr,Logical)) and/or
 // unions (Expr := Union(LogicalExpr,NumericExpr)) would be useful here.
 struct Expr_c { ABSTRACT_TYPE_CONSTRUCTOR };
@@ -228,28 +225,20 @@ struct LogicalExpr_c { ABSTRACT_TYPE_CONSTRUCTOR };
 struct NumericExpr_c { ABSTRACT_TYPE_CONSTRUCTOR };
 
 std::ostream &operator<< (std::ostream &out, Any_c const &) { return out << "Any"; }
-std::ostream &operator<< (std::ostream &out, BinOp_c const &) { return out << "BinOp"; }
-std::ostream &operator<< (std::ostream &out, Logical_c const &) { return out << "Logical"; }
 std::ostream &operator<< (std::ostream &out, LogicalBinOp_c const &) { return out << "LogicalBinOp"; }
 std::ostream &operator<< (std::ostream &out, LogicalUnOp_c const &) { return out << "LogicalUnOp"; }
-std::ostream &operator<< (std::ostream &out, Numeric_c const &) { return out << "Numeric"; }
 std::ostream &operator<< (std::ostream &out, NumericBinOp_c const &) { return out << "NumericBinOp"; }
 std::ostream &operator<< (std::ostream &out, NumericUnOp_c const &) { return out << "NumericUnOp"; }
-std::ostream &operator<< (std::ostream &out, UnOp_c const &) { return out << "UnOp"; }
 
 std::ostream &operator<< (std::ostream &out, Expr_c const &) { return out << "Expr"; }
 std::ostream &operator<< (std::ostream &out, LogicalExpr_c const &) { return out << "LogicalExpr"; }
 std::ostream &operator<< (std::ostream &out, NumericExpr_c const &) { return out << "NumericExpr"; }
 
 inline sept::NonParametricType_c abstract_type_of (Any_c const &) { return sept::NonParametricType; }
-inline sept::NonParametricType_c abstract_type_of (BinOp_c const &) { return sept::NonParametricType; }
-inline sept::NonParametricType_c abstract_type_of (Logical_c const &) { return sept::NonParametricType; }
 inline sept::NonParametricType_c abstract_type_of (LogicalBinOp_c const &) { return sept::NonParametricType; }
 inline sept::NonParametricType_c abstract_type_of (LogicalUnOp_c const &) { return sept::NonParametricType; }
-inline sept::NonParametricType_c abstract_type_of (Numeric_c const &) { return sept::NonParametricType; }
 inline sept::NonParametricType_c abstract_type_of (NumericBinOp_c const &) { return sept::NonParametricType; }
 inline sept::NonParametricType_c abstract_type_of (NumericUnOp_c const &) { return sept::NonParametricType; }
-inline sept::NonParametricType_c abstract_type_of (UnOp_c const &) { return sept::NonParametricType; }
 inline sept::NonParametricType_c abstract_type_of (Expr_c const &) { return sept::NonParametricType; }
 inline sept::NonParametricType_c abstract_type_of (LogicalExpr_c const &) { return sept::NonParametricType; }
 inline sept::NonParametricType_c abstract_type_of (NumericExpr_c const &) { return sept::NonParametricType; }
@@ -261,15 +250,17 @@ LogicalUnOp_c const LogicalUnOp;
 NumericBinOp_c const NumericBinOp;
 NumericUnOp_c const NumericUnOp;
 
-BinOp_c const BinOp;
-UnOp_c const UnOp;
-
-Logical_c const Logical;
-Numeric_c const Numeric;
+sept::UnionTerm_c const BinOp{LogicalBinOp, NumericBinOp};
+sept::UnionTerm_c const UnOp{LogicalUnOp, NumericUnOp};
 
 Expr_c const Expr;
 LogicalExpr_c const LogicalExpr;
 NumericExpr_c const NumericExpr;
+
+sept::UnionTerm_c const LogicalOp{LogicalBinOp, LogicalUnOp};
+sept::UnionTerm_c const Logical{LogicalExpr, LogicalOp};
+sept::UnionTerm_c const NumericOp{NumericBinOp, NumericUnOp};
+sept::UnionTerm_c const Numeric{NumericExpr, NumericOp};
 
 // These are effectively structural subtypes (indistinguishable from sept::Bool and sept::Float64 respectively)
 sept::Bool_c const LogicalValue;
@@ -311,11 +302,6 @@ bool constexpr inhabits (ASTNPTerm t, NumericUnOp_c const &);
 
 inline sept::True_c constexpr inhabits (ASTNPTerm t, Any_c const &) { return sept::True; }
 
-inline bool constexpr inhabits (ASTNPTerm t, BinOp_c const &) {
-    return inhabits(t, LogicalBinOp) || inhabits(t, NumericBinOp);
-}
-
-
 inline sept::False_c constexpr inhabits (ASTNPTerm t, Expr_c const &) { return sept::False; }
 inline sept::True_c constexpr inhabits (bool const &, Expr_c const &) { return sept::True; }
 inline sept::True_c constexpr inhabits (double const &, Expr_c const &) { return sept::True; }
@@ -325,16 +311,6 @@ inline bool inhabits (sept::TupleTerm_c const &t, Expr_c const &) {
         || inhabits(t, CondExpr)
         || inhabits(t, ParenExpr);
 }
-
-
-inline bool constexpr inhabits (ASTNPTerm t, Logical_c const &) {
-    return inhabits(t, LogicalBinOp) || inhabits(t, LogicalUnOp);
-}
-inline sept::True_c constexpr inhabits (bool const &, Logical_c const &) { return sept::True; }
-inline sept::True_c constexpr inhabits (sept::True_c const &, Logical_c const &) { return sept::True; }
-inline sept::True_c constexpr inhabits (sept::False_c const &, Logical_c const &) { return sept::True; }
-inline sept::False_c constexpr inhabits (double const &, Logical_c const &) { return sept::False; }
-inline bool inhabits (sept::TupleTerm_c const &t, Logical_c const &) { return inhabits(t, LogicalExpr); }
 
 inline bool constexpr inhabits (ASTNPTerm t, LogicalBinOp_c const &) {
     return ASTNPTermRepr(ASTNPTerm::__LogicalBinOp_LOWEST__) <= ASTNPTermRepr(t)
@@ -357,15 +333,6 @@ inline bool constexpr inhabits (ASTNPTerm t, LogicalUnOp_c const &) {
         && ASTNPTermRepr(t) <= ASTNPTermRepr(ASTNPTerm::__LogicalUnOp_HIGHEST__);
 }
 
-inline bool constexpr inhabits (ASTNPTerm t, Numeric_c const &) {
-    return inhabits(t, NumericBinOp) || inhabits(t, NumericUnOp);
-}
-inline sept::False_c constexpr inhabits (bool const &, Numeric_c const &) { return sept::False; }
-inline sept::False_c constexpr inhabits (sept::True_c const &, Numeric_c const &) { return sept::False; }
-inline sept::False_c constexpr inhabits (sept::False_c const &, Numeric_c const &) { return sept::False; }
-inline sept::True_c constexpr inhabits (double const &, Numeric_c const &) { return sept::True; }
-inline bool inhabits (sept::TupleTerm_c const &t, Numeric_c const &) { return inhabits(t, NumericExpr); }
-
 inline bool constexpr inhabits (ASTNPTerm t, NumericBinOp_c const &) {
     return ASTNPTermRepr(ASTNPTerm::__NumericBinOp_LOWEST__) <= ASTNPTermRepr(t)
         && ASTNPTermRepr(t) <= ASTNPTermRepr(ASTNPTerm::__NumericBinOp_HIGHEST__);
@@ -384,10 +351,6 @@ inline bool inhabits (sept::TupleTerm_c const &t, NumericExpr_c const &) {
         || inhabits(t, NumericUnOpExpr)
         || inhabits(t, NumericCondExpr)
         || inhabits(t, NumericParenExpr);
-}
-
-inline bool constexpr inhabits (ASTNPTerm t, UnOp_c const &) {
-    return inhabits(t, LogicalUnOp) || inhabits(t, NumericUnOp);
 }
 
 //
@@ -505,45 +468,32 @@ sept::Data evaluate_expr (sept::TupleTerm_c const &t) {
 namespace sept {
 SEPT__REGISTER__PRINT(ASTNPTerm)
 SEPT__REGISTER__PRINT(Any_c)
-SEPT__REGISTER__PRINT(BinOp_c)
 SEPT__REGISTER__PRINT(Expr_c)
-SEPT__REGISTER__PRINT(Logical_c)
 SEPT__REGISTER__PRINT(LogicalBinOp_c)
 SEPT__REGISTER__PRINT(LogicalExpr_c)
 SEPT__REGISTER__PRINT(LogicalUnOp_c)
-SEPT__REGISTER__PRINT(Numeric_c)
 SEPT__REGISTER__PRINT(NumericBinOp_c)
 SEPT__REGISTER__PRINT(NumericUnOp_c)
 SEPT__REGISTER__PRINT(NumericExpr_c)
-SEPT__REGISTER__PRINT(UnOp_c)
 
 SEPT__REGISTER__EQ(Any_c)
-SEPT__REGISTER__EQ(BinOp_c)
 SEPT__REGISTER__EQ(Expr_c)
-SEPT__REGISTER__EQ(Logical_c)
 SEPT__REGISTER__EQ(LogicalBinOp_c)
 SEPT__REGISTER__EQ(LogicalExpr_c)
 SEPT__REGISTER__EQ(LogicalUnOp_c)
-SEPT__REGISTER__EQ(Numeric_c)
 SEPT__REGISTER__EQ(NumericBinOp_c)
 SEPT__REGISTER__EQ(NumericUnOp_c)
 SEPT__REGISTER__EQ(NumericExpr_c)
-SEPT__REGISTER__EQ(UnOp_c)
 
 SEPT__REGISTER__ABSTRACT_TYPE_OF(Any_c)
-SEPT__REGISTER__ABSTRACT_TYPE_OF(BinOp_c)
 SEPT__REGISTER__ABSTRACT_TYPE_OF(Expr_c)
-SEPT__REGISTER__ABSTRACT_TYPE_OF(Logical_c)
 SEPT__REGISTER__ABSTRACT_TYPE_OF(LogicalBinOp_c)
 SEPT__REGISTER__ABSTRACT_TYPE_OF(LogicalExpr_c)
 SEPT__REGISTER__ABSTRACT_TYPE_OF(LogicalUnOp_c)
-SEPT__REGISTER__ABSTRACT_TYPE_OF(Numeric_c)
 SEPT__REGISTER__ABSTRACT_TYPE_OF(NumericBinOp_c)
 SEPT__REGISTER__ABSTRACT_TYPE_OF(NumericUnOp_c)
 SEPT__REGISTER__ABSTRACT_TYPE_OF(NumericExpr_c)
-SEPT__REGISTER__ABSTRACT_TYPE_OF(UnOp_c)
 
-SEPT__REGISTER__INHABITS__NONDATA(ASTNPTerm,     BinOp_c)
 SEPT__REGISTER__INHABITS__NONDATA__UNCONDITIONAL(bool,          Expr_c)
 SEPT__REGISTER__INHABITS__NONDATA__UNCONDITIONAL(double,        Expr_c)
 SEPT__REGISTER__INHABITS__NONDATA(TupleTerm_c,   Expr_c)
@@ -555,31 +505,22 @@ SEPT__REGISTER__INHABITS__NONDATA(ASTNPTerm,     LogicalBinOp_c)
 SEPT__REGISTER__INHABITS__NONDATA(ASTNPTerm,     LogicalUnOp_c)
 SEPT__REGISTER__INHABITS__NONDATA(ASTNPTerm,     NumericBinOp_c)
 SEPT__REGISTER__INHABITS__NONDATA(ASTNPTerm,     NumericUnOp_c)
-SEPT__REGISTER__INHABITS__NONDATA(ASTNPTerm,     UnOp_c)
 // TODO there are probably some missing
 
 SEPT__REGISTER__COMPARE__SINGLETON(Any_c)
-SEPT__REGISTER__COMPARE__SINGLETON(BinOp_c)
 SEPT__REGISTER__COMPARE__SINGLETON(Expr_c)
-SEPT__REGISTER__COMPARE__SINGLETON(Logical_c)
 SEPT__REGISTER__COMPARE__SINGLETON(LogicalBinOp_c)
 SEPT__REGISTER__COMPARE__SINGLETON(LogicalExpr_c)
 SEPT__REGISTER__COMPARE__SINGLETON(LogicalUnOp_c)
-SEPT__REGISTER__COMPARE__SINGLETON(Numeric_c)
 SEPT__REGISTER__COMPARE__SINGLETON(NumericBinOp_c)
 SEPT__REGISTER__COMPARE__SINGLETON(NumericUnOp_c)
 SEPT__REGISTER__COMPARE__SINGLETON(NumericExpr_c)
-SEPT__REGISTER__COMPARE__SINGLETON(UnOp_c)
 SEPT__REGISTER__COMPARE(ASTNPTerm, ASTNPTerm)
 
-SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(BinOp_c,             ASTNPTerm)
-SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(Logical_c,           ASTNPTerm)
 SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(LogicalBinOp_c,      ASTNPTerm)
 SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(LogicalUnOp_c,       ASTNPTerm)
-SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(Numeric_c,           ASTNPTerm)
 SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(NumericBinOp_c,      ASTNPTerm)
 SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(NumericUnOp_c,       ASTNPTerm)
-SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(UnOp_c,              ASTNPTerm)
 SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(Expr_c,              bool)
 SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(LogicalExpr_c,       bool)
 SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(Expr_c,              double)
@@ -590,6 +531,10 @@ SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(NumericExpr_c,       Tupl
 SEPT__REGISTER__EVALUATE_EXPR(bool)
 SEPT__REGISTER__EVALUATE_EXPR(double)
 SEPT__REGISTER__EVALUATE_EXPR(TupleTerm_c)
+
+// TEMP HACK
+SEPT__REGISTER__INHABITS__NONDATA(ASTNPTerm, UnionTerm_c)
+SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(UnionTerm_c, ASTNPTerm)
 } // end namespace sept
 
 int main (int argc, char **argv) {
