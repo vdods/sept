@@ -4930,8 +4930,8 @@ Structured Expression Project Toolkit Design Document
             mechanism is needed, e.g. symbolic references into a symbol table, some pointer-like references
             into local memory, or URI references (which would also need a table to function efficiently).
         -   Make a struct metatype?
-            -   This would be a tuple whose elements are named
-            -   Would this require defining a tuple type first?  Since right now there's
+            -   This would be a tuple whose elements are named, which would require having a string type
+            x   Would this require defining a tuple type first?  Since right now there's
                 only Array, which can't force different elements to have distinct types.
         -   POC: Make a simple AST hierarchy (ideally without introducing any new types)
             and a simple interpreter for a simple functional language (no state, only pure
@@ -5197,4 +5197,69 @@ Structured Expression Project Toolkit Design Document
     UnionTerm_t<T1,...,Tn> which would allow some tighter control on types.  This pattern could
     be also used for arrays, tuples, maps, etc (though really it should just use C++ STL types
     for those).
+
+-   Notes on references
+    -   There are various use cases that require references of some kind:
+        -   Defining types that are recursive or mutually recursive
+        -   Being able to have data structures that aren't plain trees (i.e. have multiple
+            nodes that refer to the same node)
+        -   Being able to refer to some named data, which could be defined:
+            -   Locally in memory, as in a symbol table in a program
+            -   Locally in the filesystem
+            -   Via URI or URL
+    -   Ideally references should have https://en.wikipedia.org/wiki/Referential_transparency
+    -   References should survive a round-trip through serialization.
+    -   The various use cases suggest that there should be several types of references.
+        -   Context-free pointer-based references within local memory (used for recursion and for complex data)
+        -   Context-dependent pointer-based references (e.g. "element 0 of the parent data")
+        -   Context-dependent named references (e.g. symbolic reference into local data, e.g. codebase)
+        -   Context-free named references (e.g. URIs or URLs or similar)
+    -   Context-free pointer-based references
+        -   Dereference should be no slower than ordinary pointers
+        -   Should have referential transparency
+        -   Should be re-assignable
+        -   It's straightforward enough when the pointed-to type is known at compile time (in the C++ sense)
+            but when the pointed-to type is Data, does that change things?
+        -   Types
+
+                Ref(T) -- has referential transparency, behaves as T; analogous to `T&` in C++.
+                Ptr(T) -- no referential transparency, must be dereferenced; analogous to `T*` in C++.
+
+            There needs to be a way to reference and dereference these terms.  This can be part of the
+            data model.
+        -   Serialization of a reference or a pointer requires more than just simple depth-first
+            traversal of the data structure -- it requires adding a context object to the serialization
+            process to track which references/pointers have been serialized/deserialized.  In particular:
+            -   There must be a lookup table within the serialization context object which maps in-memory
+                references to the in-serialization references.
+            -   Form of the references in-serialization
+                -   Simplest would be a bit or byte offset from the start of the serialized form.
+                -   Next would be to store serialized local references within data structures
+                    when feasible (e.g. "here are the elements of the OrderedMap").  This would
+                    work well when it's known that the references are local (i.e. the data structure
+                    doesn't have external references).
+    -   Context-dependent pointer-based references
+        -   Should be a "base pointer" and an offset (the offset could be small), though if the base
+            pointer is stored explicitly, then it's context-free.  The base pointer is the context.
+        -   Dereference should be no slower than an add and a pointer dereference
+        -   Same other properties as context-free refs
+        -   Main use for these is probably intra-structure references (e.g. a map structure, DAG, poset, etc)
+    -   Context-dependent named references
+        -   The context must be specified somehow.  Perhaps it's defined using a subtype of the named
+            reference type.  E.g:
+            -   `SymbolicRef(name)` could be a symbolic reference into a program's symbol table.
+            -   `CodeRepoRef(name)` could refer to a particular global symbol in a package that's indexed
+                by some programming language's package index (e.g. PyPi for Python or crates.io for Rust)
+        -   Ideally the dereference should be faster than a full string lookup in whatever index.
+        -   Perhaps the value is cached in local memory, and then turns into a pointer-based reference.
+            This would involve managing the cached value, or would depend on some notion of immutability.
+        -   Serialization can do one of two things:
+            -   Serialize / deserialize just the name itself
+            -   Serialize / deserialize also some definition of the context for the named reference
+    -   Context-free named references
+        -   Similar to context-dependent named references, but requires no context.  E.g. URI or URL.
+        -   Naive serialization / deserialization is feasible.
+    -   Questions
+        -   Should there be notions of immutability?  If not, then the eventual translation to Rust
+            will be difficult.
 
