@@ -51,12 +51,53 @@ AST design notes
     -   NumericThing := Union(NumericBinOp, NumericBinOpExpr, NumericCondExpr, NumericExpr, NumericParenExpr, NumericUnOp, NumericUnOpExpr)
 -   Idea for improvement: Just make a single enum for BinOpTerm_c and a single enum for UnOpTerm_c,
     containing all classes of BinOps and UnOps respectively, and then define semantic classes
-    that select out subsets of those binops.  Since there's no reason to have distinct concrete
+    that select out subsets of those binops.  Since there is no reason to have distinct concrete
     types for these things.  In fact, because the ops are just non-parametric terms, there could
     potentially be a single enum for all ops, and semantic classes are used to select different
     semantic subtypes.
 
 #endif
+
+//
+// StaticAssociation_t for evaluate
+//
+
+using EvaluateExprFunction = std::function<sept::Data(sept::Data const &expr)>;
+using DataEvaluateExprFunctionMap = std::unordered_map<std::type_index,EvaluateExprFunction>;
+LVD_STATIC_ASSOCIATION_DEFINE(EvaluateExpr, DataEvaluateExprFunctionMap)
+
+#define SEPT__REGISTER__EVALUATE_EXPR__GIVE_ID__EVALUATOR(ExprType, unique_id, evaluator) \
+    LVD_STATIC_ASSOCIATION_REGISTER( \
+        EvaluateExpr, \
+        unique_id, \
+        std::type_index(typeid(ExprType)), \
+        evaluator \
+    )
+#define SEPT__REGISTER__EVALUATE_EXPR__EVALUATOR(ExprType, evaluator) \
+    SEPT__REGISTER__EVALUATE_EXPR__GIVE_ID__EVALUATOR(ExprType, ExprType, evaluator)
+#define SEPT__REGISTER__EVALUATE_EXPR__GIVE_ID(ExprType, unique_id) \
+    SEPT__REGISTER__EVALUATE_EXPR__GIVE_ID__EVALUATOR( \
+        ExprType, \
+        unique_id, \
+        [](sept::Data const &expr_data) -> sept::Data { \
+            auto const &expr = expr_data.cast<ExprType const &>(); \
+            return evaluate_expr(expr); \
+        } \
+    )
+#define SEPT__REGISTER__EVALUATE_EXPR(ExprType) \
+    SEPT__REGISTER__EVALUATE_EXPR__GIVE_ID(ExprType, ExprType)
+
+sept::Data evaluate_expr_data (sept::Data const &expr_data) {
+    // Look up the type pair in the evaluator map.
+    auto const &evaluator_map = lvd::static_association_singleton<EvaluateExpr>();
+    auto it = evaluator_map.find(std::type_index(expr_data.type()));
+    if (it == evaluator_map.end())
+//         throw std::runtime_error(LVD_FMT("Data type " << expr_data.type().name() << " is not registered in EvaluateExpr for use in evaluate_expr_data"));
+        // Evaluation is the identity.  TODO: Maybe don't do this, because it makes missing registrations harder to detect.
+        return expr_data;
+
+    return it->second(expr_data);
+}
 
 //
 // LOGICAL
@@ -655,47 +696,6 @@ SEPT__REGISTER__COMPARE__SINGLETON(NumericUnOp_c)
 SEPT__REGISTER__COMPARE__SINGLETON(NumericUnOpExpr_c)
 SEPT__REGISTER__COMPARE(NumericUnOpTerm_c, NumericUnOpTerm_c)
 } // end namespace sept
-
-//
-// StaticAssociation_t for evaluate
-//
-
-using EvaluateExprFunction = std::function<sept::Data(sept::Data const &expr)>;
-using DataEvaluateExprFunctionMap = std::unordered_map<std::type_index,EvaluateExprFunction>;
-LVD_STATIC_ASSOCIATION_DEFINE(EvaluateExpr, DataEvaluateExprFunctionMap)
-
-#define SEPT__REGISTER__EVALUATE_EXPR__GIVE_ID__EVALUATOR(ExprType, unique_id, evaluator) \
-    LVD_STATIC_ASSOCIATION_REGISTER( \
-        EvaluateExpr, \
-        unique_id, \
-        std::type_index(typeid(ExprType)), \
-        evaluator \
-    )
-#define SEPT__REGISTER__EVALUATE_EXPR__EVALUATOR(ExprType, evaluator) \
-    SEPT__REGISTER__EVALUATE_EXPR__GIVE_ID__EVALUATOR(ExprType, ExprType, evaluator)
-#define SEPT__REGISTER__EVALUATE_EXPR__GIVE_ID(ExprType, unique_id) \
-    SEPT__REGISTER__EVALUATE_EXPR__GIVE_ID__EVALUATOR( \
-        ExprType, \
-        unique_id, \
-        [](sept::Data const &expr_data) -> sept::Data { \
-            auto const &expr = expr_data.cast<ExprType const &>(); \
-            return evaluate_expr(expr); \
-        } \
-    )
-#define SEPT__REGISTER__EVALUATE_EXPR(ExprType) \
-    SEPT__REGISTER__EVALUATE_EXPR__GIVE_ID(ExprType, ExprType)
-
-sept::Data evaluate_expr_data (sept::Data const &expr_data) {
-    // Look up the type pair in the evaluator map.
-    auto const &evaluator_map = lvd::static_association_singleton<EvaluateExpr>();
-    auto it = evaluator_map.find(std::type_index(expr_data.type()));
-    if (it == evaluator_map.end())
-//         throw std::runtime_error(LVD_FMT("Data type " << expr_data.type().name() << " is not registered in EvaluateExpr for use in evaluate_expr_data"));
-        // Evaluation is the identity.  TODO: Maybe don't do this, because it makes missing registrations harder to detect.
-        return expr_data;
-
-    return it->second(expr_data);
-}
 
 bool evaluate_expr__as_LogicalBinOpExpr (sept::ArrayTerm_c const &a) {
     assert(inhabits(a, LogicalBinOpExpr));
