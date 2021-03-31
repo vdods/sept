@@ -36,7 +36,8 @@ class Data_t;
 // Forward declaration of print_data, with necessary forward declaration of Data.
 class Data;
 void print_data (std::ostream &out, Data const &data);
-Data element_of_data (Data const &param);
+Data element_of_data (Data const &container, Data const &param);
+Data construct_inhabitant_of_data (Data const &type_data, Data const &argument_data);
 
 // Data is the fundamental unit of currency in sept; this is how each data node is represented in C++.
 // TODO: Should this be called Data or Node?  Or what?
@@ -181,8 +182,10 @@ public:
     // TODO: Potentially include things like abstract_type(), serialize(), etc.
     //
 
-    // This calls element_of_data(param).
-    Data operator[] (Data const &param) const { return element_of_data(param); }
+    // This calls construct_inhabitant_of(*this, argument)
+    Data operator() (Data const &argument) const { return construct_inhabitant_of_data(*this, argument); }
+    // This calls element_of_data(*this, param).
+    Data operator[] (Data const &param) const { return element_of_data(*this, param); }
 };
 
 // TODO: Implement specialization for std::swap(Data &, Data &)
@@ -352,6 +355,7 @@ LVD_STATIC_ASSOCIATION_DEFINE(_Data_Inhabits, DataInhabitsPredicateMap)
     )
 #define SEPT__REGISTER__INHABITS__EVALUATOR(Value, Type, evaluator) \
     SEPT__REGISTER__INHABITS__GIVE_ID__EVALUATOR(Value, Type, __##Value##___##Type##__, evaluator)
+// TODO: Probably don't offer EVALUATOR_BODY version, just assume there will be an overload for inhabits(value, type)
 #define SEPT__REGISTER__INHABITS__GIVE_ID__EVALUATOR_BODY(Value, Type, unique_id, evaluator_body) \
     SEPT__REGISTER__INHABITS__GIVE_ID__EVALUATOR( \
         Value, \
@@ -369,6 +373,7 @@ LVD_STATIC_ASSOCIATION_DEFINE(_Data_Inhabits, DataInhabitsPredicateMap)
     SEPT__REGISTER__INHABITS__GIVE_ID__EVALUATOR_BODY(Value, Type, __##Value##___##Type##__, evaluator_body )
 #define SEPT__REGISTER__INHABITS__GIVE_ID(Value, Type, unique_id) \
     SEPT__REGISTER__INHABITS__GIVE_ID__EVALUATOR(Value, Type, unique_id, DataPredicateBinary{nullptr})
+// This one causes inhabits_data(value, type) (where decltype(value) == Value and decltype(type) == Type) to always return true.
 #define SEPT__REGISTER__INHABITS(Value, Type) \
     SEPT__REGISTER__INHABITS__EVALUATOR(Value, Type, DataPredicateBinary{nullptr})
 
@@ -554,6 +559,65 @@ inline Data element_of_data (Data const &container_data, Data const &param_data)
     }
 
     return it->second(container_data, param_data);
+}
+
+//
+// StaticAssociation_t for construct_inhabitant_of_data -- for using the operator() syntax
+//
+
+using ConstructInhabitantEvaluator = std::function<Data(Data const &type, Data const &argument)>;
+using DataConstructInhabitantOfEvaluatorMap = std::unordered_map<TypeIndexPair,ConstructInhabitantEvaluator>;
+LVD_STATIC_ASSOCIATION_DEFINE(_Data_ConstructInhabitantOf, DataConstructInhabitantOfEvaluatorMap)
+
+#define SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__GIVE_ID__EVALUATOR(Type, Argument, unique_id, evaluator) \
+    LVD_STATIC_ASSOCIATION_REGISTER( \
+        _Data_ConstructInhabitantOf, \
+        unique_id, \
+        TypeIndexPair{std::type_index(typeid(Type)), std::type_index(typeid(Argument))}, \
+        evaluator \
+    )
+#define SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__EVALUATOR(Type, Argument, evaluator) \
+    SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__GIVE_ID__EVALUATOR(Type, Argument, __##Type##___##Argument##__, evaluator)
+#define SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__GIVE_ID__EVALUATOR_BODY(Type, Argument, unique_id, evaluator_body) \
+    SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__GIVE_ID__EVALUATOR( \
+        Type, \
+        Argument, \
+        unique_id, \
+        [](Data const &type_data, Data const &argument_data) -> Data{ \
+            auto const &type = type_data.cast<Type const &>(); \
+            auto const &argument = argument_data.cast<Argument const &>(); \
+            std::ignore = type; \
+            std::ignore = argument; \
+            evaluator_body \
+        } \
+    )
+#define SEPT__REGISTER__CONSTRUCT_INHABITANT_OF___GIVE_ID(Type, Argument, unique_id) \
+    SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__GIVE_ID__EVALUATOR_BODY(Type, Argument, unique_id, return type(argument);)
+#define SEPT__REGISTER__CONSTRUCT_INHABITANT_OF(Type, Argument) \
+    SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__GIVE_ID__EVALUATOR_BODY(Type, Argument, __##Type##___##Argument##__, return type(argument);)
+#define SEPT__REGISTER__CONSTRUCT_INHABITANT_OF___GIVE_ID__ABSTRACT_TYPE(Type, Argument, unique_id) \
+    SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__GIVE_ID__EVALUATOR(Type, Argument, unique_id, nullptr)
+#define SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(Type, Argument) \
+    SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__GIVE_ID__EVALUATOR(Type, Argument, __##Type##___##Argument##__, nullptr)
+
+inline Data construct_inhabitant_of_data (Data const &type_data, Data const &argument_data) {
+    // Look up the type pair in the evaluator map.
+    auto const &evaluator_map = lvd::static_association_singleton<sept::_Data_ConstructInhabitantOf>();
+    auto it = evaluator_map.find(TypeIndexPair{std::type_index(type_data.type()), std::type_index(argument_data.type())});
+    if (it == evaluator_map.end())
+        throw std::runtime_error(LVD_FMT("no construct_inhabitant_of function registered for type " << type_data << " and argument " << argument_data));
+//         throw std::runtime_error(LVD_FMT("no construct_inhabitant_of function registered for type " << type_data.type().name() << " and argument " << argument_data.type().name()));
+
+    auto const &evaluator = it->second;
+    // TODO: Maybe use a kind of default implementation
+    if (evaluator == nullptr) {
+        // Just check if the argument is already an inhabitant.
+        if (!inhabits_data(argument_data, type_data))
+            throw std::runtime_error(LVD_FMT("abstract construct_inhabitant_of condition (that argument inhabits type) failed for type " << type_data << " and argument " << argument_data));
+        return argument_data;
+    } else {
+        return evaluator(type_data, argument_data);
+    }
 }
 
 //

@@ -149,6 +149,7 @@ if(BUILD_testlibsept)
         bin/test-libsept/req.hpp
         bin/test-libsept/test_abstract_type_of.cpp
         bin/test-libsept/test_Array.cpp
+        bin/test-libsept/test_construct_inhabitant_of.cpp
         bin/test-libsept/test_ctl.cpp
         bin/test-libsept/test_Data.cpp
         bin/test-libsept/test_element_of.cpp

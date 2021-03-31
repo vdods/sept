@@ -4,6 +4,8 @@
 
 #include <boost/core/demangle.hpp>
 #include <ios>
+// #include <lvd/call_site.hpp> // TEMP
+// #include <lvd/g_log.hpp> // TEMP
 #include "sept/ArrayTerm.hpp"
 #include "sept/ArrayType.hpp"
 #include "sept/ctl/ClearOutput.hpp"
@@ -39,8 +41,12 @@ bool inhabits_data (Data const &value_data, Data const &type_data) {
     auto const &predicate_map = lvd::static_association_singleton<sept::_Data_Inhabits>();
     auto it = predicate_map.find(TypeIndexPair{std::type_index(value_data.type()), std::type_index(type_data.type())});
     // If the (value,type) type pair isn't found, then it's assumed that value does not inhabit type.
-    if (it == predicate_map.end())
+    if (it == predicate_map.end()) {
+//         lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - returning false by convention because no predicate found for\n" << lvd::IndentGuard()
+//                    << LVD_REFLECT(value_data) << '\n'
+//                    << LVD_REFLECT(type_data) << '\n';
         return false;
+    }
 
     auto const &predicate = it->second;
     // If predicate == nullptr, then by convention, value always inhabits type, and it doesn't depend on any runtime value.

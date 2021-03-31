@@ -22,7 +22,7 @@ public:
     // instead of having concrete inhabitants.
 
     template <typename... Args_, typename = std::enable_if<!std::is_same_v<Term_,TermNone>,Term_>>
-    Term_ operator () (Args_&&... args) const {
+    Term_ operator() (Args_&&... args) const {
         static_assert(!std::is_same_v<Term_,TermNone>, "This type can't instantiate a Term");
         // TODO: Add type checking
         return Term_(std::forward<Args_>(args)...);
@@ -31,7 +31,7 @@ public:
     // TODO: Should there be a check as to if this type is an abstract type?  Or just let the
     // inhabitation check below suffice?
 //     template <typename T_>
-//     AbstractTerm_c operator [] (T_ &&term) const {
+//     AbstractTerm_c operator[] (T_ &&term) const {
 //         // TODO: Add type checking
 //         return AbstractTerm(SINGLETON, std::forward<T_>(term));
 //     }

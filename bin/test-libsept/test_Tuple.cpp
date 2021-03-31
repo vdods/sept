@@ -19,6 +19,12 @@ LVD_TEST_BEGIN(570__Tuple__0)
 
     // Test Tuple's instantiation.
     LVD_TEST_REQ_EQ(sept::Tuple(10,20,30), sept::TupleTerm_c(sept::DataVector{10,20,30}));
+
+    // Test abstract_type_of
+    LVD_TEST_REQ_EQ(
+        sept::abstract_type_of(sept::Tuple(sept::Uint32(123), sept::Float64(103.24), sept::True)),
+        sept::Tuple(sept::Uint32, sept::Float64, sept::TrueType)
+    );
 LVD_TEST_END
 
 LVD_TEST_BEGIN(570__Tuple__compare)
@@ -38,6 +44,6 @@ LVD_TEST_BEGIN(570__Tuple__inhabits)
     auto v0 = sept::Tuple(sept::Float64(12.3), sept::Uint32(3001), sept::Array(1,2,3));
 //     test_log << lvd::Log::trc() << LVD_REFLECT(v0) << '\n' << LVD_REFLECT(sept::tuple_type_of(v0)) << '\n';
     auto t0 = sept::Tuple(sept::Float64, sept::Uint32, sept::Array);
-    LVD_TEST_REQ_EQ(sept::tuple_type_of(v0), t0);
+    LVD_TEST_REQ_EQ(sept::abstract_type_of(v0), t0);
     LVD_TEST_REQ_IS_TRUE(sept::inhabits(v0, t0));
 LVD_TEST_END

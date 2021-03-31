@@ -63,4 +63,6 @@ SEPT__REGISTER__ELEMENT_OF__NONDATA(TupleTerm_c, uint16_t)
 SEPT__REGISTER__ELEMENT_OF__NONDATA(TupleTerm_c, uint32_t)
 SEPT__REGISTER__ELEMENT_OF__NONDATA(TupleTerm_c, uint64_t)
 
+SEPT__REGISTER__CONSTRUCT_INHABITANT_OF(TupleTerm_c, TupleTerm_c)
+
 } // end namespace sept
