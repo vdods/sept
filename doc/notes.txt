@@ -4881,6 +4881,7 @@ Structured Expression Project Toolkit Design Document
         x   eq
         x   compare (maybe rename this to something more specific like lexiographical_compare)
         x   inhabits
+        x   construct_inhabitant_of
         x   abstract_type_of
         -   element_type_of
         -   domain_of

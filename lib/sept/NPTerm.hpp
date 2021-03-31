@@ -185,6 +185,7 @@ class False_c;
 // are not instances of BoolTerm_c in a concrete sense, but they are inhabitants of Bool.  However,
 // all the expected constructors, conversion operators, and comparators exist.
 // NOTE: This is a ParametricTerm
+// TODO: Probably deprecate BoolTerm_c in favor of just plain bool (which seems to be working).
 class BoolTerm_c {
 public:
 
