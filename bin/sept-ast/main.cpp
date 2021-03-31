@@ -257,15 +257,17 @@ Expr_c const Expr;
 LogicalExpr_c const LogicalExpr;
 NumericExpr_c const NumericExpr;
 
-sept::UnionTerm_c const LogicalOp{LogicalBinOp, LogicalUnOp};
-sept::UnionTerm_c const Logical{LogicalExpr, LogicalOp};
-sept::UnionTerm_c const NumericOp{NumericBinOp, NumericUnOp};
-sept::UnionTerm_c const Numeric{NumericExpr, NumericOp};
-
 // These are effectively structural subtypes (indistinguishable from sept::Bool and sept::Float64 respectively)
-sept::Bool_c const LogicalValue;
+// sept::Bool_c const LogicalValue;
+sept::UnionTerm_c const LogicalValue{sept::Bool, sept::TrueType, sept::FalseType};
 sept::Float64_c const NumericValue;
+sept::UnionTerm_c const Value{LogicalValue, NumericValue};
 // TODO: Could define variables for each as well
+
+sept::UnionTerm_c const LogicalOp{LogicalBinOp, LogicalUnOp};
+sept::UnionTerm_c const Logical{LogicalExpr, LogicalOp, LogicalValue};
+sept::UnionTerm_c const NumericOp{NumericBinOp, NumericUnOp};
+sept::UnionTerm_c const Numeric{NumericExpr, NumericOp, NumericValue};
 
 // These are effectively structural subtypes (indistinguishable from the specific tuple terms)
 sept::TupleTerm_c const BinOpExpr{Expr, BinOp, Expr};
@@ -495,9 +497,13 @@ SEPT__REGISTER__ABSTRACT_TYPE_OF(NumericUnOp_c)
 SEPT__REGISTER__ABSTRACT_TYPE_OF(NumericExpr_c)
 
 SEPT__REGISTER__INHABITS__NONDATA__UNCONDITIONAL(bool,          Expr_c)
+SEPT__REGISTER__INHABITS__NONDATA__UNCONDITIONAL(True_c,        Expr_c)
+SEPT__REGISTER__INHABITS__NONDATA__UNCONDITIONAL(False_c,       Expr_c)
 SEPT__REGISTER__INHABITS__NONDATA__UNCONDITIONAL(double,        Expr_c)
 SEPT__REGISTER__INHABITS__NONDATA(TupleTerm_c,   Expr_c)
 SEPT__REGISTER__INHABITS__NONDATA__UNCONDITIONAL(bool,          LogicalExpr_c)
+SEPT__REGISTER__INHABITS__NONDATA__UNCONDITIONAL(True_c,        LogicalExpr_c)
+SEPT__REGISTER__INHABITS__NONDATA__UNCONDITIONAL(False_c,        LogicalExpr_c)
 SEPT__REGISTER__INHABITS__NONDATA(TupleTerm_c,   LogicalExpr_c)
 SEPT__REGISTER__INHABITS__NONDATA__UNCONDITIONAL(double,        NumericExpr_c)
 SEPT__REGISTER__INHABITS__NONDATA(TupleTerm_c,   NumericExpr_c)
@@ -517,18 +523,24 @@ SEPT__REGISTER__COMPARE__SINGLETON(NumericUnOp_c)
 SEPT__REGISTER__COMPARE__SINGLETON(NumericExpr_c)
 SEPT__REGISTER__COMPARE(ASTNPTerm, ASTNPTerm)
 
+SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(Expr_c,              bool)
+SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(Expr_c,              True_c)
+SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(Expr_c,              False_c)
+SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(Expr_c,              double)
 SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(LogicalBinOp_c,      ASTNPTerm)
+SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(LogicalExpr_c,       bool)
+SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(LogicalExpr_c,       True_c)
+SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(LogicalExpr_c,       False_c)
+SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(LogicalExpr_c,       TupleTerm_c)
 SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(LogicalUnOp_c,       ASTNPTerm)
 SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(NumericBinOp_c,      ASTNPTerm)
-SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(NumericUnOp_c,       ASTNPTerm)
-SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(Expr_c,              bool)
-SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(LogicalExpr_c,       bool)
-SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(Expr_c,              double)
 SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(NumericExpr_c,       double)
-SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(LogicalExpr_c,       TupleTerm_c)
 SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(NumericExpr_c,       TupleTerm_c)
+SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(NumericUnOp_c,       ASTNPTerm)
 
 SEPT__REGISTER__EVALUATE_EXPR(bool)
+SEPT__REGISTER__EVALUATE_EXPR(True_c)
+SEPT__REGISTER__EVALUATE_EXPR(False_c)
 SEPT__REGISTER__EVALUATE_EXPR(double)
 SEPT__REGISTER__EVALUATE_EXPR(TupleTerm_c)
 

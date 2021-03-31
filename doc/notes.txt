@@ -5164,18 +5164,21 @@ Structured Expression Project Toolkit Design Document
     x   BinOp = Union(LogicalBinOp, NumericBinOp)
     -   Expr = Union(BinOpExpr, CondExpr, ParenExpr, UnOpExpr)
     x   Logical = Union(LogicalExpr, LogicalOp)
-    -   LogicalExpr = Union(bool, FalseType, LogicalBinOpExpr, LogicalCondExpr, LogicalParenExpr, LogicalUnOpExpr, TrueType)
+    -   LogicalExpr = Union(LogicalBinOpExpr, LogicalCondExpr, LogicalParenExpr, LogicalUnOpExpr, LogicalValue)
     x   LogicalOp = Union(LogicalBinOp, LogicalUnOp)
+    x   LogicalValue = Union(Bool, FalseType, TrueType)
     x   Numeric = Union(NumericExpr, NumericOp)
     -   NumericExpr = Union(double, NumericBinOpExpr, NumericCondExpr, NumericParenExpr, NumericUnOpExpr)
     x   NumericOp = Union(NumericBinOp, NumericUnOp)
+    x   NumericValue = Float64
+    x   Value = Union(LogicalValue, NumericValue)
     x   UnOp = Union(LogicalUnOp, NumericUnOp)
     NOTE: Could potentially implement LogicalXyz as Intersection(Logical,Xyz), though those types
     would need to be defined in a more fundamental way so there's no cyclic definition.
 
-    This particular usage of Union is currently problematic because it's a recursively
+    Currently this particular usage of Union is currently problematic because it's a recursively
     defined relationship, and therefore requires some mechanism for indirection, such as
-    symbolic references.
+    symbolic references or pointer-like references or actual pointers.
 
     Question: How to maintain the C++-typed versions of inhabits(x, T) for when T is a Union?
     Certainly the inhabits_data(x, T) case can be taken care of.
