@@ -34,19 +34,6 @@ TupleTerm_c deserialize_value_TupleTerm (Data &&abstract_type, std::istream &in)
     return TupleTerm_c(std::move(elements));
 }
 
-// Do fancy "from the end" indexing for negative numbers.  An index of -1 will be the last element
-// and an index of -t.size() will be the first element.  However, an index of -t.size()-1 will
-// throw std::out_of_range.
-Data element_of (TupleTerm_c const &t, int8_t index) { return index >= 0 ? t[index] : t[t.size()+size_t(index)]; }
-Data element_of (TupleTerm_c const &t, int16_t index) { return index >= 0 ? t[index] : t[t.size()+size_t(index)]; }
-Data element_of (TupleTerm_c const &t, int32_t index) { return index >= 0 ? t[index] : t[t.size()+size_t(index)]; }
-Data element_of (TupleTerm_c const &t, int64_t index) { return index >= 0 ? t[index] : t[t.size()+size_t(index)]; }
-
-Data element_of (TupleTerm_c const &t, uint8_t index) { return t[index]; }
-Data element_of (TupleTerm_c const &t, uint16_t index) { return t[index]; }
-Data element_of (TupleTerm_c const &t, uint32_t index) { return t[index]; }
-Data element_of (TupleTerm_c const &t, uint64_t index) { return t[index]; }
-
 //
 // Registrations for Data functions
 //

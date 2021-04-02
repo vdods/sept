@@ -18,11 +18,54 @@
 #include "sept/OrderedMapTerm.hpp"
 #include "sept/OrderedMapType.hpp"
 #include "sept/Placeholder.hpp"
+#include "sept/RefTerm.hpp"
 #include "sept/Tuple.hpp"
 #include "sept/Union.hpp"
 #include <sstream> // Needed by LVD_FMT
 
 namespace sept {
+
+Data const &Data::deref_once () const & {
+    return as_ref().referenced_data();
+}
+
+Data &Data::deref_once () & {
+    return as_ref().referenced_data();
+}
+
+Data Data::deref_once () && {
+    return std::move(as_ref().referenced_data());
+}
+
+void print_data (std::ostream &out, Data const &data) {
+    // First check if it's a RefTerm_c.
+    if (data.is_ref()) {
+        out << "Ref(...)";
+        return;
+    }
+
+    // Look up the type in the predicate map.
+    auto const &data_printing_function_map = lvd::static_association_singleton<sept::_Data_Print>();
+    auto it = data_printing_function_map.find(std::type_index(data.type()));
+    if (it == data_printing_function_map.end())
+        throw std::runtime_error(LVD_FMT("Data type " << data.type().name() << " not registered in _Data_Print for use in print_data"));
+
+    it->second(out, data);
+}
+
+bool eq_data (Data const &lhs, Data const &rhs) {
+    // If the types differ, they can't be equal.
+    if (lhs.type() != rhs.type())
+        return false;
+
+    // Otherwise look up the type in the predicate map.
+    auto const &data_operator_eq_predicate_map = lvd::static_association_singleton<sept::_Data_Eq>();
+    auto it = data_operator_eq_predicate_map.find(std::type_index(lhs.type()));
+    if (it == data_operator_eq_predicate_map.end())
+        throw std::runtime_error(LVD_FMT("Data type " << lhs.type().name() << " not registered in _Data_Eq for use in eq_data"));
+
+    return it->second(lhs, rhs);
+}
 
 Data abstract_type_of_data (Data const &value_data) {
     // Look up the type in the evaluator map.
@@ -47,7 +90,15 @@ bool inhabits_data (Data const &value_data, Data const &type_data) {
 //         lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - returning false by convention because no predicate found for\n" << lvd::IndentGuard()
 //                    << LVD_REFLECT(value_data) << '\n'
 //                    << LVD_REFLECT(type_data) << '\n';
-        return false;
+        // If the specific type didn't resolve, then check where the value type is Data.
+        it = predicate_map.find(TypeIndexPair{std::type_index(typeid(Data)), std::type_index(type_data.type())});
+        if (it == predicate_map.end()) {
+//             lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE()
+//                        << " - returning false by convention because no predicate found for\n" << lvd::IndentGuard()
+//                        << LVD_REFLECT(value_data) << '\n'
+//                        << LVD_REFLECT(type_data) << '\n';
+            return false;
+        }
     }
 
     auto const &predicate = it->second;
@@ -227,6 +278,45 @@ Data deserialize_data (std::istream &in) {
         case SerializedTopLevelCode::NON_PARAMETRIC_TERM: return deserialize_NonParametricTerm(in);
         case SerializedTopLevelCode::PARAMETRIC_TERM: return deserialize_ParametricTerm(in);
         default: throw std::runtime_error(LVD_FMT("invalid SerializedTopLevelCode " << int(stlc)));
+    }
+}
+
+Data element_of_data (Data const &container_data, Data const &param_data) {
+    // Look up the type pair in the evaluator map.
+    auto const &evaluator_map = lvd::static_association_singleton<sept::ElementOfData>();
+    auto it = evaluator_map.find(TypeIndexPair{std::type_index(container_data.type()), std::type_index(param_data.type())});
+    if (it == evaluator_map.end()) {
+        // TEMP HACK: Check if there's an evaluator registered that accepts Data as its param type.
+        it = evaluator_map.find(TypeIndexPair{std::type_index(container_data.type()), std::type_index(typeid(Data))});
+        if (it == evaluator_map.end())
+            throw std::runtime_error(LVD_FMT("Data type pairs (" << container_data.type().name() << ", " << param_data.type().name() << ") and (" << container_data.type().name() << ", " << std::type_index(typeid(Data)).name() << ") are both not registered in ElementOfData for use in element_of_data"));
+    }
+
+    return it->second(container_data, param_data);
+}
+
+Data construct_inhabitant_of_data (Data const &type_data, Data const &argument_data) {
+    // Look up the type pair in the evaluator map.
+    auto const &evaluator_map = lvd::static_association_singleton<sept::_Data_ConstructInhabitantOf>();
+    auto it = evaluator_map.find(TypeIndexPair{std::type_index(type_data.type()), std::type_index(argument_data.type())});
+    if (it == evaluator_map.end()) {
+        // This is a bit of a hack, but this should account for the inhabitant being Data itself.
+        it = evaluator_map.find(TypeIndexPair{std::type_index(type_data.type()), std::type_index(typeid(Data))});
+        if (it == evaluator_map.end()) {
+//             throw std::runtime_error(LVD_FMT("no construct_inhabitant_of function registered for type " << type_data << " and argument " << argument_data));
+            throw std::runtime_error(LVD_FMT("no construct_inhabitant_of function registered for type " << type_data.type().name() << " and argument " << argument_data.type().name() << " or Data"));
+        }
+    }
+
+    auto const &evaluator = it->second;
+    // TODO: Maybe use a kind of default implementation
+    if (evaluator == nullptr) {
+        // Just check if the argument is already an inhabitant.
+        if (!inhabits_data(argument_data, type_data))
+            throw std::runtime_error(LVD_FMT("abstract construct_inhabitant_of condition (that argument inhabits type) failed for type " << type_data << " and argument " << argument_data));
+        return argument_data;
+    } else {
+        return evaluator(type_data, argument_data);
     }
 }
 

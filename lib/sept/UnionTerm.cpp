@@ -55,6 +55,8 @@ SEPT__REGISTER__PRINT(UnionTerm_c)
 
 SEPT__REGISTER__EQ(UnionTerm_c)
 
+SEPT__REGISTER__INHABITS__DATA(Data, UnionTerm_c)
+
 SEPT__REGISTER__COMPARE(UnionTerm_c, UnionTerm_c)
 
 SEPT__REGISTER__SERIALIZE(UnionTerm_c)

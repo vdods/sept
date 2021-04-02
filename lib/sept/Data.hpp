@@ -11,6 +11,7 @@
 #include <lvd/StaticAssociation_t.hpp>
 #include "sept/core.hpp"
 #include "sept/hash.hpp"
+#include "sept/RefTerm.hpp"
 #include <typeindex>
 #include <type_traits>
 
@@ -114,60 +115,186 @@ public:
         return *this;
     }
 
-    // Returns true iff the given std::any_cast<T_> would succeed (this uses the pointer-semantic version of std::any_cast)
-    template <typename T_>
-    bool can_cast () const & noexcept {
-        return std::any_cast<T_>(static_cast<std::any const *>(this)) != nullptr;
+    // Override std::any::has_value in order to deref first.
+    bool has_value () const { return deref().raw__has_value(); }
+    // Override std::any::type in order to deref first.
+    std::type_info const &type () const { return deref().raw__type(); }
+
+    // This calls std::any::has_value
+    bool raw__has_value () const { return std::any::has_value(); } // { return static_cast<std::any const &>(*this).has_value(); }
+    // This calls std::any::type
+    std::type_info const &raw__type () const { return std::any::type(); } // { return static_cast<std::any const &>(*this).type(); }
+
+    // This dereferences all wrapped RefTerm_c levels.  I.e. if this data is RefTerm_c, then it will call
+    // deref() on it and return.  Otherwise it will return *this.
+    Data const &deref () const & {
+        return is_ref() ? deref_once().deref() : *this;
     }
-    // Returns true iff the given std::any_cast<T_> would succeed (this uses the pointer-semantic version of std::any_cast)
-    template <typename T_>
-    bool can_cast () & noexcept {
-        return std::any_cast<T_>(static_cast<std::any *>(this)) != nullptr;
+    // This dereferences all wrapped RefTerm_c levels.  I.e. if this data is RefTerm_c, then it will call
+    // deref() on it and return.  Otherwise it will return *this.
+    Data &deref () & {
+        return is_ref() ? deref_once().deref() : *this;
     }
-    // Returns true iff the given std::any_cast<T_> would succeed (this uses the pointer-semantic version of std::any_cast)
-    template <typename T_>
-    bool can_cast () && noexcept {
-        // Not 100% sure if this can_cast version is necessary or even correct.
-        return std::any_cast<T_>(static_cast<std::any *>(this)) != nullptr;
+    // This dereferences all wrapped RefTerm_c levels.  I.e. if this data is RefTerm_c, then it will call
+    // deref() on it and return.  Otherwise it will return *this.
+    Data deref () && {
+        return is_ref() ? std::move(deref_once().deref()) : std::move(*this);
     }
 
-    // Essentially performs std::any_cast<T_> on this object, except with nicer syntax.
+    // For determining if this Data contains a RefTerm_c value.
+    bool is_ref () const noexcept {
+        return raw__can_cast<RefTerm_c>();
+    }
+    // For accessing the underlying RefTerm_c, if is_ref() returns true.  Otherwise will throw.
+    RefTerm_c const &as_ref () const & {
+        return raw__cast<RefTerm_c const &>();
+    }
+    // For accessing the underlying RefTerm_c, if is_ref() returns true.  Otherwise will throw.
+    RefTerm_c &as_ref () & {
+        return raw__cast<RefTerm_c &>();
+    }
+    // For accessing the underlying RefTerm_c, if is_ref() returns true.  Otherwise will throw.
+    RefTerm_c as_ref () && {
+        return std::move(raw__cast<RefTerm_c &>());
+    }
+
+private:
+
+    // Returns the referenced_data if this data is RefTerm_c (recursively).  Otherwise will throw.
+    Data const &deref_once () const &;
+    // Returns the referenced_data if this data is RefTerm_c (recursively).  Otherwise will throw.
+    Data &deref_once () &;
+    // Returns the referenced_data if this data is RefTerm_c (recursively).  Otherwise will throw.
+    Data deref_once () &&;
+
+public:
+
+    //
+    // Cast methods (which implicitly and automatically dereference.
+    //
+
+    // Returns true iff the given std::any_cast<T_> would succeed (this uses the pointer-semantic version of std::any_cast).
+    // T_ should not be a reference type.  It automatically handles dereferencing if this data is RefTerm_c.
     template <typename T_>
-    T_ cast () const & { // Using auto for the return type is a copout, but I don't care!
-        return std::any_cast<T_>(static_cast<std::any const &>(*this));
+    bool can_cast () const & noexcept {
+        static_assert(!std::is_reference_v<T_>, "T_ must not be a reference type");
+        return deref().raw__can_cast<T_>();
+    }
+    // Returns true iff the given std::any_cast<T_> would succeed (this uses the pointer-semantic version of std::any_cast)
+    // T_ should not be a reference type.  It automatically handles dereferencing if this data is RefTerm_c.
+    template <typename T_>
+    bool can_cast () & noexcept {
+        static_assert(!std::is_reference_v<T_>, "T_ must not be a reference type");
+        return deref().raw__can_cast<T_>();
+    }
+//     // Returns true iff the given std::any_cast<T_> would succeed (this uses the pointer-semantic version of std::any_cast)
+//     // T_ should not be a reference type.  It automatically handles dereferencing if this data is RefTerm_c.
+//     template <typename T_>
+//     bool can_cast () && noexcept {
+//         static_assert(!std::is_reference_v<T_>, "T_ must not be a reference type");
+//         // Not 100% sure if this can_cast version is necessary or even correct.
+//         return deref().raw__can_cast<T_>();
+//     }
+
+    // Essentially performs std::any_cast<T_> on this object, except with nicer syntax.
+    // It automatically handles dereferencing if this data is RefTerm_c.
+    // TODO: Maybe use std::decay_t and then return `std::decay_t<T_> const &`
+    template <typename T_>
+    T_ cast () const & {
+        return deref().raw__cast<T_>();
     }
     // Essentially performs std::any_cast<T_> on this object, except with nicer syntax.
+    // It automatically handles dereferencing if this data is RefTerm_c.
+    // TODO: Maybe use std::decay_t and then return `std::decay_t<T_> &`
     template <typename T_>
-    T_ cast () & { // Using auto for the return type is a copout, but I don't care!
-        return std::any_cast<T_>(static_cast<std::any &>(*this));
+    T_ cast () & {
+        return deref().raw__cast<T_>();
     }
     // Essentially performs std::any_cast<T_> on this object, except with nicer syntax.
+    // It automatically handles dereferencing if this data is RefTerm_c.
+    // TODO: Maybe use std::decay_t and then return `std::decay_t<T_> &&`
     template <typename T_>
-    T_ cast () && { // Using auto for the return type is a copout, but I don't care!
-        return std::any_cast<T_>(static_cast<std::any &&>(*this));
+    T_ cast () && {
+        return deref().raw__cast<T_>();
     }
 
     // This is a run-time type assertion that this Data actually holds T_.  This call then just type-casts this
     // to the more-specific type Data_t<T_> const &.
     template <typename T_>
     Data_t<T_> const &as () const & {
+        return deref().raw__as<T_>();
+    }
+    // This is a run-time type assertion that this Data actually holds T_.  This call then just type-casts this
+    // to the more-specific type Data_t<T_> &.
+    template <typename T_>
+    Data_t<T_> &as () & {
+        return deref().raw__as<T_>();
+    }
+//     // This is a run-time type assertion that this Data actually holds T_.  This call then just type-casts this
+//     // to the more-specific type Data_t<T_> &&.
+//     template <typename T_>
+//     Data_t<T_> &&as () && {
+//         return deref().raw__as<T_>();
+//     }
+
+    //
+    // Original "raw" versions of can_cast, cast, as -- these don't automatically dereference RefTerm_c.
+    //
+
+    // Returns true iff the given std::any_cast<T_> would succeed (this uses the pointer-semantic version of std::any_cast)
+    template <typename T_>
+    bool raw__can_cast () const & noexcept {
+        return std::any_cast<T_>(static_cast<std::any const *>(this)) != nullptr;
+    }
+    // Returns true iff the given std::any_cast<T_> would succeed (this uses the pointer-semantic version of std::any_cast)
+    template <typename T_>
+    bool raw__can_cast () & noexcept {
+        return std::any_cast<T_>(static_cast<std::any *>(this)) != nullptr;
+    }
+//     // Returns true iff the given std::any_cast<T_> would succeed (this uses the pointer-semantic version of std::any_cast)
+//     template <typename T_>
+//     bool raw__can_cast () && noexcept {
+//         // Not 100% sure if this raw__can_cast version is necessary or even correct.
+//         return std::any_cast<T_>(static_cast<std::any *>(this)) != nullptr;
+//     }
+
+    // Essentially performs std::any_cast<T_> on this object, except with nicer syntax.
+    template <typename T_>
+    T_ raw__cast () const & {
+        return std::any_cast<T_>(static_cast<std::any const &>(*this));
+    }
+    // Essentially performs std::any_cast<T_> on this object, except with nicer syntax.
+    template <typename T_>
+    T_ raw__cast () & {
+        return std::any_cast<T_>(static_cast<std::any &>(*this));
+    }
+    // Essentially performs std::any_cast<T_> on this object, except with nicer syntax.
+    template <typename T_>
+    T_ raw__cast () && {
+        return std::move(std::any_cast<T_>(static_cast<std::any &>(*this)));
+    }
+
+    // This is a run-time type assertion that this Data actually holds T_.  This call then just type-casts this
+    // to the more-specific type Data_t<T_> const &.
+    template <typename T_>
+    Data_t<T_> const &raw__as () const & {
         std::any_cast<T_>(static_cast<std::any const &>(*this)); // This will throw std::bad_any_cast if the cast is invalid.
         return static_cast<Data_t<T_> const &>(*this);
     }
     // This is a run-time type assertion that this Data actually holds T_.  This call then just type-casts this
     // to the more-specific type Data_t<T_> &.
     template <typename T_>
-    Data_t<T_> &as () & {
+    Data_t<T_> &raw__as () & {
         std::any_cast<T_>(static_cast<std::any &>(*this)); // This will throw std::bad_any_cast if the cast is invalid.
         return static_cast<Data_t<T_>&>(*this);
     }
-    // This is a run-time type assertion that this Data actually holds T_.  This call then just type-casts this
-    // to the more-specific type Data_t<T_> &&.
-    template <typename T_>
-    Data_t<T_> &&as () && {
-        std::any_cast<T_>(static_cast<std::any &&>(*this)); // This will throw std::bad_any_cast if the cast is invalid.
-        return static_cast<Data_t<T_>&&>(*this);
-    }
+//     // This is a run-time type assertion that this Data actually holds T_.  This call then just type-casts this
+//     // to the more-specific type Data_t<T_> &&.
+//     template <typename T_>
+//     Data_t<T_> &&raw__as () && {
+//         std::any_cast<T_>(static_cast<std::any &&>(*this)); // This will throw std::bad_any_cast if the cast is invalid.
+//         return static_cast<Data_t<T_>&&>(*this);
+//     }
 
     // Convenient way to get an overload for operator<< on std::ostream.
     operator lvd::OstreamDelegate () const {
@@ -216,15 +343,7 @@ LVD_STATIC_ASSOCIATION_DEFINE(_Data_Print, DataPrintFunctionMap)
 #define SEPT__REGISTER__PRINT(Type) \
     SEPT__REGISTER__PRINT__GIVE_ID(Type, Type)
 
-inline void print_data (std::ostream &out, Data const &data) {
-    // Look up the type in the predicate map.
-    auto const &data_printing_function_map = lvd::static_association_singleton<sept::_Data_Print>();
-    auto it = data_printing_function_map.find(std::type_index(data.type()));
-    if (it == data_printing_function_map.end())
-        throw std::runtime_error(LVD_FMT("Data type " << data.type().name() << " not registered in _Data_Print for use in print_data"));
-
-    it->second(out, data);
-}
+void print_data (std::ostream &out, Data const &data);
 
 //
 // StaticAssociation_t for eq_data
@@ -250,19 +369,7 @@ LVD_STATIC_ASSOCIATION_DEFINE(_Data_Eq, DataEqPredicateMap)
 
 // Only allow definitions of equality where the data are the same type.  This means that for values of
 // different types to be equal (i.e. different int sizes), their conversion has to be explicit.
-inline bool eq_data (Data const &lhs, Data const &rhs) {
-    // If the types differ, they can't be equal.
-    if (lhs.type() != rhs.type())
-        return false;
-
-    // Otherwise look up the type in the predicate map.
-    auto const &data_operator_eq_predicate_map = lvd::static_association_singleton<sept::_Data_Eq>();
-    auto it = data_operator_eq_predicate_map.find(std::type_index(lhs.type()));
-    if (it == data_operator_eq_predicate_map.end())
-        throw std::runtime_error(LVD_FMT("Data type " << lhs.type().name() << " not registered in _Data_Eq for use in eq_data"));
-
-    return it->second(lhs, rhs);
-}
+bool eq_data (Data const &lhs, Data const &rhs);
 
 // TODO: Maybe use an explicitly named equals function instead, otherwise the fact that type can be converted into
 // Data greatly interferes with finding legitimately missing overloads for operator== for specific types.
@@ -378,7 +485,7 @@ LVD_STATIC_ASSOCIATION_DEFINE(_Data_Inhabits, DataInhabitsPredicateMap)
         Value, \
         Type, \
         unique_id, \
-        [](Data const &value_data, Data const &type_data) -> Data { \
+        [](Data const &value_data, Data const &type_data) -> bool { \
             auto const &type = type_data.cast<Type const &>(); \
             std::ignore = type; \
             static_assert(std::is_same_v<Value,Data>); \
@@ -568,19 +675,7 @@ LVD_STATIC_ASSOCIATION_DEFINE(ElementOfData, DataElementOfFunctionMap)
 #define SEPT__REGISTER__ELEMENT_OF__DATA(ContainerType, ParamType) \
     SEPT__REGISTER__ELEMENT_OF__GIVE_ID__DATA(ContainerType, ParamType, __##ContainerType##___##ParamType##__)
 
-inline Data element_of_data (Data const &container_data, Data const &param_data) {
-    // Look up the type pair in the evaluator map.
-    auto const &evaluator_map = lvd::static_association_singleton<sept::ElementOfData>();
-    auto it = evaluator_map.find(TypeIndexPair{std::type_index(container_data.type()), std::type_index(param_data.type())});
-    if (it == evaluator_map.end()) {
-        // TEMP HACK: Check if there's an evaluator registered that accepts Data as its param type.
-        it = evaluator_map.find(TypeIndexPair{std::type_index(container_data.type()), std::type_index(typeid(Data))});
-        if (it == evaluator_map.end())
-            throw std::runtime_error(LVD_FMT("Data type pairs (" << container_data.type().name() << ", " << param_data.type().name() << ") and (" << container_data.type().name() << ", " << std::type_index(typeid(Data)).name() << ") are both not registered in ElementOfData for use in element_of_data"));
-    }
-
-    return it->second(container_data, param_data);
-}
+Data element_of_data (Data const &container_data, Data const &param_data);
 
 //
 // StaticAssociation_t for construct_inhabitant_of_data -- for using the operator() syntax
@@ -622,25 +717,7 @@ LVD_STATIC_ASSOCIATION_DEFINE(_Data_ConstructInhabitantOf, DataConstructInhabita
 #define SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(Type, Argument) \
     SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__GIVE_ID__EVALUATOR(Type, Argument, __##Type##___##Argument##__, nullptr)
 
-inline Data construct_inhabitant_of_data (Data const &type_data, Data const &argument_data) {
-    // Look up the type pair in the evaluator map.
-    auto const &evaluator_map = lvd::static_association_singleton<sept::_Data_ConstructInhabitantOf>();
-    auto it = evaluator_map.find(TypeIndexPair{std::type_index(type_data.type()), std::type_index(argument_data.type())});
-    if (it == evaluator_map.end())
-        throw std::runtime_error(LVD_FMT("no construct_inhabitant_of function registered for type " << type_data << " and argument " << argument_data));
-//         throw std::runtime_error(LVD_FMT("no construct_inhabitant_of function registered for type " << type_data.type().name() << " and argument " << argument_data.type().name()));
-
-    auto const &evaluator = it->second;
-    // TODO: Maybe use a kind of default implementation
-    if (evaluator == nullptr) {
-        // Just check if the argument is already an inhabitant.
-        if (!inhabits_data(argument_data, type_data))
-            throw std::runtime_error(LVD_FMT("abstract construct_inhabitant_of condition (that argument inhabits type) failed for type " << type_data << " and argument " << argument_data));
-        return argument_data;
-    } else {
-        return evaluator(type_data, argument_data);
-    }
-}
+Data construct_inhabitant_of_data (Data const &type_data, Data const &argument_data);
 
 //
 // Other stuff

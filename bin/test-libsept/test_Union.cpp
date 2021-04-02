@@ -5,6 +5,7 @@
 #include "sept/Union.hpp"
 #include "sept/UnionTerm.hpp"
 #include "sept/NPType.hpp"
+#include "sept/Ref.hpp"
 
 LVD_TEST_BEGIN(571__Union__0)
     // First, compare exact identity of the singletons involved.
@@ -57,4 +58,19 @@ LVD_TEST_BEGIN(571__Union__inhabits)
 
 //     // TODO: Figure out if this really makes sense.
 //     LVD_TEST_REQ_IS_TRUE(sept::inhabits(Union_Float32_Bool, Union_Float32Type_BoolType));
+LVD_TEST_END
+
+LVD_TEST_BEGIN(571__Union__inhabits_via_Ref)
+    auto u = sept::Union(sept::Float32, sept::Uint64);
+    test_log << lvd::Log::trc() << LVD_REFLECT(u) << '\n';
+    auto du = sept::Data(u);
+    test_log << lvd::Log::trc() << LVD_REFLECT(du) << '\n';
+    auto rdu = sept::Ref(&du);
+    test_log << lvd::Log::trc() << LVD_REFLECT(rdu) << '\n';
+    auto drdu = sept::Data(rdu);
+
+    LVD_TEST_REQ_IS_TRUE(sept::inhabits(sept::Uint64(10), u));
+    LVD_TEST_REQ_IS_TRUE(sept::inhabits_data(sept::Uint64(10), du));
+    LVD_TEST_REQ_IS_TRUE(sept::inhabits_data(sept::Uint64(10), rdu));
+    LVD_TEST_REQ_IS_TRUE(sept::inhabits_data(sept::Uint64(10), drdu));
 LVD_TEST_END

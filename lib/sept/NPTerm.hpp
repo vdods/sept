@@ -100,6 +100,9 @@ enum class NPTerm : NPTermRepr {
     TUPLE_TYPE, // Inhabitant is Tuple.
     TUPLE, // Inhabitants have the form Tuple(...) -- implemented by class TupleTerm_c.
 
+    REF_TYPE, // Inhabitant is Ref
+    REF, // Inhabitants have the form Ref(&d), where d is Data -- inhabitants are implemented by class RefTerm_c
+
     PLACEHOLDER_TYPE,
     PLACEHOLDER,
 

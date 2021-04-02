@@ -23,9 +23,17 @@ public:
 
     UnionTerm_c () = default;
     UnionTerm_c (UnionTerm_c const &other) = default;
+    // This is needed to ensure that UnionTerm_c& gets passed to this constructor, and not the
+    // variadic template below (which would enter an infinite cycle of Data (aka std::any) construction).
+    UnionTerm_c (UnionTerm_c &other) : UnionTerm_c(static_cast<UnionTerm_c const &>(other)) { }
     UnionTerm_c (UnionTerm_c &&other) = default;
     explicit UnionTerm_c (DataVector const &elements) : ParentClass(elements) { }
+    // This is needed to ensure that UnionTerm_c& gets passed to this constructor, and not the
+    // variadic template below (which would enter an infinite cycle of Data (aka std::any) construction).
+    explicit UnionTerm_c (DataVector &elements) : UnionTerm_c(static_cast<DataVector const &>(elements)) { }
     explicit UnionTerm_c (DataVector &&elements) : ParentClass(std::move(elements)) { }
+    // Ideally we would just use std::enable_if_t to avoid the need for the non-const reference "copy constructors"
+    // above, but hey.
     template <typename... Args_>
     explicit UnionTerm_c (Args_&&... args)
         :   ParentClass(make_DataVector(std::forward<Args_>(args)...))
@@ -41,6 +49,7 @@ public:
             throw std::runtime_error(LVD_FMT("argument " << argument << " does not inhabit abstract type " << *this));
         return std::forward<Argument_>(argument);
     }
+    // TODO: Make a Data-accepting one, and then ensure the above one disallows Argument_==Data
 
     operator lvd::OstreamDelegate () const {
         return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
@@ -52,8 +61,8 @@ public:
 // // This is used to construct UnionTerm_c more efficiently (std::initializer_list lacks move semantics for some dumb
 // // reason), as well as to avoid a potential infinite loop in constructors between UnionTerm_c, Data, and std::any.
 // template <typename... Args_>
-// UnionTerm_c make_tuple (Args_&&... args) {
-//     return UnionTerm_c(std::forward<Args_>(args)...);
+// UnionTerm_c make_union (Args_&&... args) {
+//     return UnionTerm_c(make_DataVector(std::forward<Args_>(args)...));
 // }
 
 // // TODO: This should be abstract_type_of, and concrete_type_of should be what returns Union.
