@@ -36,6 +36,7 @@ enum class NPTerm : NPTermRepr {
     TRUE_TYPE, // Sole inhabitant is True
     FALSE_TYPE, // Sole inhabitant is False
     EMPTY_TYPE, // A Type defined to have no inhabitants
+    FORMAL_TYPE_OF, // Constructs FormalTypeOf(x) for any term x.  Sole inhabitant of FormalTypeOf(x) is x.
 
     // POD Types
     BOOL, // Isomorphic to Union(TrueType,FalseType)

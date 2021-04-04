@@ -5263,3 +5263,11 @@ Structured Expression Project Toolkit Design Document
         -   Should there be notions of immutability?  If not, then the eventual translation to Rust
             will be difficult.
 
+2021.04.02
+
+-   A useful type would be FormalTypeOf(x) where x is any Term.  This provides a clear pattern to use
+    for nonparametric terms that don't otherwise need to have a declared type.
+-   Maybe also useful would be FormalTypeOfCollection(x1, ..., xn), where x1, ..., xn are declared to
+    share a formal type.  Construction of this type would require a parameter, and could either be
+    done abstractly (by verifying the construct_inhabitant_of argument is equal to an element in the
+    collection, or perhaps by specifying an index into the collection.

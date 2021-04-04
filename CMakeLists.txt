@@ -84,6 +84,7 @@ set(libsept_HEADERS
     lib/sept/Data_t.hpp
     lib/sept/DataArray_t.hpp
     lib/sept/DataVector.hpp
+    lib/sept/FormalTypeOf.hpp
     lib/sept/hash.hpp
     lib/sept/NPTerm.hpp
     lib/sept/NPType.hpp
@@ -116,6 +117,7 @@ set(libsept_SOURCES
     lib/sept/core.cpp
     lib/sept/Data.cpp
     lib/sept/DataVector.cpp
+    lib/sept/FormalTypeOf.cpp
     lib/sept/NPTerm.cpp
     lib/sept/NPType.cpp
     lib/sept/OrderedMapTerm.cpp
@@ -161,6 +163,7 @@ if(BUILD_testlibsept)
         bin/test-libsept/test_ctl.cpp
         bin/test-libsept/test_Data.cpp
         bin/test-libsept/test_element_of.cpp
+        bin/test-libsept/test_FormalTypeOf.cpp
         bin/test-libsept/test_inhabits.cpp
         bin/test-libsept/test_NPTerm.cpp
         bin/test-libsept/test_NPType.cpp

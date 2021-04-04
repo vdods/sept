@@ -54,6 +54,7 @@ using VoidType_c = NonParametricType_t<NPTerm::VOID_TYPE,Void_c>;
 using TrueType_c = NonParametricType_t<NPTerm::TRUE_TYPE,True_c>;
 using FalseType_c = NonParametricType_t<NPTerm::FALSE_TYPE,False_c>;
 using EmptyType_c = NonParametricType_t<NPTerm::EMPTY_TYPE>;
+
 // using Bool_c = NonParametricType_t<NPTerm::BOOL,BoolTerm_c>;
 using Bool_c = NonParametricType_t<NPTerm::BOOL,bool>;
 using Sint8_c = NonParametricType_t<NPTerm::SINT8,int8_t>; // Maybe make Sint8Term

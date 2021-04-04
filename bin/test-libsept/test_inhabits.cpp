@@ -25,6 +25,9 @@ LVD_TEST_BEGIN(400__inhabits__0)
     LVD_TEST_REQ_IS_TRUE(sept::inhabits(sept::BoolTerm_c(false), sept::FalseType));
     LVD_TEST_REQ_IS_TRUE(sept::inhabits(sept::Bool(false), sept::FalseType)); // Bool(...) is preferred over BoolTerm_c(...)
     LVD_TEST_REQ_IS_TRUE(sept::inhabits(false, sept::FalseType));
+
+    LVD_TEST_REQ_IS_TRUE(sept::inhabits(sept::TrueType, sept::BoolType));
+    LVD_TEST_REQ_IS_TRUE(sept::inhabits(sept::FalseType, sept::BoolType));
 LVD_TEST_END
 
 LVD_TEST_BEGIN(400__inhabits__1__data)
@@ -52,4 +55,7 @@ LVD_TEST_BEGIN(400__inhabits__1__data)
     LVD_TEST_REQ_IS_TRUE(sept::inhabits_data(sept::BoolTerm_c(false), sept::FalseType));
     LVD_TEST_REQ_IS_TRUE(sept::inhabits_data(sept::Bool(false), sept::FalseType)); // Bool(...) is preferred over BoolTerm_c(...)
     LVD_TEST_REQ_IS_TRUE(sept::inhabits_data(false, sept::FalseType));
+
+    LVD_TEST_REQ_IS_TRUE(sept::inhabits_data(sept::TrueType, sept::BoolType));
+    LVD_TEST_REQ_IS_TRUE(sept::inhabits_data(sept::FalseType, sept::BoolType));
 LVD_TEST_END
