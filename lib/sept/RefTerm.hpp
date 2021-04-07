@@ -12,24 +12,53 @@ namespace sept {
 
 class Data;
 
-// Reference without type specification.  Just holds a pointer to Data.
+//
+// Interface for defining custom transparent reference behavior.
+//
+
+class RefTermBase_i {
+public:
+
+    virtual ~RefTermBase_i () = 0;
+
+    // Returns a clone of this.
+    virtual lvd::nnup<RefTermBase_i> cloned () const = 0;
+
+    // Value of the referenced Data.
+    virtual Data const &referenced_data () const & = 0;
+    // Value of the referenced Data.
+    virtual Data &referenced_data () & = 0;
+    // Value of the referenced Data.
+    virtual Data referenced_data () && = 0;
+
+    virtual operator lvd::OstreamDelegate () const = 0;
+};
+
+inline RefTermBase_i::~RefTermBase_i () = default;
+
+//
+// RefTerm_c
+//
+
+// This class acts as a delegate for the specific kinds of references, each of which implement
+// the RefTermBase_i interface.
 class RefTerm_c {
 public:
 
     RefTerm_c () = default;
-    RefTerm_c (RefTerm_c const &other) = default;
+    RefTerm_c (RefTerm_c const &other) : m_ref_base(other.m_ref_base->cloned()) { }
     RefTerm_c (RefTerm_c &&other) = default;
-    explicit RefTerm_c (lvd::nnp<Data> ptr) : m_ptr(ptr) { }
-    explicit RefTerm_c (Data &ref) : m_ptr(&ref) { }
+    explicit RefTerm_c (lvd::nnup<RefTermBase_i> &&ref_base) : m_ref_base(std::move(ref_base)) { }
 
     RefTerm_c &operator = (RefTerm_c const &other) = default;
     RefTerm_c &operator = (RefTerm_c &&other) = default;
 
     // Value of the referenced Data.
-    Data const &referenced_data () const & { return *m_ptr; }
+    Data const &referenced_data () const & { return ref_base_get().referenced_data(); }
     // Value of the referenced Data.
-    Data &referenced_data () & { return *m_ptr; }
+    Data &referenced_data () & { return ref_base_get().referenced_data(); }
     // Value of the referenced Data.
+    // TODO: Figure out if this one makes sense to have.
     Data referenced_data () &&;
 
     // Forward this call to the referenced_data.  Can only do so through registered construct_inhabitant_of functions.
@@ -39,9 +68,15 @@ public:
 
     operator lvd::OstreamDelegate () const;
 
+    // This should only be used by inhabits
+    RefTermBase_i const &ref_base_get () const & { return static_cast<RefTermBase_i const &>(*m_ref_base.get().get()); }
+
 private:
 
-    lvd::nnp<Data> m_ptr;
+    RefTermBase_i &ref_base_get () & { return static_cast<RefTermBase_i &>(*m_ref_base.get().get()); }
+    RefTermBase_i &&ref_base_get () && { return static_cast<RefTermBase_i &&>(*m_ref_base.get().get()); }
+
+    lvd::nnup<RefTermBase_i> m_ref_base;
 };
 
 bool operator== (RefTerm_c const &lhs, RefTerm_c const &rhs);

@@ -85,7 +85,9 @@ set(libsept_HEADERS
     lib/sept/DataArray_t.hpp
     lib/sept/DataVector.hpp
     lib/sept/FormalTypeOf.hpp
+    lib/sept/GlobalSymRef.hpp
     lib/sept/hash.hpp
+    lib/sept/MemRef.hpp
     lib/sept/NPTerm.hpp
     lib/sept/NPType.hpp
     lib/sept/OrderedMapTerm.hpp
@@ -94,7 +96,6 @@ set(libsept_HEADERS
     lib/sept/Projection.hpp
     lib/sept/proj/ElementExtraction.hpp
     lib/sept/proj/TypeFunctor.hpp
-    lib/sept/Ref.hpp
     lib/sept/RefTerm.hpp
     lib/sept/TreeNode_t.hpp
     lib/sept/Tuple.hpp
@@ -118,6 +119,8 @@ set(libsept_SOURCES
     lib/sept/Data.cpp
     lib/sept/DataVector.cpp
     lib/sept/FormalTypeOf.cpp
+    lib/sept/GlobalSymRef.cpp
+    lib/sept/MemRef.cpp
     lib/sept/NPTerm.cpp
     lib/sept/NPType.cpp
     lib/sept/OrderedMapTerm.cpp
@@ -125,7 +128,6 @@ set(libsept_SOURCES
     lib/sept/Placeholder.cpp
     lib/sept/proj/ElementExtraction.cpp
     lib/sept/proj/TypeFunctor.cpp
-    lib/sept/Ref.cpp
     lib/sept/RefTerm.cpp
     lib/sept/Tuple.cpp
     lib/sept/TupleTerm.cpp

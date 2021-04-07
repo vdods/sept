@@ -5162,13 +5162,13 @@ Structured Expression Project Toolkit Design Document
 
 -   Notes on Union types
     x   BinOp = Union(LogicalBinOp, NumericBinOp)
-    -   Expr = Union(BinOpExpr, CondExpr, ParenExpr, UnOpExpr)
+    x   Expr = Union(BinOpExpr, CondExpr, ParenExpr, UnOpExpr)
     x   Logical = Union(LogicalExpr, LogicalOp)
-    -   LogicalExpr = Union(LogicalBinOpExpr, LogicalCondExpr, LogicalParenExpr, LogicalUnOpExpr, LogicalValue)
+    x   LogicalExpr = Union(LogicalBinOpExpr, LogicalCondExpr, LogicalParenExpr, LogicalUnOpExpr, LogicalValue)
     x   LogicalOp = Union(LogicalBinOp, LogicalUnOp)
     x   LogicalValue = Union(Bool, FalseType, TrueType)
     x   Numeric = Union(NumericExpr, NumericOp)
-    -   NumericExpr = Union(double, NumericBinOpExpr, NumericCondExpr, NumericParenExpr, NumericUnOpExpr)
+    x   NumericExpr = Union(double, NumericBinOpExpr, NumericCondExpr, NumericParenExpr, NumericUnOpExpr)
     x   NumericOp = Union(NumericBinOp, NumericUnOp)
     x   NumericValue = Float64
     x   Value = Union(LogicalValue, NumericValue)
@@ -5271,3 +5271,92 @@ Structured Expression Project Toolkit Design Document
     share a formal type.  Construction of this type would require a parameter, and could either be
     done abstractly (by verifying the construct_inhabitant_of argument is equal to an element in the
     collection, or perhaps by specifying an index into the collection.
+
+2021.04.04
+
+-   Notes on implementing more reference types
+    -   A ref requires a "resolver", e.g.
+        -   An in-memory pointer-based reference would resolve via pointer dereference.
+        -   A symbolic reference would resolve via symbol lookup in local memory, e.g.
+            -   In a programming language runtime, looking up the value [and type] of a global function/variable, local variable, etc.
+            -   In a programming language compiler, looking up the symbol table entry for a declared function, variable, type, etc.
+            This sort of thing is very application-specific, so it would have to be definable by that application.
+        -   URI references.  A URI has the form `scheme:[//authority]path[?query][#fragment]`
+            -   The scheme should [at least partially] dictate the resolver.  E.g.
+                -   `http` -> HTTP GET
+                -   `file` -> local filesystem operation
+                -   `did:key` -> https://w3c-ccg.github.io/did-method-key/ -- extract the key from the DID URI
+    -   For references that refer to non-local data, there could be some sort of data cache so that
+        repeated resolutions of non-local references would just use the locally cached data.  This could
+        be implemented as a detail of the symbol resolver.
+    -   The ability to define new types of references must be left open.  Another Data model method could
+        be defined.  This would be "referenced_data", and would return `this` data if it's not a reference,
+        and would return the referenced data if it is a reference (and call referenced_data recursively).
+        This would add a method lookup for each data access operation, which is not great.
+-   Notes on reference types as it pertains to serialization
+    -   In-memory pointer-based references
+        -   The serialization process would need to store a lookup table of a serialization stream offset for
+            each in-memory pointer value.  And for deserialization, the reverse.
+        -   For serialization format that must have efficient queries (guaranteeing certain runtime complexity
+            for various operations), the referenced values would need to be placed in a different "segment" of
+            the serialized stream.  This requires either pre-computing the offset of that segment, or post-filling
+            offsets after writing the segment.  It could also involve a totally separate serialization stream,
+            but that's probably not a bit of complexity that should be added at the moment.
+    -   Symbolic references
+        -   The resolution method for symbolic references is a lookup based on the symbol ID.  Thus the serialized
+            form has to serialize the symbol table.  The symbolic references themselves can just contain the symbol
+            IDs themselves.  There are optimizations that could be made such as having the symbolic references just
+            use an index into the symbol table, but for now, keep it simple.
+    -   Context-free references
+        -   This is the easiest, because there's no context to refer to, so the reference content (e.g a URL) can
+            be serialized/deserialized directly.
+    -   Some other ideas on serialization
+        -   Some sort of locality property regarding serialization of data structures would be useful.  In particular,
+            a complex data structure might involve many data nodes with references connecting everything together
+            (e.g. a DAG).  Ideally the whole body of that data structure could be serialized into a contiguous
+            block, so that it could be "taken out of context" and still understood.  This would imply that any
+            references would have to be local to that contiguous block (i.e. relative).  But this concept also
+            introduces a distinction in data -- those that can be serialized into a local, contiguous block, and
+            those that can't (i.e. that aren't self contained; they refer to a context outside themselves somehow)
+
+            For symbolic references, this would map onto "local symbol contexts", e.g. function-local symbols,
+            symbols that are local to a code block.
+
+2021.04.06
+
+-   Notes on trying to implement multiple reference types efficiently.
+    -   Could approach this using a function registration as in the rest of the data model,
+        but the lookup would be much slower than a pointer dereference, and because this kind
+        of dereference is very frequent, this would be an unacceptable slowdown.
+    -   The data model is finite, so perhaps implementing a custom vtable would work, where
+        types have to be registered with their vtables, and then Data could be changed from
+        using std::any to using the vtable to determine the type, as well as call the data
+        model methods more efficiently (at least for single-parameter methods which only
+        depend on the type of the data).
+
+        Note that multi-parameter data model methods couldn't use this vtable approach, since
+        part of the design of the multi-parameter data model is to allow rich multi-parameter
+        polymorphism, resolved through use of a type poset.
+    -   The downside to using a custom vtable is that it requires creating a custom implementation
+        of a std::any-like class.
+    -   The upside to using a custom vtable is that type registration becomes more formal and
+        probably more clear.
+
+2021.04.07
+
+-   Notes on reasoning about terms of reference type as inhabitants of reference types, dealing with
+    the fact that referential transparency makes them a slippery fish.
+    -   Make a function like "opaque" which turns a [transparent] reference term into an opaque reference
+        (i.e. semantically equivalent to a pointer; requiring explicit dereferencing).  Then reasoning
+        about its abstract type would be possible.
+-   Idea for efficiently printing transparent references when reference cycles are possible:
+    -   Instead of tracking exactly which references have been printed, just track a dereference
+        depth counter, and cut it off after some number.  This would not fully print some data,
+        for example data that has cycles but has a non-cycle path that is longer than a given depth
+        counter limit.  This would be fine for debugging.
+    -   Could potentially introduce a subtype of reference with semantics that it causes a cycle,
+        and handle it accordingly.
+    -   The full implementation would require tracking all dereferenced references, so that some
+        sort of "<already-seen>" could be printed in its place.  This would be necessary for the
+        sept GUI, since the main part of its mission is to be able to view and navigate arbitrary
+        sept data.

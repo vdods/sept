@@ -4,12 +4,12 @@
 
 #include "sept/Data.hpp"
 #include "sept/NPTerm.hpp"
-#include "sept/Ref.hpp"
 
 namespace sept {
 
 Data RefTerm_c::referenced_data () && {
-    return std::move(*m_ptr);
+//     return referenced_data();
+    LVD_ABORT("rvalue-ref accessing form of RefTerm_c::referenced_data has been disabled to see if it's actually necessary");
 }
 
 Data RefTerm_c::operator() (Data const &argument) const {
@@ -21,10 +21,11 @@ Data RefTerm_c::operator[] (Data const &param) const {
 }
 
 RefTerm_c::operator lvd::OstreamDelegate () const {
-    return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
-        // TODO: This will print a cyclic reference in an infinite loop unless something stops it
-        out << "RefTerm_c(" << *m_ptr << ')';
-    });
+//     return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
+//         // TODO: This will print a cyclic reference in an infinite loop unless something stops it
+//         out << "RefTerm_c(" << *m_ptr << ')';
+//     });
+    return referenced_data().operator lvd::OstreamDelegate();
 }
 
 //

@@ -5,7 +5,7 @@
 #include "sept/Union.hpp"
 #include "sept/UnionTerm.hpp"
 #include "sept/NPType.hpp"
-#include "sept/Ref.hpp"
+#include "sept/MemRef.hpp"
 
 LVD_TEST_BEGIN(571__Union__0)
     // First, compare exact identity of the singletons involved.
@@ -65,7 +65,7 @@ LVD_TEST_BEGIN(571__Union__inhabits_via_Ref)
     test_log << lvd::Log::trc() << LVD_REFLECT(u) << '\n';
     auto du = sept::Data(u);
     test_log << lvd::Log::trc() << LVD_REFLECT(du) << '\n';
-    auto rdu = sept::Ref(&du);
+    auto rdu = sept::MemRef(&du);
     test_log << lvd::Log::trc() << LVD_REFLECT(rdu) << '\n';
     auto drdu = sept::Data(rdu);
 

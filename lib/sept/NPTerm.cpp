@@ -72,18 +72,20 @@ std::string const &as_string (NPTerm t) {
         "OrderedMap",                   // 0x3B  59
         "TupleType",                    // 0x3C  60
         "Tuple",                        // 0x3D  61
-        "RefType",                      // 0x3E  62
-        "Ref",                          // 0x3F  63
-        "PlaceholderType",              // 0x40  64
-        "Placeholder",                  // 0x41  65
-        "OutputType",                   // 0x42  66
-        "Output",                       // 0x43  67
-        "ClearOutputType",              // 0x44  68
-        "ClearOutput",                  // 0x45  69
-        "EndOfFileType",                // 0x46  70
-        "EndOfFile",                    // 0x47  71
-        "RequestSyncInputType",         // 0x48  72
-        "RequestSyncInput",             // 0x49  73
+        "MemRefType",                   // 0x3E  62
+        "MemRef",                       // 0x3F  63
+        "GlobalSymRefType",             // 0x40  64
+        "GlobalSymRef",                 // 0x41  65
+        "PlaceholderType",              // 0x42  66
+        "Placeholder",                  // 0x43  67
+        "OutputType",                   // 0x44  68
+        "Output",                       // 0x45  69
+        "ClearOutputType",              // 0x46  70
+        "ClearOutput",                  // 0x47  71
+        "EndOfFileType",                // 0x48  72
+        "EndOfFile",                    // 0x49  73
+        "RequestSyncInputType",         // 0x4A  74
+        "RequestSyncInput",             // 0x4B  75
     };
     return TABLE.at(size_t(t));
 }

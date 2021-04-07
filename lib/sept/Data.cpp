@@ -40,7 +40,7 @@ Data Data::deref_once () && {
 void print_data (std::ostream &out, Data const &data) {
     // First check if it's a RefTerm_c.
     if (data.is_ref()) {
-        out << "Ref(...)";
+        out << "RefTerm_c(...)";
         return;
     }
 

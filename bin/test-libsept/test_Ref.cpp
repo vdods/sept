@@ -2,20 +2,12 @@
 
 #include <lvd/test.hpp>
 #include "req.hpp"
-#include "sept/Ref.hpp"
-#include "sept/RefTerm.hpp"
+#include "sept/GlobalSymRef.hpp"
+#include "sept/MemRef.hpp"
 #include "sept/NPType.hpp"
 
 LVD_TEST_BEGIN(572__Ref__0)
-    // First, compare exact identity of the singletons involved.
-    LVD_TEST_REQ_EQ(&sept::abstract_type_of(sept::Ref), &sept::RefType);
-    LVD_TEST_REQ_EQ(&sept::abstract_type_of(sept::RefType), &sept::NonParametricType);
-
-    // Now, compare values
-    LVD_TEST_REQ_EQ(sept::abstract_type_of(sept::Ref), sept::RefType);
-    LVD_TEST_REQ_EQ(sept::abstract_type_of(sept::RefType), sept::NonParametricType);
-
-    // Test Ref's instantiation.
+    // Test MemRef's instantiation.
     sept::Data x{10.5};
     test_log << lvd::Log::trc()
              << LVD_REFLECT(x) << '\n'
@@ -26,10 +18,11 @@ LVD_TEST_BEGIN(572__Ref__0)
 //              << LVD_REFLECT(x.is_ref_and_can_cast<double>()) << '\n'
 //              << LVD_REFLECT(x.is_ref_and_can_cast<double const>()) << '\n'
              << '\n';
-    LVD_TEST_REQ_EQ(sept::Ref(&x), sept::RefTerm_c(&x));
+//     LVD_TEST_REQ_EQ(sept::MemRef(&x), sept::make_mem_ref(&x));
+    LVD_TEST_REQ_EQ(sept::MemRef(&x), sept::RefTerm_c(lvd::make_nnup<sept::MemRefTermImpl>(&x)));
 
     // Test abstract_type_of
-    auto r = sept::Ref(&x);
+    auto r = sept::MemRef(&x);
     auto dr = sept::Data{r};
     test_log << lvd::Log::trc()
              << LVD_REFLECT(dr) << '\n'
@@ -54,23 +47,70 @@ LVD_TEST_BEGIN(572__Ref__0)
 
 LVD_TEST_END
 
-// LVD_TEST_BEGIN(572__Ref__compare)
-//     SEPT_TEST_REQ_COMPARE_IS_EQ(sept::Ref(), sept::Ref());
-//     SEPT_TEST_REQ_COMPARE_IS_LT(sept::Ref(), sept::Ref(10));
-//     SEPT_TEST_REQ_COMPARE_IS_LT(sept::Ref(), sept::Ref(10,20));
-//     SEPT_TEST_REQ_COMPARE_IS_LT(sept::Ref(), sept::Ref(10,20,30));
-//     SEPT_TEST_REQ_COMPARE_IS_GT(sept::Ref(10), sept::Ref());
-//     SEPT_TEST_REQ_COMPARE_IS_EQ(sept::Ref(10), sept::Ref(10));
-//     SEPT_TEST_REQ_COMPARE_IS_LT(sept::Ref(10), sept::Ref(20));
-//     SEPT_TEST_REQ_COMPARE_IS_GT(sept::Ref(30), sept::Ref(20));
-//     SEPT_TEST_REQ_COMPARE_IS_GT(sept::Ref(30,30), sept::Ref(20,30));
-//     SEPT_TEST_REQ_COMPARE_IS_GT(sept::Ref(30,30), sept::Ref(20,30,40));
-// LVD_TEST_END
-//
-// LVD_TEST_BEGIN(572__Ref__inhabits)
-//     auto v0 = sept::Ref(sept::Float64(12.3), sept::Uint32(3001), sept::Array(1,2,3));
-// //     test_log << lvd::Log::trc() << LVD_REFLECT(v0) << '\n' << LVD_REFLECT(sept::tuple_type_of(v0)) << '\n';
-//     auto t0 = sept::Ref(sept::Float64, sept::Uint32, sept::Array);
-//     LVD_TEST_REQ_EQ(sept::abstract_type_of(v0), t0);
-//     LVD_TEST_REQ_IS_TRUE(sept::inhabits(v0, t0));
-// LVD_TEST_END
+LVD_TEST_BEGIN(572__Ref__1__MemRef)
+    auto d = sept::Data{sept::Uint32(123456)};
+    auto mr = sept::MemRef(&d);
+    LVD_TEST_REQ_EQ(mr, d);
+    auto dmr = sept::Data{mr};
+    LVD_TEST_REQ_EQ(d, d);
+    LVD_TEST_REQ_EQ(d, mr);
+    LVD_TEST_REQ_EQ(d, dmr);
+    LVD_TEST_REQ_EQ(mr, d);
+    LVD_TEST_REQ_EQ(mr, mr);
+    LVD_TEST_REQ_EQ(mr, dmr);
+    LVD_TEST_REQ_EQ(dmr, d);
+    LVD_TEST_REQ_EQ(dmr, mr);
+    LVD_TEST_REQ_EQ(dmr, dmr);
+
+    // Double reference
+    auto mr_dmr = sept::MemRef(&dmr);
+    LVD_TEST_REQ_EQ(mr_dmr, d);
+    LVD_TEST_REQ_EQ(mr_dmr, mr);
+    LVD_TEST_REQ_EQ(mr_dmr, dmr);
+    LVD_TEST_REQ_EQ(mr_dmr, mr_dmr);
+    LVD_TEST_REQ_EQ(d, mr_dmr);
+    LVD_TEST_REQ_EQ(mr, mr_dmr);
+    LVD_TEST_REQ_EQ(dmr, mr_dmr);
+    LVD_TEST_REQ_EQ(mr_dmr, mr_dmr);
+
+    // Due to referential transparency, all of these should inhabit sept::Uint32
+    LVD_TEST_REQ_IS_TRUE(inhabits_data(d, sept::Uint32));
+    LVD_TEST_REQ_IS_TRUE(inhabits_data(mr, sept::Uint32));
+    LVD_TEST_REQ_IS_TRUE(inhabits_data(dmr, sept::Uint32));
+    LVD_TEST_REQ_IS_TRUE(inhabits_data(mr_dmr, sept::Uint32));
+LVD_TEST_END
+
+LVD_TEST_BEGIN(572__Ref__2__GlobalSymRef)
+    auto d = sept::Data{sept::Uint32(123456)};
+    sept::GlobalSymRefTermImpl::symbol_table().emplace("hippo", d);
+    auto sr = sept::GlobalSymRef("hippo");
+    LVD_TEST_REQ_EQ(sr, d);
+    auto dsr = sept::Data{sr};
+    LVD_TEST_REQ_EQ(d, d);
+    LVD_TEST_REQ_EQ(d, sr);
+    LVD_TEST_REQ_EQ(d, dsr);
+    LVD_TEST_REQ_EQ(sr, d);
+    LVD_TEST_REQ_EQ(sr, sr);
+    LVD_TEST_REQ_EQ(sr, dsr);
+    LVD_TEST_REQ_EQ(dsr, d);
+    LVD_TEST_REQ_EQ(dsr, sr);
+    LVD_TEST_REQ_EQ(dsr, dsr);
+
+    // Double reference
+    sept::GlobalSymRefTermImpl::symbol_table().emplace("ostrich", sr);
+    auto sr_dsr = sept::GlobalSymRef("ostrich");
+    LVD_TEST_REQ_EQ(sr_dsr, d);
+    LVD_TEST_REQ_EQ(sr_dsr, sr);
+    LVD_TEST_REQ_EQ(sr_dsr, dsr);
+    LVD_TEST_REQ_EQ(sr_dsr, sr_dsr);
+    LVD_TEST_REQ_EQ(d, sr_dsr);
+    LVD_TEST_REQ_EQ(sr, sr_dsr);
+    LVD_TEST_REQ_EQ(dsr, sr_dsr);
+    LVD_TEST_REQ_EQ(sr_dsr, sr_dsr);
+
+    // Due to referential transparency, all of these should inhabit sept::Uint32
+    LVD_TEST_REQ_IS_TRUE(inhabits_data(d, sept::Uint32));
+    LVD_TEST_REQ_IS_TRUE(inhabits_data(sr, sept::Uint32));
+    LVD_TEST_REQ_IS_TRUE(inhabits_data(dsr, sept::Uint32));
+    LVD_TEST_REQ_IS_TRUE(inhabits_data(sr_dsr, sept::Uint32));
+LVD_TEST_END
