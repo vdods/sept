@@ -76,7 +76,13 @@ public:
 
     SymbolMap const &symbol_map () const { return m_symbol_map; }
     SymbolMap &symbol_map () { return m_symbol_map; }
-    lvd::sp<SymbolTable> const &parent_symbol_table () const { return m_parent_symbol_table; }
+    bool has_parent_symbol_table () const { return m_parent_symbol_table != nullptr; }
+    // This will throw if there is no parent SymbolTable.
+    lvd::nnsp<SymbolTable> parent_symbol_table () const {
+        if (m_parent_symbol_table == nullptr)
+            throw std::runtime_error("this SymbolTable has no parent SymbolTable");
+        return m_parent_symbol_table;
+    }
 
     // This constructs a symbol table whose parent is this one.
     lvd::nnsp<SymbolTable> push_symbol_table () {
