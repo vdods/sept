@@ -10,15 +10,11 @@ GlobalSymRef_c GlobalSymRef;
 GlobalSymRefType_c GlobalSymRefType;
 
 Data const &GlobalSymRefTermImpl::referenced_data () const & {
-    static Data const s_unresolved_symbol{std::string("<unresolved-symbol>")};
-    auto it = ms_symbol_table.find(m_symbol_id);
-    return it == ms_symbol_table.end() ? s_unresolved_symbol : it->second;
+    return ms_symbol_table->resolve_symbol_const(m_symbol_id);
 }
 
 Data &GlobalSymRefTermImpl::referenced_data () & {
-    static Data s_unresolved_symbol{std::string("<unresolved-symbol>")};
-    auto it = ms_symbol_table.find(m_symbol_id);
-    return it == ms_symbol_table.end() ? s_unresolved_symbol : it->second;
+    return ms_symbol_table->resolve_symbol_nonconst(m_symbol_id);
 }
 
 Data GlobalSymRefTermImpl::referenced_data () && {
@@ -31,6 +27,6 @@ GlobalSymRefTermImpl::operator lvd::OstreamDelegate () const {
     });
 }
 
-std::unordered_map<std::string,Data> GlobalSymRefTermImpl::ms_symbol_table;
+lvd::nnsp<SymbolTable> GlobalSymRefTermImpl::ms_symbol_table{lvd::make_nnsp<SymbolTable>()};
 
 } // end namespace sept

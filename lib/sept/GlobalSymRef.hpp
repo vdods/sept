@@ -9,6 +9,7 @@
 #include "sept/core.hpp"
 #include "sept/NPType.hpp"
 #include "sept/RefTerm.hpp"
+#include "sept/SymbolTable.hpp"
 
 namespace sept {
 
@@ -36,19 +37,21 @@ public:
 
     virtual operator lvd::OstreamDelegate () const override;
 
-    static std::unordered_map<std::string,Data> &symbol_table () { return ms_symbol_table; }
+    static lvd::nnsp<SymbolTable> const &symbol_table () { return ms_symbol_table; }
 
 private:
 
     std::string m_symbol_id;
 
-    static std::unordered_map<std::string,Data> ms_symbol_table;
+    static lvd::nnsp<SymbolTable> ms_symbol_table;
+
+    friend lvd::nnsp<SymbolTable> const &global_symbol_table ();
 };
 
-// TODO: Make a context-dependent symbolic ref, which has the symbol_id and also a pointer
-// (or maybe RefTermBase_i) to the symbol table that it depends on.  GlobalSymRefTermImpl is a special
-// case where the pointer to the table is known at compile time, so it doesn't have to be
-// stored along with the reference.
+// For accessing the global SymbolTable.
+inline lvd::nnsp<SymbolTable> const &global_symbol_table () {
+    return GlobalSymRefTermImpl::ms_symbol_table;
+}
 
 // inline RefTerm_c make_global_sym_ref (std::string const &symbol_id) {
 //     return RefTerm_c{lvd::make_nnup<GlobalSymRefTermImpl>(symbol_id)};
@@ -84,7 +87,7 @@ inline constexpr GlobalSymRefType_c const &abstract_type_of (GlobalSymRef_c cons
 // NOTE: inhabits is not provided for GlobalSymRefTermImpl within GlobalSymRef_c or Ref_c, since it would violate
 // referential transparency.  There needs to be some way to handle a ref without transparently
 // dereferencing it.  A few options:
-// - Convert to a "MemPtr" analog of MemRef which doesn't automatically dereference
+// - Convert to a "GlobalSymPtr" analog of GlobalSymRef which doesn't automatically dereference
 // - Have a different notion of inhabitation that accounts for refs
 
 } // end namespace sept

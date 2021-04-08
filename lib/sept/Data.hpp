@@ -176,14 +176,14 @@ public:
     // Returns true iff the given std::any_cast<T_> would succeed (this uses the pointer-semantic version of std::any_cast).
     // T_ should not be a reference type.  It automatically handles dereferencing if this data is RefTerm_c.
     template <typename T_>
-    bool can_cast () const & noexcept {
+    bool can_cast () const noexcept {
         static_assert(!std::is_reference_v<T_>, "T_ must not be a reference type");
         return deref().raw__can_cast<T_>();
     }
     // Returns true iff the given std::any_cast<T_> would succeed (this uses the pointer-semantic version of std::any_cast)
     // T_ should not be a reference type.  It automatically handles dereferencing if this data is RefTerm_c.
     template <typename T_>
-    bool can_cast () & noexcept {
+    bool can_cast () noexcept {
         static_assert(!std::is_reference_v<T_>, "T_ must not be a reference type");
         return deref().raw__can_cast<T_>();
     }
@@ -243,12 +243,12 @@ public:
 
     // Returns true iff the given std::any_cast<T_> would succeed (this uses the pointer-semantic version of std::any_cast)
     template <typename T_>
-    bool raw__can_cast () const & noexcept {
+    bool raw__can_cast () const noexcept {
         return std::any_cast<T_>(static_cast<std::any const *>(this)) != nullptr;
     }
     // Returns true iff the given std::any_cast<T_> would succeed (this uses the pointer-semantic version of std::any_cast)
     template <typename T_>
-    bool raw__can_cast () & noexcept {
+    bool raw__can_cast () noexcept {
         return std::any_cast<T_>(static_cast<std::any *>(this)) != nullptr;
     }
 //     // Returns true iff the given std::any_cast<T_> would succeed (this uses the pointer-semantic version of std::any_cast)
@@ -321,6 +321,28 @@ public:
 template <typename T_, typename... Args_>
 Data make_data (Args_&&... args) {
     return Data(std::in_place_type_t<T_>(), std::forward<Args_>(args)...);
+}
+
+//
+// Template methods from RefTerm_c that must be after the definition of Data
+//
+
+template <typename T_>
+bool RefTerm_c::can_cast () const {
+    return referenced_data().can_cast<T_>();
+}
+template <typename T_>
+bool RefTerm_c::can_cast () {
+    return referenced_data().can_cast<T_>();
+}
+
+template <typename T_>
+T_ RefTerm_c::cast () const {
+    return referenced_data().cast<T_>();
+}
+template <typename T_>
+T_ RefTerm_c::cast () {
+    return referenced_data().cast<T_>();
 }
 
 //

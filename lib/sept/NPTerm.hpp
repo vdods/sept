@@ -105,6 +105,8 @@ enum class NPTerm : NPTermRepr {
     MEM_REF, // Inhabitants have the form MemRef(&d), where d is Data
     GLOBAL_SYM_REF_TYPE, // Inhabitant is GlobalSymRef
     GLOBAL_SYM_REF, // Inhabitants have the form GlobalSymRef("<symbol-id>")
+    LOCAL_SYM_REF_TYPE, // Inhabitant is LocalSymRef
+    LOCAL_SYM_REF, // Inhabitants have the form LocalSymRef("<symbol-id>", <shared-ptr-to-symbol-table>)
 
     PLACEHOLDER_TYPE,
     PLACEHOLDER,

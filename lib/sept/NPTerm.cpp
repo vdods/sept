@@ -76,16 +76,18 @@ std::string const &as_string (NPTerm t) {
         "MemRef",                       // 0x3F  63
         "GlobalSymRefType",             // 0x40  64
         "GlobalSymRef",                 // 0x41  65
-        "PlaceholderType",              // 0x42  66
-        "Placeholder",                  // 0x43  67
-        "OutputType",                   // 0x44  68
-        "Output",                       // 0x45  69
-        "ClearOutputType",              // 0x46  70
-        "ClearOutput",                  // 0x47  71
-        "EndOfFileType",                // 0x48  72
-        "EndOfFile",                    // 0x49  73
-        "RequestSyncInputType",         // 0x4A  74
-        "RequestSyncInput",             // 0x4B  75
+        "LocalSymRefType",              // 0x42  66
+        "LocalSymRef",                  // 0x43  67
+        "PlaceholderType",              // 0x44  68
+        "Placeholder",                  // 0x45  69
+        "OutputType",                   // 0x46  70
+        "Output",                       // 0x47  71
+        "ClearOutputType",              // 0x48  72
+        "ClearOutput",                  // 0x49  73
+        "EndOfFileType",                // 0x4A  74
+        "EndOfFile",                    // 0x4B  75
+        "RequestSyncInputType",         // 0x4C  76
+        "RequestSyncInput",             // 0x4D  77
     };
     return TABLE.at(size_t(t));
 }

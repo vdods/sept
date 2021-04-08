@@ -71,6 +71,20 @@ public:
     // This should only be used by inhabits
     RefTermBase_i const &ref_base_get () const & { return static_cast<RefTermBase_i const &>(*m_ref_base.get().get()); }
 
+    //
+    // Frontends for Data::can_cast and Data::cast
+    //
+
+    template <typename T_>
+    bool can_cast () const;
+    template <typename T_>
+    bool can_cast ();
+
+    template <typename T_>
+    T_ cast () const;
+    template <typename T_>
+    T_ cast ();
+
 private:
 
     RefTermBase_i &ref_base_get () & { return static_cast<RefTermBase_i &>(*m_ref_base.get().get()); }

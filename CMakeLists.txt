@@ -87,6 +87,7 @@ set(libsept_HEADERS
     lib/sept/FormalTypeOf.hpp
     lib/sept/GlobalSymRef.hpp
     lib/sept/hash.hpp
+    lib/sept/LocalSymRef.hpp
     lib/sept/MemRef.hpp
     lib/sept/NPTerm.hpp
     lib/sept/NPType.hpp
@@ -97,6 +98,7 @@ set(libsept_HEADERS
     lib/sept/proj/ElementExtraction.hpp
     lib/sept/proj/TypeFunctor.hpp
     lib/sept/RefTerm.hpp
+    lib/sept/SymbolTable.hpp
     lib/sept/TreeNode_t.hpp
     lib/sept/Tuple.hpp
     lib/sept/TupleTerm.hpp
@@ -120,6 +122,7 @@ set(libsept_SOURCES
     lib/sept/DataVector.cpp
     lib/sept/FormalTypeOf.cpp
     lib/sept/GlobalSymRef.cpp
+    lib/sept/LocalSymRef.cpp
     lib/sept/MemRef.cpp
     lib/sept/NPTerm.cpp
     lib/sept/NPType.cpp
