@@ -74,6 +74,8 @@ public:
     {
         // OrderedMapConstraint is already satisfied by construction.
     }
+    // TODO: Maybe could add OrderedMapTerm_c(OrderedMapTerm &other) : OrderedMapTerm_c(static_cast<OrderedMapTerm_c const &>(other)) { }
+    // in order to then allow the variadic template constructor (that may have been the obstruction from earlier).
     OrderedMapTerm_c (OrderedMapTerm_c &&other)
     :   m_constraint(std::move(other.m_constraint))
     ,   m_pairs(std::move(other.m_pairs))

@@ -19,6 +19,8 @@ public:
 
     TupleTerm_c () = default;
     TupleTerm_c (TupleTerm_c const &other) = default;
+    // This is necessary to prevent the variadic template constructor from being called in this case.
+    TupleTerm_c (TupleTerm_c &other) : TupleTerm_c(static_cast<TupleTerm_c const &>(other)) { }
     TupleTerm_c (TupleTerm_c &&other) = default;
     explicit TupleTerm_c (DataVector const &elements) : ParentClass(elements) { }
     explicit TupleTerm_c (DataVector &&elements) : ParentClass(std::move(elements)) { }

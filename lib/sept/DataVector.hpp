@@ -25,12 +25,18 @@ std::ostream &operator << (std::ostream &out, DataVector const &v);
 // Returns true iff the given value is equal to at least one of the elements in the container.
 bool is_member (Data const &value, DataVector const &container);
 
+bool eq (DataVector const &lhs, DataVector const &rhs);
+
 // Runtime complexity O(size); lexicographical ordering (not shortlex order), e.g.
 // - "carp"
 // - "cars"
 // - "cat"
 // - "catsup"
 int compare (DataVector const &lhs, DataVector const &rhs);
+
+// Returns true iff the DataVector values, considered as unordered sets (and assuming there are no duplicates),
+// have the same elements.
+bool are_equal_as_sets__assume_no_duplicates (DataVector const &lhs, DataVector const &rhs);
 
 } // end namespace sept
 

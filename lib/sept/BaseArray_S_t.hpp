@@ -23,31 +23,37 @@ public:
     BaseArray_S_t () = delete;
     template <typename Arg_, typename = std::enable_if_t<ELEMENT_COUNT_ == 1>>
     BaseArray_S_t (Arg_ &&arg)
-    :   m_elements(make_DataArray_t<ELEMENT_COUNT_>(std::move(arg))) {
+        :   m_elements(make_DataArray_t<ELEMENT_COUNT_>(std::move(arg)))
+    {
         for (auto const &element : m_elements)
             if (!element.has_value())
                 throw std::runtime_error("all elements in BaseArray_S_t must have values");
     }
     template <typename... Args_, typename = std::enable_if_t<sizeof...(Args_) == ELEMENT_COUNT_ && (ELEMENT_COUNT_ > 1)>>
     BaseArray_S_t (Args_&&... args)
-    :   m_elements(make_DataArray_t<ELEMENT_COUNT_>(std::forward<Args_>(args)...)) {
+        :   m_elements(make_DataArray_t<ELEMENT_COUNT_>(std::forward<Args_>(args)...))
+    {
         for (auto const &element : m_elements)
             if (!element.has_value())
                 throw std::runtime_error("all elements in BaseArray_S_t must have values");
     }
     BaseArray_S_t (DataArray const &elements)
-    :   m_elements(elements) {
+        :   m_elements(elements)
+    {
         for (auto const &element : m_elements)
             if (!element.has_value())
                 throw std::runtime_error("all elements in BaseArray_S_t must have values");
     }
     BaseArray_S_t (DataArray &&elements)
-    :   m_elements(std::move(elements)) {
+        :   m_elements(std::move(elements))
+    {
         for (auto const &element : m_elements)
             if (!element.has_value())
                 throw std::runtime_error("all elements in BaseArray_S_t must have values");
     }
     BaseArray_S_t (BaseArray_S_t const &other) = default;
+    // This is necessary to prevent the variadic template constructor from being called in this case.
+    BaseArray_S_t (BaseArray_S_t &other) : BaseArray_S_t(static_cast<BaseArray_S_t const &>(other)) { }
     BaseArray_S_t (BaseArray_S_t &&other) = default;
 
     BaseArray_S_t &operator = (BaseArray_S_t const &other) = default;

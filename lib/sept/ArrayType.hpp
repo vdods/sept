@@ -20,20 +20,27 @@ template <typename T_> struct is_an_array_type : std::false_type { };
 
 template <typename T_> inline constexpr bool is_an_array_type_v = is_an_array_type<T_>::value;
 
+// TODO: Make this inherit ArrayETerm_c and ArraySTerm_c
 class ArrayESTerm_c {
 public:
 
     explicit ArrayESTerm_c (Data const &element_type, size_t size)
-    :   m_element_type(element_type)
-    ,   m_size(size) {
-        if (!m_element_type.has_value())
-            throw std::runtime_error("can't construct ArrayESTerm_c with no value");
+        :   m_element_type(element_type)
+        ,   m_size(size)
+    {
+        // NOTE: Commented out because otherwise it's problematic constructing a global instance of
+        // ArrayESTerm_c that depends on another global Data instance.
+//         if (!m_element_type.has_value())
+//             throw std::runtime_error("can't construct ArrayESTerm_c with no value");
     }
     explicit ArrayESTerm_c (Data &&element_type, size_t size)
-    :   m_element_type(std::move(element_type))
-    ,   m_size(size) {
-        if (!m_element_type.has_value())
-            throw std::runtime_error("can't construct ArrayESTerm_c with no value");
+        :   m_element_type(std::move(element_type))
+        ,   m_size(size)
+    {
+        // NOTE: Commented out because otherwise it's problematic constructing a global instance of
+        // ArrayESTerm_c that depends on another global Data instance.
+//         if (!m_element_type.has_value())
+//             throw std::runtime_error("can't construct ArrayESTerm_c with no value");
     }
 
     // Constructs ArrayTerm_c (abstractly, a Term of type Array).
@@ -66,14 +73,20 @@ class ArrayETerm_c {
 public:
 
     explicit ArrayETerm_c (Data const &element_type)
-    :   m_element_type(element_type) {
-        if (!m_element_type.has_value())
-            throw std::runtime_error("can't construct ArrayETerm_c with no value");
+        :   m_element_type(element_type)
+    {
+        // NOTE: Commented out because otherwise it's problematic constructing a global instance of
+        // ArrayETerm_c that depends on another global Data instance.
+//         if (!m_element_type.has_value())
+//             throw std::runtime_error("can't construct ArrayETerm_c with no value");
     }
     explicit ArrayETerm_c (Data &&element_type)
-    :   m_element_type(std::move(element_type)) {
-        if (!m_element_type.has_value())
-            throw std::runtime_error("can't construct ArrayETerm_c with no value");
+        :   m_element_type(std::move(element_type))
+    {
+        // NOTE: Commented out because otherwise it's problematic constructing a global instance of
+        // ArrayETerm_c that depends on another global Data instance.
+//         if (!m_element_type.has_value())
+//             throw std::runtime_error("can't construct ArrayETerm_c with no value");
     }
 
     // Constructs ArrayTerm_c (abstractly, a Term of type Array).

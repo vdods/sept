@@ -33,9 +33,13 @@ RefTerm_c::operator lvd::OstreamDelegate () const {
 //
 
 bool operator== (RefTerm_c const &lhs, RefTerm_c const &rhs) {
+//     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << lvd::IndentGuard() << '\n'
+//                << LVD_REFLECT(&lhs.referenced_data()) << '\n'
+//                << LVD_REFLECT(&rhs.referenced_data()) << '\n';
+    // TODO: Because references can be stacked, this really should check the innermost reference addresses first.
     return &lhs.referenced_data() == &rhs.referenced_data() || lhs.referenced_data() == rhs.referenced_data();
 }
-// // NOTE: These aren't yet present in DataEq registration, since it isn't yet build to take asymmetric type equality
+// // NOTE: These aren't yet present in DataEq registration, since it isn't yet built to take asymmetric type equality
 // bool operator== (RefTerm_c const &lhs, Data const &rhs) {
 //     return lhs.referenced_data() == rhs;
 // }

@@ -19,21 +19,28 @@ public:
     using ParentClass = BaseArrayT_t<ArrayTerm_c>;
 
     ArrayTerm_c ()
-    :   ParentClass(Array_c()) {
-        // ArrayConstraint is already satisfied by construction.
-    }
-    ArrayTerm_c (ArrayTerm_c const &other)
-    :   ParentClass(other.abstract_type(), static_cast<ParentClass const &>(other))
+        :   ParentClass(Array_c())
     {
         // ArrayConstraint is already satisfied by construction.
     }
+    ArrayTerm_c (ArrayTerm_c const &other)
+        :   ParentClass(other.abstract_type(), static_cast<ParentClass const &>(other))
+    {
+        // ArrayConstraint is already satisfied by construction.
+    }
+    // This is necessary to prevent the variadic template constructor from being called in this case.
+    ArrayTerm_c (ArrayTerm_c &other)
+        :   ArrayTerm_c(static_cast<ArrayTerm_c const &>(other))
+    { }
     ArrayTerm_c (ArrayTerm_c &&other)
-    :   ParentClass(std::move(other).abstract_type(), std::move(static_cast<ParentClass&&>(other))) {
+        :   ParentClass(std::move(other).abstract_type(), std::move(static_cast<ParentClass&&>(other)))
+    {
         // ArrayConstraint is already satisfied by construction.
     }
     template <typename... Args_>
     explicit ArrayTerm_c (Args_&&... args)
-    :   ParentClass(Array_c(), std::forward<Args_>(args)...) {
+        :   ParentClass(Array_c(), std::forward<Args_>(args)...)
+    {
         // ArrayConstraint is already satisfied by construction.
     }
 

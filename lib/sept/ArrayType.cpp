@@ -54,11 +54,29 @@ void ArraySTerm_c::verify_constraint_or_throw (DataVector const &elements) const
 }
 
 bool inhabits (ArrayTerm_c const &a, ArrayESTerm_c const &t) {
-    return a.element_type() == t.element_type() && a.size() == t.size();
+    if (a.size() != t.size())
+        return false;
+    // Check the constraint -- if that's satisfied, then we're good.
+    if (a.element_type() == t.element_type())
+        return true;
+    // Otherwise check inhabitation of elements.
+    for (auto const &a_element : a.elements())
+        if (!inhabits_data(a_element, t.element_type()))
+            return false;
+    // Passed all checks
+    return true;
 }
 
 bool inhabits (ArrayTerm_c const &a, ArrayETerm_c const &t) {
-    return a.element_type() == t.element_type();
+    // Check the constraint -- if that's satisfied, then we're good.
+    if (a.element_type() == t.element_type())
+        return true;
+    // Otherwise check inhabitation of elements.
+    for (auto const &a_element : a.elements())
+        if (!inhabits_data(a_element, t.element_type()))
+            return false;
+    // Passed all checks
+    return true;
 }
 
 bool inhabits (ArrayTerm_c const &a, ArraySTerm_c const &t) {
@@ -216,5 +234,10 @@ SEPT__REGISTER__DESERIALIZE(ArrayESTerm_c, return deserialize_value_ArrayTerm(st
 SEPT__REGISTER__DESERIALIZE(ArrayETerm_c, return deserialize_value_ArrayTerm(std::move(abstract_type), in);)
 SEPT__REGISTER__DESERIALIZE(ArraySTerm_c, return deserialize_value_ArrayTerm(std::move(abstract_type), in);)
 SEPT__REGISTER__DESERIALIZE(Array_c, return deserialize_value_ArrayTerm(std::move(abstract_type), in);)
+
+
+SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(ArrayESTerm_c, ArrayTerm_c)
+SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(ArrayETerm_c, ArrayTerm_c)
+SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(ArraySTerm_c, ArrayTerm_c)
 
 } // end namespace sept

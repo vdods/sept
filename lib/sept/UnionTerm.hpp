@@ -39,8 +39,20 @@ public:
         :   ParentClass(make_DataVector(std::forward<Args_>(args)...))
     { }
 
-    UnionTerm_c &operator = (UnionTerm_c const &other) = default;
-    UnionTerm_c &operator = (UnionTerm_c &&other) = default;
+    UnionTerm_c &operator= (UnionTerm_c const &other) = default;
+    UnionTerm_c &operator= (UnionTerm_c &&other) = default;
+
+    // NOTE: This does not produce "full" equality check for unions, since that requires proving that
+    // all inhabitants of this and the other union are the same, and that's probably undecidable in general.
+    // Thus this provides a weaker notion of equality, defined as the set of types forming the unions
+    // are the same.  Override BaseArray_t's operator== behavior to provide that definition.  Note that
+    // this is a non-virtual override.
+    bool operator== (UnionTerm_c const &other) const {
+//         lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << lvd::IndentGuard() << '\n'
+//                    << LVD_REFLECT(*this) << '\n'
+//                    << LVD_REFLECT(other) << '\n';
+        return are_equal_as_sets__assume_no_duplicates(this->elements(), other.elements());
+    }
 
     // "Construct" an inhabitant by validating it (this is construction of an abstract type)
     template <typename Argument_>

@@ -42,8 +42,8 @@ public:
         return (other.type() == typeid(Derived)) && this->operator==(other.cast<Derived const &>());
     }
     // NOTE: This uses a useful, but weak notion of equality that compares only the elements.
-    bool operator == (BaseArray_t const &other) const { return compare(m_elements, other.m_elements) == 0; }
-    bool operator != (BaseArray_t const &other) const { return !(*this == other); }
+    bool operator == (BaseArray_t const &other) const { return eq(m_elements, other.m_elements); }
+    bool operator != (BaseArray_t const &other) const { return !(this->as_derived() == other.as_derived()); }
 
     Derived const & as_derived () const & { return static_cast<Derived const &>(*this); }
     Derived &as_derived () & { return static_cast<Derived &>(*this); }

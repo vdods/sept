@@ -54,6 +54,20 @@ void print_data (std::ostream &out, Data const &data) {
 }
 
 bool eq_data (Data const &lhs, Data const &rhs) {
+//     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << lvd::IndentGuard() << '\n'
+//                << LVD_REFLECT(&lhs) << '\n'
+//                << LVD_REFLECT(&rhs) << '\n'
+//                << LVD_REFLECT(lhs) << '\n'
+//                << LVD_REFLECT(rhs) << '\n';
+    // If they refer to the same memory, then they're equal.
+    if (&lhs == &rhs)
+        return true;
+
+    // If they're both references, then use RefTerm_c-defined equality.  Notably, this will
+    // early-out with true if the refs both refer to the same thing.
+    if (lhs.is_ref() && rhs.is_ref())
+        return lhs.as_ref() == rhs.as_ref();
+
     // If the types differ, they can't be equal.
     if (lhs.type() != rhs.type())
         return false;
