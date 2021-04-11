@@ -7,6 +7,7 @@
 #include <lvd/comma.hpp>
 #include <lvd/fmt.hpp>
 #include <lvd/g_log.hpp>
+#include <lvd/ScopeGuard.hpp>
 #include "sept/ArrayTerm.hpp"
 #include "sept/ArrayType.hpp"
 #include "sept/FormalTypeOf.hpp"
@@ -185,37 +186,23 @@ int compare (uint8_t lhs, uint8_t rhs) {
 // which would make certain code be constexpr.
 using ASTNPTermRepr = uint8_t;
 enum class ASTNPTerm : ASTNPTermRepr {
-    // LogicalBinOp
+    // BinOp
     AND = 0,
     OR,
     XOR,
-    __LogicalBinOp_LOWEST__ = AND,
-    __LogicalBinOp_HIGHEST__ = XOR,
-
-    // LogicalUnOp
-    NOT,
-    __LogicalUnOp_LOWEST__ = NOT,
-    __LogicalUnOp_HIGHEST__ = NOT,
-
-    __Logical_LOWEST__ = __LogicalBinOp_LOWEST__,
-    __Logical_HIGHEST__ = __LogicalUnOp_HIGHEST__,
-
-    // NumericBinOp
     ADD,
     SUB,
     MUL,
     DIV,
     POW,
-    __NumericBinOp_LOWEST__ = ADD,
-    __NumericBinOp_HIGHEST__ = POW,
+    __BinOp_LOWEST__ = AND,
+    __BinOp_HIGHEST__ = POW,
 
-    // NumericUnOp
+    // UnOp
+    NOT,
     NEG,
-    __NumericUnOp_LOWEST__ = NEG,
-    __NumericUnOp_HIGHEST__ = NEG,
-
-    __Numeric_LOWEST__ = __NumericBinOp_LOWEST__,
-    __Numeric_HIGHEST__ = __NumericUnOp_HIGHEST__,
+    __UnOp_LOWEST__ = NOT,
+    __UnOp_HIGHEST__ = NEG,
 
     //
     // Misc -- TODO: Categorize
@@ -225,10 +212,19 @@ enum class ASTNPTerm : ASTNPTermRepr {
     DECLARED_AS,    // :
     DEFINED_AS,     // ::=
     ASSIGN_FROM,    // =
+    ROUND_OPEN,     // (
+    ROUND_CLOSE,    // )
+    SQUARE_OPEN,    // [
+    SQUARE_CLOSE,   // ]
+    CURLY_OPEN,     // {
+    CURLY_CLOSE,    // }
+    IF,
+    THEN,
+    ELSE,
     __Misc_LOWEST__ = MAPS_TO,
-    __Misc_HIGHEST__ = ASSIGN_FROM,
+    __Misc_HIGHEST__ = ELSE,
 
-    __LOWEST__ = __Logical_LOWEST__,
+    __LOWEST__ = __BinOp_LOWEST__,
     __HIGHEST__ = __Misc_HIGHEST__,
 };
 
@@ -236,25 +232,34 @@ size_t constexpr AST_NP_TERM_COUNT = size_t(ASTNPTerm::__HIGHEST__)+1 - size_t(A
 
 std::string const &as_string (ASTNPTerm t) {
     static std::array<std::string,AST_NP_TERM_COUNT> const TABLE{
-        // LogicalBinOp
+        // BinOp
         "And",
         "Or",
         "Xor",
-        // LogicalUnOp
-        "Not",
-        // NumericBinOp
         "Add",
         "Sub",
         "Mul",
         "Div",
         "Pow",
-        // NumericUnOp
+
+        // UnOp
+        "Not",
         "Neg",
+
         // Misc
         "MapsTo",
         "DeclaredAs",
         "DefinedAs",
         "AssignFrom",
+        "RoundOpen",
+        "RoundClose",
+        "SquareOpen",
+        "SquareClose",
+        "CurlyOpen",
+        "CurlyClose",
+        "If",
+        "Then",
+        "Else",
     };
     return TABLE.at(size_t(t));
 }
@@ -268,25 +273,32 @@ int compare (ASTNPTerm const &lhs, ASTNPTerm const &rhs) {
 }
 
 
-// LogicalBinOp
+// BinOp
 ASTNPTerm const And{ASTNPTerm::AND};
 ASTNPTerm const Or{ASTNPTerm::OR};
 ASTNPTerm const Xor{ASTNPTerm::XOR};
-// LogicalUnOp
-ASTNPTerm const Not{ASTNPTerm::NOT};
-// NumericBinOp
 ASTNPTerm const Add{ASTNPTerm::ADD};
 ASTNPTerm const Sub{ASTNPTerm::SUB};
 ASTNPTerm const Mul{ASTNPTerm::MUL};
 ASTNPTerm const Div{ASTNPTerm::DIV};
 ASTNPTerm const Pow{ASTNPTerm::POW};
-// NumericUnOp
+// UnOp
+ASTNPTerm const Not{ASTNPTerm::NOT};
 ASTNPTerm const Neg{ASTNPTerm::NEG};
 // Misc
 ASTNPTerm const MapsTo{ASTNPTerm::MAPS_TO};
 ASTNPTerm const DeclaredAs{ASTNPTerm::DECLARED_AS};
 ASTNPTerm const DefinedAs{ASTNPTerm::DEFINED_AS};
 ASTNPTerm const AssignFrom{ASTNPTerm::ASSIGN_FROM};
+ASTNPTerm const RoundOpen{ASTNPTerm::ROUND_OPEN};
+ASTNPTerm const RoundClose{ASTNPTerm::ROUND_CLOSE};
+ASTNPTerm const SquareOpen{ASTNPTerm::SQUARE_OPEN};
+ASTNPTerm const SquareClose{ASTNPTerm::SQUARE_CLOSE};
+ASTNPTerm const CurlyOpen{ASTNPTerm::CURLY_OPEN};
+ASTNPTerm const CurlyClose{ASTNPTerm::CURLY_CLOSE};
+ASTNPTerm const If{ASTNPTerm::IF};
+ASTNPTerm const Then{ASTNPTerm::THEN};
+ASTNPTerm const Else{ASTNPTerm::ELSE};
 
 //
 // Sigils that represent different categories of things.  This is sort of vaguely defined at the moment.
@@ -300,12 +312,8 @@ ASTNPTerm const AssignFrom{ASTNPTerm::ASSIGN_FROM};
         return std::forward<Argument_>(argument); \
     }
 
-struct Any_c { ABSTRACT_TYPE_CONSTRUCTOR };
-struct LogicalBinOp_c { ABSTRACT_TYPE_CONSTRUCTOR };
-struct LogicalUnOp_c { ABSTRACT_TYPE_CONSTRUCTOR };
-struct NumericBinOp_c { ABSTRACT_TYPE_CONSTRUCTOR };
-struct NumericUnOp_c { ABSTRACT_TYPE_CONSTRUCTOR };
-// TODO: Type intersections (LogicalExpr := Intersection(Expr,Logical)) and/or
+struct BinOp_c { ABSTRACT_TYPE_CONSTRUCTOR };
+struct UnOp_c { ABSTRACT_TYPE_CONSTRUCTOR };
 
 struct SymbolId_c {
     std::string operator() (char const *c_str) const {
@@ -316,98 +324,83 @@ struct SymbolId_c {
 };
 
 // These are all singletons
-bool constexpr operator== (Any_c const &, Any_c const &) { return true; }
-bool constexpr operator== (LogicalBinOp_c const &, LogicalBinOp_c const &) { return true; }
-bool constexpr operator== (LogicalUnOp_c const &, LogicalUnOp_c const &) { return true; }
-bool constexpr operator== (NumericBinOp_c const &, NumericBinOp_c const &) { return true; }
-bool constexpr operator== (NumericUnOp_c const &, NumericUnOp_c const &) { return true; }
+bool constexpr operator== (BinOp_c const &, BinOp_c const &) { return true; }
+bool constexpr operator== (UnOp_c const &, UnOp_c const &) { return true; }
 bool constexpr operator== (SymbolId_c const &, SymbolId_c const &) { return true; }
 
-std::ostream &operator<< (std::ostream &out, Any_c const &) { return out << "Any"; }
-std::ostream &operator<< (std::ostream &out, LogicalBinOp_c const &) { return out << "LogicalBinOp"; }
-std::ostream &operator<< (std::ostream &out, LogicalUnOp_c const &) { return out << "LogicalUnOp"; }
-std::ostream &operator<< (std::ostream &out, NumericBinOp_c const &) { return out << "NumericBinOp"; }
-std::ostream &operator<< (std::ostream &out, NumericUnOp_c const &) { return out << "NumericUnOp"; }
+std::ostream &operator<< (std::ostream &out, BinOp_c const &) { return out << "BinOp"; }
+std::ostream &operator<< (std::ostream &out, UnOp_c const &) { return out << "UnOp"; }
 std::ostream &operator<< (std::ostream &out, SymbolId_c const &) { return out << "SymbolId"; }
 
-inline sept::NonParametricType_c abstract_type_of (Any_c const &) { return sept::NonParametricType; }
-inline sept::NonParametricType_c abstract_type_of (LogicalBinOp_c const &) { return sept::NonParametricType; }
-inline sept::NonParametricType_c abstract_type_of (LogicalUnOp_c const &) { return sept::NonParametricType; }
-inline sept::NonParametricType_c abstract_type_of (NumericBinOp_c const &) { return sept::NonParametricType; }
-inline sept::NonParametricType_c abstract_type_of (NumericUnOp_c const &) { return sept::NonParametricType; }
+inline sept::NonParametricType_c abstract_type_of (BinOp_c const &) { return sept::NonParametricType; }
+inline sept::NonParametricType_c abstract_type_of (UnOp_c const &) { return sept::NonParametricType; }
 inline sept::NonParametricType_c abstract_type_of (SymbolId_c const &) { return sept::NonParametricType; }
 
-Any_c const Any;
-
-LogicalBinOp_c const LogicalBinOp;
-LogicalUnOp_c const LogicalUnOp;
-NumericBinOp_c const NumericBinOp;
-NumericUnOp_c const NumericUnOp;
+BinOp_c const BinOp;
+UnOp_c const UnOp;
 SymbolId_c const SymbolId;
-
-auto const BinOp = sept::Union(LogicalBinOp, NumericBinOp);
-auto const UnOp = sept::Union(LogicalUnOp, NumericUnOp);
 
 // TODO: Figure out how to keep this as sept::UnionTerm_c so that its usage doesn't require Data indirection.
 extern sept::Data Expr_as_Data;
 auto const Expr_as_Ref = sept::MemRef(&Expr_as_Data);
 
 // TODO: Figure out how to keep this as sept::UnionTerm_c so that its usage doesn't require Data indirection.
-extern sept::Data LogicalExpr_as_Data;
-auto const LogicalExpr_as_Ref = sept::MemRef(&LogicalExpr_as_Data);
-
-// TODO: Figure out how to keep this as sept::UnionTerm_c so that its usage doesn't require Data indirection.
-extern sept::Data NumericExpr_as_Data;
-auto const NumericExpr_as_Ref = sept::MemRef(&NumericExpr_as_Data);
-
-// TODO: Figure out how to keep this as sept::UnionTerm_c so that its usage doesn't require Data indirection.
 extern sept::Data TypeExpr_as_Data;
 auto const TypeExpr_as_Ref = sept::MemRef(&TypeExpr_as_Data);
 
-// These are effectively structural subtypes (indistinguishable from sept::Bool and sept::Float64 respectively)
-auto const LogicalValueTerminal = sept::Union(sept::Bool, sept::TrueType, sept::FalseType);
-auto const NumericValueTerminal = sept::Float64;
-auto const ValueTerminal = sept::Union(LogicalValueTerminal, NumericValueTerminal);
-auto const LogicalTypeTerminal = sept::Union(sept::BoolType); // Note that TrueType and FalseType both inhabit BoolType.
-auto const NumericTypeTerminal = sept::Union(sept::Float64Type);
-auto const TypeTerminal = sept::Union(LogicalTypeTerminal, NumericTypeTerminal);
+auto const ValueTerminal = sept::Union(
+    sept::Array,
+    sept::Bool,
+    sept::FalseType,
+    sept::Float32,
+    sept::Float64,
+    sept::Sint8,
+    sept::Sint16,
+    sept::Sint32,
+    sept::Sint64,
+    sept::Uint8,
+    sept::Uint16,
+    sept::Uint32,
+    sept::Uint64,
+    sept::TrueType,
+    sept::Tuple
+);
+auto const TypeTerminal = sept::Union(
+    sept::ArrayES,
+    sept::ArrayE,
+    sept::ArrayS,
+    sept::ArrayType,
+    sept::BoolType,
+    sept::FormalTypeOf(sept::FalseType),
+    sept::Sint8Type,
+    sept::Sint16Type,
+    sept::Sint32Type,
+    sept::Sint64Type,
+    sept::Uint8Type,
+    sept::Uint16Type,
+    sept::Uint32Type,
+    sept::Uint64Type,
+    sept::Float32Type,
+    sept::Float64Type,
+    sept::FormalTypeOf(sept::TrueType),
+    sept::TupleType
+);
 // TODO: Could define variables for each as well
-
-auto const LogicalOp = sept::Union(LogicalBinOp, LogicalUnOp);
-auto const Logical = sept::Union(LogicalExpr_as_Ref, LogicalOp, LogicalValueTerminal, LogicalTypeTerminal);
-auto const NumericOp = sept::Union(NumericBinOp, NumericUnOp);
-auto const Numeric = sept::Union(NumericExpr_as_Ref, NumericOp, NumericValueTerminal, NumericTypeTerminal);
 
 // These are effectively structural subtypes (indistinguishable from the specific tuple terms)
 auto const BinOpExpr = sept::Tuple(Expr_as_Ref, BinOp, Expr_as_Ref);
 // NOTE: This should be called LeftUnOpExpr
 auto const UnOpExpr = sept::Tuple(UnOp, Expr_as_Ref);
-auto const CondExpr = sept::Tuple(LogicalExpr_as_Ref, Expr_as_Ref, Expr_as_Ref);
-auto const ParenExpr = sept::Tuple(Expr_as_Ref);
-
-auto const LogicalBinOpExpr = sept::Tuple(LogicalExpr_as_Ref, LogicalBinOp, LogicalExpr_as_Ref);
-auto const NumericBinOpExpr = sept::Tuple(NumericExpr_as_Ref, NumericBinOp, NumericExpr_as_Ref);
-
-auto const LogicalUnOpExpr = sept::Tuple(LogicalUnOp, LogicalExpr_as_Ref);
-auto const NumericUnOpExpr = sept::Tuple(NumericUnOp, NumericExpr_as_Ref);
-
-auto const LogicalCondExpr = sept::Tuple(LogicalExpr_as_Ref, LogicalExpr_as_Ref, LogicalExpr_as_Ref);
-auto const NumericCondExpr = sept::Tuple(LogicalExpr_as_Ref, NumericExpr_as_Ref, NumericExpr_as_Ref);
-
-auto const LogicalParenExpr = sept::Tuple(LogicalExpr_as_Ref);
-auto const NumericParenExpr = sept::Tuple(NumericExpr_as_Ref);
+auto const CondExpr = sept::Tuple(sept::FormalTypeOf(If), Expr_as_Ref, sept::FormalTypeOf(Then), Expr_as_Ref, sept::FormalTypeOf(Else), Expr_as_Ref);
+auto const RoundExpr = sept::Tuple(sept::FormalTypeOf(RoundOpen), Expr_as_Ref, sept::FormalTypeOf(RoundClose));
+auto const SquareExpr = sept::Tuple(sept::FormalTypeOf(SquareOpen), Expr_as_Ref, sept::FormalTypeOf(SquareClose));
+auto const CurlyExpr = sept::Tuple(sept::FormalTypeOf(CurlyOpen), Expr_as_Ref, sept::FormalTypeOf(CurlyClose));
 
 auto const SymbolDefn = sept::Tuple(SymbolId, sept::FormalTypeOf(DefinedAs), Expr_as_Ref);
 // TODO: Eventually this must support assignment to lvalues, not just symbols.
 auto const Assignment = sept::Tuple(SymbolId, sept::FormalTypeOf(AssignFrom), Expr_as_Ref);
 
-// extern sept::Data Stmt_as_Data;
-// auto const Stmt_as_Ref = sept::MemRef(&Stmt_as_Data);
-// sept::Data Stmt_as_Data{sept::Union(SymbolDefn)};
-// auto const &Stmt = Stmt_as_Data.cast<sept::UnionTerm_c const &>();
 auto const Stmt = sept::Union(SymbolDefn, Assignment);
-
-// auto const StmtArray = sept::ArrayE(Stmt_as_Ref);
 auto const StmtArray = sept::ArrayE(Stmt);
 auto const ExprArray = sept::ArrayE(Expr_as_Ref);
 // This defines a Rust-style block expression, where the last expression is the produced value of the block.
@@ -418,7 +411,9 @@ auto const SymbolTypeDecl = sept::Tuple(SymbolId, sept::FormalTypeOf(DeclaredAs)
 auto const FuncType = sept::Tuple(TypeExpr_as_Ref, sept::FormalTypeOf(MapsTo), TypeExpr_as_Ref);
 auto const FuncPrototype = sept::Tuple(SymbolTypeDecl, sept::FormalTypeOf(MapsTo), TypeExpr_as_Ref);
 auto const FuncLiteral = sept::Tuple(FuncPrototype, Expr_as_Ref);
-auto const FuncEval = sept::Tuple(SymbolId, ParenExpr);
+auto const FuncEval = sept::Tuple(SymbolId, RoundExpr);
+auto const ElementEval = sept::Tuple(Expr_as_Ref, SquareExpr);
+auto const Construction = sept::Tuple(TypeExpr_as_Ref, CurlyExpr);
 
 // This can't be const.
 sept::Data Expr_as_Data{
@@ -426,8 +421,9 @@ sept::Data Expr_as_Data{
         BinOpExpr,
         BlockExpr,
         CondExpr,
+        Construction,
         FuncEval,
-        ParenExpr,
+        RoundExpr,
         UnOpExpr,
         SymbolId,
         ValueTerminal
@@ -435,37 +431,18 @@ sept::Data Expr_as_Data{
 };
 auto const &Expr = Expr_as_Data.cast<sept::UnionTerm_c const &>();
 
-sept::Data LogicalExpr_as_Data{
-    sept::Union(
-        LogicalBinOpExpr,
-        LogicalCondExpr,
-        LogicalParenExpr,
-        LogicalUnOpExpr,
-        LogicalValueTerminal,
-        SymbolId
-    )
-};
-auto const &LogicalExpr = LogicalExpr_as_Data.cast<sept::UnionTerm_c const &>();
-
-sept::Data NumericExpr_as_Data{
-    sept::Union(
-        NumericBinOpExpr,
-        NumericCondExpr,
-        NumericParenExpr,
-        NumericUnOpExpr,
-        NumericValueTerminal,
-        SymbolId
-    )
-};
-auto const &NumericExpr = NumericExpr_as_Data.cast<sept::UnionTerm_c const &>();
-
 // TODO: More type constructions
 sept::Data TypeExpr_as_Data{
     sept::Union(
+        sept::ArrayES,
+        sept::ArrayE,
+        sept::ArrayS,
+        sept::ArrayType,
         TypeTerminal,
         FuncType,
         FuncPrototype,
-        SymbolId
+        SymbolId,
+        sept::Tuple
     )
 };
 auto const &TypeExpr = TypeExpr_as_Data.cast<sept::UnionTerm_c const &>();
@@ -474,25 +451,16 @@ auto const &TypeExpr = TypeExpr_as_Data.cast<sept::UnionTerm_c const &>();
 // Definitions of inhabits
 //
 
-inline sept::True_c constexpr inhabits (ASTNPTerm t, Any_c const &) { return sept::True; }
+// inline sept::True_c constexpr inhabits (ASTNPTerm t, Any_c const &) { return sept::True; }
 
-inline bool constexpr inhabits (ASTNPTerm t, LogicalBinOp_c const &) {
-    return ASTNPTermRepr(ASTNPTerm::__LogicalBinOp_LOWEST__) <= ASTNPTermRepr(t)
-        && ASTNPTermRepr(t) <= ASTNPTermRepr(ASTNPTerm::__LogicalBinOp_HIGHEST__);
+inline bool constexpr inhabits (ASTNPTerm t, BinOp_c const &) {
+    return ASTNPTermRepr(ASTNPTerm::__BinOp_LOWEST__) <= ASTNPTermRepr(t)
+        && ASTNPTermRepr(t) <= ASTNPTermRepr(ASTNPTerm::__BinOp_HIGHEST__);
 }
 
-inline bool constexpr inhabits (ASTNPTerm t, LogicalUnOp_c const &) {
-    return ASTNPTermRepr(ASTNPTerm::__LogicalUnOp_LOWEST__) <= ASTNPTermRepr(t)
-        && ASTNPTermRepr(t) <= ASTNPTermRepr(ASTNPTerm::__LogicalUnOp_HIGHEST__);
-}
-
-inline bool constexpr inhabits (ASTNPTerm t, NumericBinOp_c const &) {
-    return ASTNPTermRepr(ASTNPTerm::__NumericBinOp_LOWEST__) <= ASTNPTermRepr(t)
-        && ASTNPTermRepr(t) <= ASTNPTermRepr(ASTNPTerm::__NumericBinOp_HIGHEST__);
-}
-inline bool constexpr inhabits (ASTNPTerm t, NumericUnOp_c const &) {
-    return ASTNPTermRepr(ASTNPTerm::__NumericUnOp_LOWEST__) <= ASTNPTermRepr(t)
-        && ASTNPTermRepr(t) <= ASTNPTermRepr(ASTNPTerm::__NumericUnOp_HIGHEST__);
+inline bool constexpr inhabits (ASTNPTerm t, UnOp_c const &) {
+    return ASTNPTermRepr(ASTNPTerm::__UnOp_LOWEST__) <= ASTNPTermRepr(t)
+        && ASTNPTermRepr(t) <= ASTNPTermRepr(ASTNPTerm::__UnOp_HIGHEST__);
 }
 
 inline bool inhabits (ASTNPTerm t, sept::FormalTypeOf_Term_c const &f) {
@@ -521,8 +489,11 @@ public:
 
     lvd::nnsp<sept::SymbolTable> const &current_scope () const { return m_current_scope; }
 
-    void push_scope () {
+    // This will return a ScopeGuard object which facilitates exception-safe popping of scope.
+    // That ScopeGuard object should be kept alive as long as the scope is meant to live.
+    [[nodiscard]] lvd::ScopeGuard push_scope () {
         m_current_scope = m_current_scope->push_symbol_table();
+        return lvd::ScopeGuard{[this](){ this->pop_scope(); }};
     }
     void pop_scope () {
         // This will throw if there is no parent.
@@ -539,99 +510,78 @@ sept::Data evaluate_expr__as_SymbolId (std::string const &symbol_id, EvalCtx &ct
 void execute_stmt__as_StmtArray (sept::Data const &stmt, EvalCtx &ctx);
 
 bool evaluate_expr (bool const &expr, EvalCtx &ctx) { return expr; }
-// bool evaluate_expr (sept::BoolTerm_c const &expr, EvalCtx &ctx) { return expr; }
 sept::BoolTerm_c evaluate_expr (sept::BoolTerm_c const &expr, EvalCtx &ctx) { return expr; }
 double evaluate_expr (double const &expr, EvalCtx &ctx) { return expr; }
+sept::Array_c evaluate_expr (sept::Array_c const &expr, EvalCtx &ctx) { return expr; }
+sept::ArrayESTerm_c evaluate_expr (sept::ArrayESTerm_c const &expr, EvalCtx &ctx) { return expr; }
+sept::ArrayETerm_c evaluate_expr (sept::ArrayETerm_c const &expr, EvalCtx &ctx) { return expr; }
+sept::ArraySTerm_c evaluate_expr (sept::ArraySTerm_c const &expr, EvalCtx &ctx) { return expr; }
+sept::ArrayTerm_c evaluate_expr (sept::ArrayTerm_c const &expr, EvalCtx &ctx) {
+    sept::DataVector evaluated_elements;
+    evaluated_elements.reserve(expr.size());
+    for (auto const &element : expr.elements())
+        evaluated_elements.emplace_back(evaluate_expr_data(element, ctx));
+    return sept::ArrayTerm_c(std::move(evaluated_elements));
+}
+sept::Tuple_c evaluate_expr (sept::Tuple_c const &expr, EvalCtx &ctx) { return expr; }
 sept::Data evaluate_expr (std::string const &expr, EvalCtx &ctx) {
     return evaluate_expr__as_SymbolId(expr, ctx);
 }
 
-template <typename T_>
-T_ evaluate_expr__as_BinOpExpr (sept::TupleTerm_c const &t, EvalCtx &ctx) {
-//     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << lvd::IndentGuard() << '\n'
-//                << LVD_REFLECT(typeid(T_).name()) << '\n'
-//                << LVD_REFLECT(t) << '\n'
-//                << LVD_REFLECT(BinOpExpr) << '\n'
-//                << LVD_REFLECT(LogicalBinOpExpr) << '\n'
-//                << LVD_REFLECT(NumericBinOpExpr) << '\n'
-//                << LVD_REFLECT(inhabits(t, BinOpExpr)) << '\n'
-//                << LVD_REFLECT(inhabits(t, LogicalBinOpExpr)) << '\n'
-//                << LVD_REFLECT(inhabits(t, NumericBinOpExpr)) << '\n'
-//                << '\n';
+// template <typename T_>
+sept::Data evaluate_expr__as_BinOpExpr (sept::TupleTerm_c const &t, EvalCtx &ctx) {
     assert(inhabits(t, BinOpExpr));
-    if constexpr (std::is_same_v<T_,bool>) {
-        if (!inhabits(t, LogicalBinOpExpr)) {
-            throw std::runtime_error(LVD_FMT("failed condition: inhabits(t, LogicalBinOpExpr), where t = " << t << " and LogicalBinOpExpr = " << LogicalBinOpExpr));
-        }
-        assert(!inhabits(t, NumericBinOpExpr));
-    } else {
-        if (!inhabits(t, NumericBinOpExpr)) {
-            throw std::runtime_error(LVD_FMT("failed condition: inhabits(t, NumericBinOpExpr), where t = " << t << " and NumericBinOpExpr = " << NumericBinOpExpr));
-        }
-        assert(!inhabits(t, LogicalBinOpExpr));
-    }
 
-    auto lhs = evaluate_expr_data(t[0], ctx).cast<T_>();
+    auto lhs_data = evaluate_expr_data(t[0], ctx);
     auto bin_op = t[1].cast<ASTNPTerm>();
-    auto rhs = evaluate_expr_data(t[2], ctx).cast<T_>();
-    if constexpr (std::is_same_v<T_,bool>) {
-        switch (bin_op) {
-            case ASTNPTerm::AND: return lhs && rhs;
-            case ASTNPTerm::OR:  return lhs || rhs;
-            case ASTNPTerm::XOR: return lhs != rhs;
-            default: LVD_ABORT(LVD_FMT("invalid ASTNPTerm for use as a BinOp for Bool: " << uint32_t(bin_op)));
-        }
-    } else {
-        switch (bin_op) {
-            case ASTNPTerm::ADD: return lhs + rhs;
-            case ASTNPTerm::SUB: return lhs - rhs;
-            case ASTNPTerm::MUL: return lhs * rhs;
-            case ASTNPTerm::DIV: return lhs / rhs;
-            case ASTNPTerm::POW: return std::pow(lhs, rhs);
-            default: LVD_ABORT(LVD_FMT("invalid ASTNPTerm for use as a BinOp for Float64: " << uint32_t(bin_op)));
-        }
+    auto rhs_data = evaluate_expr_data(t[2], ctx);
+    switch (bin_op) {
+        case ASTNPTerm::AND: return lhs_data.cast<bool>() && rhs_data.cast<bool>();
+        case ASTNPTerm::OR:  return lhs_data.cast<bool>() || rhs_data.cast<bool>();
+        case ASTNPTerm::XOR: return lhs_data.cast<bool>() != rhs_data.cast<bool>();
+        case ASTNPTerm::ADD: return lhs_data.cast<double>() + rhs_data.cast<double>();
+        case ASTNPTerm::SUB: return lhs_data.cast<double>() - rhs_data.cast<double>();
+        case ASTNPTerm::MUL: return lhs_data.cast<double>() * rhs_data.cast<double>();
+        case ASTNPTerm::DIV: return lhs_data.cast<double>() / rhs_data.cast<double>();
+        case ASTNPTerm::POW: return std::pow(lhs_data.cast<double>(), rhs_data.cast<double>());
+        default: LVD_ABORT(LVD_FMT("invalid ASTNPTerm for use as a BinOp: " << uint32_t(bin_op)));
     }
 }
 
-template <typename T_>
-T_ evaluate_expr__as_UnOpExpr (sept::TupleTerm_c const &t, EvalCtx &ctx) {
+sept::Data evaluate_expr__as_UnOpExpr (sept::TupleTerm_c const &t, EvalCtx &ctx) {
     if (!inhabits(t, UnOpExpr)) {
         throw std::runtime_error(LVD_FMT("failed condition: inhabits(t, UnOpExpr), where t = " << t << " and UnOpExpr = " << UnOpExpr));
     }
     assert(inhabits(t, UnOpExpr));
 
     auto un_op = t[0].cast<ASTNPTerm>();
-    auto operand = evaluate_expr_data(t[1], ctx).cast<T_>();
+    auto operand_data = evaluate_expr_data(t[1], ctx);
     switch (un_op) {
-        case ASTNPTerm::NOT: return !operand;
-        case ASTNPTerm::NEG: return -operand;
+        case ASTNPTerm::NOT: return !operand_data.cast<bool>();
+        case ASTNPTerm::NEG: return -operand_data.cast<double>();
         default: LVD_ABORT(LVD_FMT("invalid ASTNPTerm for use as an UnOp: " << uint32_t(un_op)));
     }
 }
 
-template <typename T_>
-T_ evaluate_expr__as_CondExpr (sept::TupleTerm_c const &t, EvalCtx &ctx) {
+sept::Data evaluate_expr__as_CondExpr (sept::TupleTerm_c const &t, EvalCtx &ctx) {
     assert(inhabits(t, CondExpr));
-
-    auto condition = evaluate_expr_data(t[0], ctx).cast<bool>();
-    return evaluate_expr_data(t[condition ? 1 : 2], ctx).cast<T_>();
+    auto condition = evaluate_expr_data(t[1], ctx).cast<bool>();
+    return evaluate_expr_data(t[condition ? 3 : 5], ctx);
 }
 
-template <typename T_>
-T_ evaluate_expr__as_ParenExpr (sept::TupleTerm_c const &t, EvalCtx &ctx) {
-    assert(inhabits(t, ParenExpr));
-    return evaluate_expr_data(t[0], ctx).cast<T_>();
+sept::Data evaluate_expr__as_RoundExpr (sept::TupleTerm_c const &t, EvalCtx &ctx) {
+    assert(inhabits(t, RoundExpr));
+    return evaluate_expr_data(t[1], ctx);
 }
 
 sept::Data evaluate_expr__as_BlockExpr (sept::TupleTerm_c const &t, EvalCtx &ctx) {
     assert(inhabits(t, BlockExpr));
-    // Push a new scope for this block.  TODO: Use scope guard
-    ctx.push_scope();
+    // Push a new scope for this block.
+    auto scope_guard = ctx.push_scope();
     // Execute all the statements in the block before the final expression.
     execute_stmt__as_StmtArray(t[0], ctx);
     // Evaluate the final expression, which is what renders the value of the BlockExpr
     auto final_value = evaluate_expr_data(t[1], ctx);
-    ctx.pop_scope();
     return final_value;
 }
 
@@ -640,13 +590,50 @@ sept::Data evaluate_expr__as_SymbolId (std::string const &symbol_id, EvalCtx &ct
     return sept::LocalSymRef(symbol_id, ctx.current_scope());
 }
 
+sept::Data evaluate_expr__as_Construction (sept::TupleTerm_c const &t, EvalCtx &ctx) {
+    assert(inhabits(t, Construction));
+    // Resolve the type that will be constructed.
+    lvd::g_log << lvd::Log::trc() << '\n' << LVD_CALL_SITE() << " - " << LVD_REFLECT(t) << '\n';
+    lvd::g_log << lvd::Log::trc() << '\n' << LVD_CALL_SITE() << " - " << LVD_REFLECT(t[0]) << '\n';
+    auto type_to_construct = evaluate_expr_data(t[0], ctx);
+    lvd::g_log << lvd::Log::trc() << '\n' << LVD_CALL_SITE() << " - " << LVD_REFLECT(type_to_construct) << '\n';
+    auto curly_param = t[1];
+    lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(curly_param) << '\n';
+    assert(inhabits_data(curly_param, CurlyExpr));
+    auto param = curly_param[1];
+    lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(param) << '\n';
+    auto evaled_param = evaluate_expr_data(param, ctx);
+    lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(evaled_param) << '\n';
+    return type_to_construct(evaled_param).deref();
+}
+
+sept::Data evaluate_expr__as_ElementEval (sept::TupleTerm_c const &t, EvalCtx &ctx) {
+    assert(inhabits(t, ElementEval));
+    // Resolve the container whose element will be eval'ed
+    auto container = evaluate_expr_data(t[0], ctx);
+    lvd::g_log << lvd::Log::trc() << '\n' << LVD_CALL_SITE() << " - " << LVD_REFLECT(container) << '\n';
+    auto square_param = t[1];
+    lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(square_param) << '\n';
+    assert(inhabits_data(square_param, SquareExpr));
+    auto param = square_param[1];
+    lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(param) << '\n';
+    auto evaled_param = evaluate_expr_data(param, ctx);
+    lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(evaled_param) << '\n';
+
+    return container[evaled_param].deref();
+}
+
 sept::Data evaluate_expr__as_FuncEval (sept::TupleTerm_c const &t, EvalCtx &ctx) {
     assert(inhabits(t, FuncEval));
+    assert(!inhabits(t, Construction));
+    assert(!inhabits(t, ElementEval));
     // Resolve the function symbol
     auto func = ctx.current_scope()->resolve_symbol_const(t[0].cast<std::string>());
     lvd::g_log << lvd::Log::trc() << '\n' << LVD_CALL_SITE() << " - " << LVD_REFLECT(func) << '\n';
     assert(sept::inhabits_data(func, FuncLiteral));
-    auto param = t[1];
+    auto round_param = t[1];
+    lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(round_param) << '\n';
+    auto param = round_param[1];
     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(param) << '\n';
     auto evaled_param = evaluate_expr_data(param, ctx);
     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(evaled_param) << '\n';
@@ -657,25 +644,27 @@ sept::Data evaluate_expr__as_FuncEval (sept::TupleTerm_c const &t, EvalCtx &ctx)
     auto symbol_decl = func_prototype[0];
     auto symbol_id = symbol_decl[0];
     assert(symbol_id.can_cast<std::string>());
-    auto symbol_type = symbol_decl[2]; // TODO: Change this to eval, so that symbolic references for types are possible.
+    auto symbol_type = symbol_decl[2];
+    lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(symbol_type) << '\n';
+    auto symbol_type_eval = evaluate_expr_data(symbol_type, ctx);
+    lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(symbol_type_eval) << '\n';
     // Check that the parameter is the correct type
-    if (!sept::inhabits_data(evaled_param, symbol_type))
-        throw std::runtime_error(LVD_FMT("Expected parameter " << param << " to evaluate to a term of type " << symbol_type << " but it didn't"));
+    if (!sept::inhabits_data(evaled_param, symbol_type_eval))
+        throw std::runtime_error(LVD_FMT("Expected parameter " << param << " to evaluate to a term of type " << symbol_type << " but it didn't; evaled_param: " << evaled_param.deref()));
 
     auto return_type = func_prototype[2];
+    auto return_type_eval = evaluate_expr_data(return_type, ctx);
 
     // Push a context, define the function param(s).
-    // TODO: Use a scope guard here
-    ctx.push_scope();
+    auto scope_guard = ctx.push_scope();
     ctx.current_scope()->define_symbol(symbol_id.cast<std::string>(), std::move(evaled_param));
     // Evaluate the function body using the new scope.
     auto func_body = func[1];
-    auto retval = evaluate_expr_data(func_body, ctx);
-    // Pop the function local scope.
-    ctx.pop_scope();
+    // Have to deref the data, since this might be a reference.
+    auto retval = evaluate_expr_data(func_body, ctx).deref();
     // Check that the parameter is the correct type
-    if (!sept::inhabits_data(retval, return_type))
-        throw std::runtime_error(LVD_FMT("Expected return value " << retval << " to evaluate to a term of type " << return_type << " but it didn't"));
+    if (!sept::inhabits_data(retval, return_type_eval))
+        throw std::runtime_error(LVD_FMT("Expected return value " << retval << " to evaluate to a term of type " << return_type << " but it didn't; retval: " << retval.deref()));
     return retval;
 }
 
@@ -683,27 +672,26 @@ sept::Data evaluate_expr (sept::TupleTerm_c const &t, EvalCtx &ctx) {
     // TODO: Make this efficient -- some sort of poset search.
     if (false)
         { }
+    else if (inhabits(t, BinOpExpr))
+        return evaluate_expr__as_BinOpExpr(t, ctx);
     else if (inhabits(t, BlockExpr))
         return evaluate_expr__as_BlockExpr(t, ctx);
-    else if (inhabits(t, LogicalBinOpExpr))
-        return evaluate_expr__as_BinOpExpr<bool>(t, ctx);
-    else if (inhabits(t, LogicalCondExpr))
-        return evaluate_expr__as_CondExpr<bool>(t, ctx);
-    else if (inhabits(t, LogicalParenExpr))
-        return evaluate_expr__as_ParenExpr<bool>(t, ctx);
-    else if (inhabits(t, LogicalUnOpExpr))
-        return evaluate_expr__as_UnOpExpr<bool>(t, ctx);
-    else if (inhabits(t, NumericBinOpExpr))
-        return evaluate_expr__as_BinOpExpr<double>(t, ctx);
-    else if (inhabits(t, NumericCondExpr))
-        return evaluate_expr__as_CondExpr<double>(t, ctx);
-    else if (inhabits(t, NumericParenExpr))
-        return evaluate_expr__as_ParenExpr<double>(t, ctx);
-    else if (inhabits(t, NumericUnOpExpr))
-        return evaluate_expr__as_UnOpExpr<double>(t, ctx);
-    else if (inhabits(t, Expr))
+    else if (inhabits(t, CondExpr))
+        return evaluate_expr__as_CondExpr(t, ctx);
+    else if (inhabits(t, Construction))
+        return evaluate_expr__as_Construction(t, ctx);
+    else if (inhabits(t, ElementEval))
+        return evaluate_expr__as_ElementEval(t, ctx);
+    else if (inhabits(t, FuncEval))
+        return evaluate_expr__as_FuncEval(t, ctx);
+    else if (inhabits(t, RoundExpr))
+        return evaluate_expr__as_RoundExpr(t, ctx);
+    else if (inhabits(t, UnOpExpr))
+        return evaluate_expr__as_UnOpExpr(t, ctx);
+    else if (inhabits(t, Expr)) {
         LVD_ABORT(LVD_FMT("unhandled Expr: " << t));
-    else
+//         return t; // Just a plain Tuple.
+    } else
         LVD_ABORT(LVD_FMT("attempting to evaluate_expr for a non-Expr: " << t));
 }
 
@@ -751,48 +739,32 @@ void execute_stmt (sept::TupleTerm_c const &t, EvalCtx &ctx) {
 
 namespace sept {
 SEPT__REGISTER__PRINT(ASTNPTerm)
-SEPT__REGISTER__PRINT(Any_c)
-SEPT__REGISTER__PRINT(LogicalBinOp_c)
-SEPT__REGISTER__PRINT(LogicalUnOp_c)
-SEPT__REGISTER__PRINT(NumericBinOp_c)
-SEPT__REGISTER__PRINT(NumericUnOp_c)
+SEPT__REGISTER__PRINT(BinOp_c)
+SEPT__REGISTER__PRINT(UnOp_c)
 SEPT__REGISTER__PRINT(SymbolId_c)
 SEPT__REGISTER__PRINT__GIVE_ID(char const *, __char_const_ptr__)
 
-SEPT__REGISTER__EQ(Any_c)
-SEPT__REGISTER__EQ(LogicalBinOp_c)
-SEPT__REGISTER__EQ(LogicalUnOp_c)
-SEPT__REGISTER__EQ(NumericBinOp_c)
-SEPT__REGISTER__EQ(NumericUnOp_c)
+SEPT__REGISTER__EQ(BinOp_c)
+SEPT__REGISTER__EQ(UnOp_c)
 SEPT__REGISTER__EQ(ASTNPTerm)
 SEPT__REGISTER__EQ(SymbolId_c)
 
-SEPT__REGISTER__ABSTRACT_TYPE_OF(Any_c)
-SEPT__REGISTER__ABSTRACT_TYPE_OF(LogicalBinOp_c)
-SEPT__REGISTER__ABSTRACT_TYPE_OF(LogicalUnOp_c)
-SEPT__REGISTER__ABSTRACT_TYPE_OF(NumericBinOp_c)
-SEPT__REGISTER__ABSTRACT_TYPE_OF(NumericUnOp_c)
+SEPT__REGISTER__ABSTRACT_TYPE_OF(BinOp_c)
+SEPT__REGISTER__ABSTRACT_TYPE_OF(UnOp_c)
 
-SEPT__REGISTER__INHABITS__NONDATA(ASTNPTerm,     LogicalBinOp_c)
-SEPT__REGISTER__INHABITS__NONDATA(ASTNPTerm,     LogicalUnOp_c)
-SEPT__REGISTER__INHABITS__NONDATA(ASTNPTerm,     NumericBinOp_c)
-SEPT__REGISTER__INHABITS__NONDATA(ASTNPTerm,     NumericUnOp_c)
+SEPT__REGISTER__INHABITS__NONDATA(ASTNPTerm,     BinOp_c)
+SEPT__REGISTER__INHABITS__NONDATA(ASTNPTerm,     UnOp_c)
 SEPT__REGISTER__INHABITS__NONDATA(ASTNPTerm,     FormalTypeOf_Term_c)
 SEPT__REGISTER__INHABITS__GIVE_ID__NONDATA(std::string,   SymbolId_c, __std_string___SymbolId_c__)
 SEPT__REGISTER__INHABITS__GIVE_ID__NONDATA(char const *,  SymbolId_c, __char_const_ptr___SymbolId_c__)
 // TODO there are probably some missing
 
-SEPT__REGISTER__COMPARE__SINGLETON(Any_c)
-SEPT__REGISTER__COMPARE__SINGLETON(LogicalBinOp_c)
-SEPT__REGISTER__COMPARE__SINGLETON(LogicalUnOp_c)
-SEPT__REGISTER__COMPARE__SINGLETON(NumericBinOp_c)
-SEPT__REGISTER__COMPARE__SINGLETON(NumericUnOp_c)
+SEPT__REGISTER__COMPARE__SINGLETON(BinOp_c)
+SEPT__REGISTER__COMPARE__SINGLETON(UnOp_c)
 SEPT__REGISTER__COMPARE(ASTNPTerm, ASTNPTerm)
 
-SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(LogicalBinOp_c,      ASTNPTerm)
-SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(LogicalUnOp_c,       ASTNPTerm)
-SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(NumericBinOp_c,      ASTNPTerm)
-SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(NumericUnOp_c,       ASTNPTerm)
+SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(BinOp_c,      ASTNPTerm)
+SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(UnOp_c,       ASTNPTerm)
 SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(FormalTypeOf_Term_c, ASTNPTerm)
 SEPT__REGISTER__CONSTRUCT_INHABITANT_OF___GIVE_ID__ABSTRACT_TYPE(SymbolId_c, std::string, __SymbolId_c___std_string__)
 SEPT__REGISTER__CONSTRUCT_INHABITANT_OF___GIVE_ID__ABSTRACT_TYPE(SymbolId_c, char const *, __SymbolId_c___char_const_ptr__)
@@ -803,6 +775,11 @@ SEPT__REGISTER__EVALUATE_EXPR(False_c)
 SEPT__REGISTER__EVALUATE_EXPR(double)
 SEPT__REGISTER__EVALUATE_EXPR__GIVE_ID(std::string, __std_string__)
 SEPT__REGISTER__EVALUATE_EXPR(TupleTerm_c)
+SEPT__REGISTER__EVALUATE_EXPR(Array_c)
+SEPT__REGISTER__EVALUATE_EXPR(ArrayESTerm_c)
+SEPT__REGISTER__EVALUATE_EXPR(ArrayETerm_c)
+SEPT__REGISTER__EVALUATE_EXPR(ArraySTerm_c)
+SEPT__REGISTER__EVALUATE_EXPR(ArrayTerm_c)
 
 SEPT__REGISTER__EXECUTE_STMT(TupleTerm_c)
 
@@ -817,54 +794,14 @@ int main (int argc, char **argv) {
     lvd::g_log.out().setf(std::ios_base::boolalpha, std::ios_base::boolalpha);
 
     lvd::g_log << lvd::Log::dbg()
-               << LVD_REFLECT(Any) << '\n'
                << LVD_REFLECT(BinOp) << '\n'
                << LVD_REFLECT(BinOpExpr) << '\n'
                << LVD_REFLECT(CondExpr) << '\n'
                << LVD_REFLECT(Expr) << '\n'
-               << LVD_REFLECT(Logical) << '\n'
-               << LVD_REFLECT(LogicalBinOp) << '\n'
-               << LVD_REFLECT(LogicalBinOpExpr) << '\n'
-               << LVD_REFLECT(LogicalCondExpr) << '\n'
-               << LVD_REFLECT(LogicalExpr) << '\n'
-               << LVD_REFLECT(LogicalParenExpr) << '\n'
-               << LVD_REFLECT(LogicalUnOp) << '\n'
-               << LVD_REFLECT(LogicalUnOpExpr) << '\n'
-               << LVD_REFLECT(Numeric) << '\n'
-               << LVD_REFLECT(NumericBinOp) << '\n'
-               << LVD_REFLECT(NumericBinOpExpr) << '\n'
-               << LVD_REFLECT(NumericCondExpr) << '\n'
-               << LVD_REFLECT(NumericExpr) << '\n'
-               << LVD_REFLECT(NumericParenExpr) << '\n'
-               << LVD_REFLECT(NumericUnOp) << '\n'
-               << LVD_REFLECT(NumericUnOpExpr) << '\n'
-               << LVD_REFLECT(ParenExpr) << '\n'
                << LVD_REFLECT(UnOp) << '\n'
                << LVD_REFLECT(UnOpExpr) << '\n'
                << '\n';
     lvd::g_log << lvd::Log::dbg()
-               << LVD_REFLECT(inhabits(Add, LogicalBinOp)) << '\n'
-               << LVD_REFLECT(inhabits(Sub, LogicalBinOp)) << '\n'
-               << LVD_REFLECT(inhabits(Mul, LogicalBinOp)) << '\n'
-               << LVD_REFLECT(inhabits(Div, LogicalBinOp)) << '\n'
-               << LVD_REFLECT(inhabits(Pow, LogicalBinOp)) << '\n'
-               << LVD_REFLECT(inhabits(Neg, LogicalBinOp)) << '\n'
-               << LVD_REFLECT(inhabits(And, LogicalBinOp)) << '\n'
-               << LVD_REFLECT(inhabits(Or, LogicalBinOp)) << '\n'
-               << LVD_REFLECT(inhabits(Xor, LogicalBinOp)) << '\n'
-               << LVD_REFLECT(inhabits(Not, LogicalBinOp)) << '\n'
-               << '\n'
-               << LVD_REFLECT(inhabits(Add, NumericBinOp)) << '\n'
-               << LVD_REFLECT(inhabits(Sub, NumericBinOp)) << '\n'
-               << LVD_REFLECT(inhabits(Mul, NumericBinOp)) << '\n'
-               << LVD_REFLECT(inhabits(Div, NumericBinOp)) << '\n'
-               << LVD_REFLECT(inhabits(Pow, NumericBinOp)) << '\n'
-               << LVD_REFLECT(inhabits(Neg, NumericBinOp)) << '\n'
-               << LVD_REFLECT(inhabits(And, NumericBinOp)) << '\n'
-               << LVD_REFLECT(inhabits(Or, NumericBinOp)) << '\n'
-               << LVD_REFLECT(inhabits(Xor, NumericBinOp)) << '\n'
-               << LVD_REFLECT(inhabits(Not, NumericBinOp)) << '\n'
-               << '\n'
                << LVD_REFLECT(inhabits(Add, BinOp)) << '\n'
                << LVD_REFLECT(inhabits(Sub, BinOp)) << '\n'
                << LVD_REFLECT(inhabits(Mul, BinOp)) << '\n'
@@ -875,28 +812,6 @@ int main (int argc, char **argv) {
                << LVD_REFLECT(inhabits(Or, BinOp)) << '\n'
                << LVD_REFLECT(inhabits(Xor, BinOp)) << '\n'
                << LVD_REFLECT(inhabits(Not, BinOp)) << '\n'
-               << '\n'
-               << LVD_REFLECT(inhabits(Add, LogicalUnOp)) << '\n'
-               << LVD_REFLECT(inhabits(Sub, LogicalUnOp)) << '\n'
-               << LVD_REFLECT(inhabits(Mul, LogicalUnOp)) << '\n'
-               << LVD_REFLECT(inhabits(Div, LogicalUnOp)) << '\n'
-               << LVD_REFLECT(inhabits(Pow, LogicalUnOp)) << '\n'
-               << LVD_REFLECT(inhabits(Neg, LogicalUnOp)) << '\n'
-               << LVD_REFLECT(inhabits(And, LogicalUnOp)) << '\n'
-               << LVD_REFLECT(inhabits(Or, LogicalUnOp)) << '\n'
-               << LVD_REFLECT(inhabits(Xor, LogicalUnOp)) << '\n'
-               << LVD_REFLECT(inhabits(Not, LogicalUnOp)) << '\n'
-               << '\n'
-               << LVD_REFLECT(inhabits(Add, NumericUnOp)) << '\n'
-               << LVD_REFLECT(inhabits(Sub, NumericUnOp)) << '\n'
-               << LVD_REFLECT(inhabits(Mul, NumericUnOp)) << '\n'
-               << LVD_REFLECT(inhabits(Div, NumericUnOp)) << '\n'
-               << LVD_REFLECT(inhabits(Pow, NumericUnOp)) << '\n'
-               << LVD_REFLECT(inhabits(Neg, NumericUnOp)) << '\n'
-               << LVD_REFLECT(inhabits(And, NumericUnOp)) << '\n'
-               << LVD_REFLECT(inhabits(Or, NumericUnOp)) << '\n'
-               << LVD_REFLECT(inhabits(Xor, NumericUnOp)) << '\n'
-               << LVD_REFLECT(inhabits(Not, NumericUnOp)) << '\n'
                << '\n'
                << LVD_REFLECT(inhabits(Add, UnOp)) << '\n'
                << LVD_REFLECT(inhabits(Sub, UnOp)) << '\n'
@@ -914,8 +829,6 @@ int main (int argc, char **argv) {
                << LVD_REFLECT(inhabits(Xor, sept::FormalTypeOf(MapsTo))) << '\n'
                << '\n'
                << LVD_REFLECT(inhabits(sept::TupleTerm_c(123.4, Pow, 2.0), Expr)) << '\n'
-               << LVD_REFLECT(inhabits(sept::TupleTerm_c(123.4, Pow, 2.0), NumericExpr)) << '\n'
-               << LVD_REFLECT(inhabits(sept::TupleTerm_c(sept::TupleTerm_c(80.0, Add, 5.5), Pow, 2.0), NumericExpr)) << '\n'
                << '\n'
                << LVD_REFLECT(inhabits(sept::Float64, TypeExpr)) << '\n'
                << LVD_REFLECT(inhabits("hippo1", SymbolId)) << '\n'
@@ -935,9 +848,8 @@ int main (int argc, char **argv) {
                << LVD_REFLECT(inhabits(sept::TupleTerm_c(sept::TupleTerm_c(std::string("hippo12"), DeclaredAs, sept::Float64), MapsTo, sept::Bool), FuncPrototype)) << '\n'
                << '\n';
     lvd::g_log << lvd::Log::dbg()
-               << LVD_REFLECT(NumericValueTerminal(123.45)) << '\n'
-               << LVD_REFLECT(NumericExpr(123.45)) << '\n'
-               << LVD_REFLECT(NumericBinOpExpr(123.45, Add, 0.05)) << '\n'
+               << LVD_REFLECT(ValueTerminal(123.45)) << '\n'
+               << LVD_REFLECT(Expr(123.45)) << '\n'
                << LVD_REFLECT(BinOpExpr(123.45, Add, 0.05)) << '\n'
                << '\n';
 
@@ -947,9 +859,23 @@ int main (int argc, char **argv) {
                << LVD_REFLECT(evaluate_expr_data(123.45, ctx)) << '\n'
                << LVD_REFLECT(evaluate_expr_data(true, ctx)) << '\n'
                << LVD_REFLECT(evaluate_expr_data(BinOpExpr(123.45, Add, 0.05), ctx)) << '\n'
-               << LVD_REFLECT(evaluate_expr_data(CondExpr(true, 1.2, 0.05), ctx)) << '\n'
-               << LVD_REFLECT(evaluate_expr_data(ParenExpr(1.2), ctx)) << '\n'
-               << LVD_REFLECT(evaluate_expr_data(ParenExpr(ParenExpr(false)), ctx)) << '\n'
+               << LVD_REFLECT(evaluate_expr_data(CondExpr(If, true, Then, 1.2, Else, 0.05), ctx)) << '\n'
+               << LVD_REFLECT(evaluate_expr_data(RoundExpr(RoundOpen, 1.2, RoundClose), ctx)) << '\n'
+               << LVD_REFLECT(evaluate_expr_data(RoundExpr(RoundOpen, RoundExpr(RoundOpen, false, RoundClose), RoundClose), ctx)) << '\n'
+               << '\n';
+    lvd::g_log << lvd::Log::trc()
+               << LVD_REFLECT(inhabits_data(RoundOpen, sept::FormalTypeOf(RoundOpen))) << '\n'
+               << LVD_REFLECT(inhabits_data(SquareOpen, sept::FormalTypeOf(RoundOpen))) << '\n'
+               << LVD_REFLECT(inhabits_data(CurlyOpen, sept::FormalTypeOf(RoundOpen))) << '\n'
+               << LVD_REFLECT(inhabits_data(sept::Tuple(RoundOpen, 1.0, RoundClose), RoundExpr)) << '\n'
+               << LVD_REFLECT(inhabits_data(sept::Tuple(RoundOpen, 1.0, RoundClose), SquareExpr)) << '\n'
+               << LVD_REFLECT(inhabits_data(sept::Tuple(RoundOpen, 1.0, RoundClose), CurlyExpr)) << '\n'
+               << LVD_REFLECT(inhabits_data(sept::Tuple(SquareOpen, 1.0, SquareClose), RoundExpr)) << '\n'
+               << LVD_REFLECT(inhabits_data(sept::Tuple(SquareOpen, 1.0, SquareClose), SquareExpr)) << '\n'
+               << LVD_REFLECT(inhabits_data(sept::Tuple(SquareOpen, 1.0, SquareClose), CurlyExpr)) << '\n'
+               << LVD_REFLECT(inhabits_data(sept::Tuple(CurlyOpen, 1.0, CurlyClose), RoundExpr)) << '\n'
+               << LVD_REFLECT(inhabits_data(sept::Tuple(CurlyOpen, 1.0, CurlyClose), SquareExpr)) << '\n'
+               << LVD_REFLECT(inhabits_data(sept::Tuple(CurlyOpen, 1.0, CurlyClose), CurlyExpr)) << '\n'
                << '\n';
 
     // Silly, but hey.
@@ -964,36 +890,27 @@ int main (int argc, char **argv) {
                << LVD_REFLECT(five_factorial) << '\n'
                << LVD_REFLECT(seven_factorial) << '\n'
                << LVD_REFLECT(nine_factorial) << '\n'
-               << LVD_REFLECT(NumericBinOpExpr(x, Pow, 3.0)) << '\n'
-               << LVD_REFLECT(evaluate_expr(NumericBinOpExpr(x, Pow, 3.0), ctx)) << '\n'
+               << LVD_REFLECT(BinOpExpr(x, Pow, 3.0)) << '\n'
+               << LVD_REFLECT(evaluate_expr(BinOpExpr(x, Pow, 3.0), ctx)) << '\n'
                << '\n';
     // sin(x) = x - x^3 / 3! + x^5 / 5! - x^7 / 7! + x^9 / 9! - ...
     lvd::g_log << lvd::Log::dbg()
-               << LVD_REFLECT(evaluate_expr(NumericBinOpExpr(x, Pow, 9.0), ctx)) << '\n'
+               << LVD_REFLECT(evaluate_expr(BinOpExpr(x, Pow, 9.0), ctx)) << '\n'
                << LVD_REFLECT(evaluate_expr(nine_factorial, ctx)) << '\n'
-               << LVD_REFLECT(inhabits(NumericBinOpExpr(x, Pow, 9.0), Expr)) << '\n'
+               << LVD_REFLECT(inhabits(BinOpExpr(x, Pow, 9.0), Expr)) << '\n'
                << LVD_REFLECT(inhabits(Div, BinOp)) << '\n'
                << LVD_REFLECT(inhabits(nine_factorial, Expr)) << '\n'
-               << LVD_REFLECT(sept::inhabits_data(NumericBinOpExpr(x, Pow, 9.0), Expr)) << '\n'
-               << LVD_REFLECT(sept::inhabits_data(NumericBinOpExpr(x, Pow, 9.0), NumericExpr)) << '\n'
+               << LVD_REFLECT(sept::inhabits_data(BinOpExpr(x, Pow, 9.0), Expr)) << '\n'
+               << LVD_REFLECT(sept::inhabits_data(BinOpExpr(x, Pow, 9.0), Expr)) << '\n'
                << LVD_REFLECT(sept::inhabits_data(Div, BinOp)) << '\n'
                << LVD_REFLECT(sept::inhabits_data(nine_factorial, Expr)) << '\n'
                << LVD_REFLECT(inhabits(BinOpExpr(x, Pow, 9.0), BinOpExpr)) << '\n'
+               << LVD_REFLECT(inhabits(BinOpExpr(x, Pow, 9.0), CondExpr)) << '\n'
                << LVD_REFLECT(inhabits(BinOpExpr(x, Pow, 9.0), Expr)) << '\n'
-               << LVD_REFLECT(inhabits(BinOpExpr(x, Pow, 9.0), LogicalBinOpExpr)) << '\n'
-               << LVD_REFLECT(inhabits(BinOpExpr(x, Pow, 9.0), LogicalCondExpr)) << '\n'
-               << LVD_REFLECT(inhabits(BinOpExpr(x, Pow, 9.0), LogicalExpr)) << '\n'
-               << LVD_REFLECT(inhabits(BinOpExpr(x, Pow, 9.0), LogicalParenExpr)) << '\n'
-               << LVD_REFLECT(inhabits(BinOpExpr(x, Pow, 9.0), LogicalUnOpExpr)) << '\n'
-               << LVD_REFLECT(inhabits(BinOpExpr(x, Pow, 9.0), NumericBinOpExpr)) << '\n'
-               << LVD_REFLECT(inhabits(BinOpExpr(x, Pow, 9.0), NumericCondExpr)) << '\n'
-               << LVD_REFLECT(inhabits(BinOpExpr(x, Pow, 9.0), NumericExpr)) << '\n'
-               << LVD_REFLECT(inhabits(BinOpExpr(x, Pow, 9.0), NumericParenExpr)) << '\n'
-               << LVD_REFLECT(inhabits(BinOpExpr(x, Pow, 9.0), NumericUnOpExpr)) << '\n'
                << '\n';
     lvd::g_log << lvd::Log::dbg() << evaluate_expr(
-        NumericBinOpExpr(
-            NumericBinOpExpr(x, Pow, 9.0),
+        BinOpExpr(
+            BinOpExpr(x, Pow, 9.0),
             Div,
             nine_factorial
         ),
@@ -1001,35 +918,35 @@ int main (int argc, char **argv) {
     ) << '\n';
 
     lvd::g_log << lvd::Log::dbg() << evaluate_expr(
-        NumericBinOpExpr(
-            NumericBinOpExpr(
-                NumericBinOpExpr(
-                    NumericBinOpExpr(
+        BinOpExpr(
+            BinOpExpr(
+                BinOpExpr(
+                    BinOpExpr(
                         x,
                         Sub,
-                        NumericBinOpExpr(
-                            NumericBinOpExpr(x, Pow, 3.0),
+                        BinOpExpr(
+                            BinOpExpr(x, Pow, 3.0),
                             Div,
                             three_factorial
                         )
                     ),
                     Add,
-                    NumericBinOpExpr(
-                        NumericBinOpExpr(x, Pow, 5.0),
+                    BinOpExpr(
+                        BinOpExpr(x, Pow, 5.0),
                         Div,
                         five_factorial
                     )
                 ),
                 Sub,
-                NumericBinOpExpr(
-                    NumericBinOpExpr(x, Pow, 7.0),
+                BinOpExpr(
+                    BinOpExpr(x, Pow, 7.0),
                     Div,
                     seven_factorial
                 )
             ),
             Add,
-            NumericBinOpExpr(
-                NumericBinOpExpr(x, Pow, 9.0),
+            BinOpExpr(
+                BinOpExpr(x, Pow, 9.0),
                 Div,
                 nine_factorial
             )
@@ -1069,8 +986,8 @@ int main (int argc, char **argv) {
         )
     );
     lvd::g_log << lvd::Log::dbg()
-               << LVD_REFLECT(FuncEval(SymbolId("square"), ParenExpr(sept::Float64(100.1)))) << '\n'
-               << LVD_REFLECT(evaluate_expr__as_FuncEval(FuncEval(SymbolId("square"), ParenExpr(sept::Float64(100.1))), ctx)) << '\n'
+               << LVD_REFLECT(FuncEval(SymbolId("square"), RoundExpr(RoundOpen, sept::Float64(100.1), RoundClose))) << '\n'
+               << LVD_REFLECT(evaluate_expr__as_FuncEval(FuncEval(SymbolId("square"), RoundExpr(RoundOpen, sept::Float64(100.1), RoundClose)), ctx)) << '\n'
                << LVD_REFLECT(Stmt) << '\n'
                << LVD_REFLECT(StmtArray) << '\n'
                << LVD_REFLECT(ExprArray) << '\n'
@@ -1100,7 +1017,6 @@ int main (int argc, char **argv) {
     lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(sept::Union(SymbolDefn) == Stmt) << '\n';
 
 
-//     lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(stmt_array == blah) << '\n';
     lvd::g_log << lvd::Log::dbg() << "stmt_array == blah" << " = " << eq_val << '\n';
     auto block_expr = BlockExpr(stmt_array, SymbolId("fwee"));
     lvd::g_log << lvd::Log::dbg() << LVD_CALL_SITE() << '\n'
@@ -1139,6 +1055,178 @@ int main (int argc, char **argv) {
                     ).deref()
                   ) << '\n'
                << '\n';
+
+    // Define another global function.
+    ctx.current_scope()->define_symbol(
+        SymbolId("exp"),
+        FuncLiteral(
+            FuncPrototype(
+                SymbolTypeDecl(SymbolId("x"), DeclaredAs, sept::Float64),
+                MapsTo,
+                sept::Float64
+            ),
+            BlockExpr(
+                StmtArray(
+                    SymbolDefn(SymbolId("retval"), DefinedAs, 0.0),
+                    SymbolDefn(SymbolId("i"), DefinedAs, 0.0),
+                    SymbolDefn(SymbolId("accumulator"), DefinedAs, 1.0),
+
+                    // Just do an unrolled loop for now.
+
+                    Assignment(SymbolId("retval"), AssignFrom, BinOpExpr(SymbolId("retval"), Add, SymbolId("accumulator"))),
+                    Assignment(SymbolId("i"), AssignFrom, BinOpExpr(SymbolId("i"), Add, 1.0)),
+                    Assignment(SymbolId("accumulator"), AssignFrom, BinOpExpr(BinOpExpr(SymbolId("accumulator"), Mul, SymbolId("x")), Div, SymbolId("i"))),
+
+                    Assignment(SymbolId("retval"), AssignFrom, BinOpExpr(SymbolId("retval"), Add, SymbolId("accumulator"))),
+                    Assignment(SymbolId("i"), AssignFrom, BinOpExpr(SymbolId("i"), Add, 1.0)),
+                    Assignment(SymbolId("accumulator"), AssignFrom, BinOpExpr(BinOpExpr(SymbolId("accumulator"), Mul, SymbolId("x")), Div, SymbolId("i"))),
+
+                    Assignment(SymbolId("retval"), AssignFrom, BinOpExpr(SymbolId("retval"), Add, SymbolId("accumulator"))),
+                    Assignment(SymbolId("i"), AssignFrom, BinOpExpr(SymbolId("i"), Add, 1.0)),
+                    Assignment(SymbolId("accumulator"), AssignFrom, BinOpExpr(BinOpExpr(SymbolId("accumulator"), Mul, SymbolId("x")), Div, SymbolId("i"))),
+
+                    Assignment(SymbolId("retval"), AssignFrom, BinOpExpr(SymbolId("retval"), Add, SymbolId("accumulator"))),
+                    Assignment(SymbolId("i"), AssignFrom, BinOpExpr(SymbolId("i"), Add, 1.0)),
+                    Assignment(SymbolId("accumulator"), AssignFrom, BinOpExpr(BinOpExpr(SymbolId("accumulator"), Mul, SymbolId("x")), Div, SymbolId("i"))),
+
+                    Assignment(SymbolId("retval"), AssignFrom, BinOpExpr(SymbolId("retval"), Add, SymbolId("accumulator"))),
+                    Assignment(SymbolId("i"), AssignFrom, BinOpExpr(SymbolId("i"), Add, 1.0)),
+                    Assignment(SymbolId("accumulator"), AssignFrom, BinOpExpr(BinOpExpr(SymbolId("accumulator"), Mul, SymbolId("x")), Div, SymbolId("i"))),
+
+                    Assignment(SymbolId("retval"), AssignFrom, BinOpExpr(SymbolId("retval"), Add, SymbolId("accumulator"))),
+                    Assignment(SymbolId("i"), AssignFrom, BinOpExpr(SymbolId("i"), Add, 1.0)),
+                    Assignment(SymbolId("accumulator"), AssignFrom, BinOpExpr(BinOpExpr(SymbolId("accumulator"), Mul, SymbolId("x")), Div, SymbolId("i"))),
+
+                    Assignment(SymbolId("retval"), AssignFrom, BinOpExpr(SymbolId("retval"), Add, SymbolId("accumulator"))),
+                    Assignment(SymbolId("i"), AssignFrom, BinOpExpr(SymbolId("i"), Add, 1.0)),
+                    Assignment(SymbolId("accumulator"), AssignFrom, BinOpExpr(BinOpExpr(SymbolId("accumulator"), Mul, SymbolId("x")), Div, SymbolId("i")))
+                ),
+                SymbolId("retval")
+            )
+        )
+    );
+    lvd::g_log << lvd::Log::dbg()
+               << LVD_REFLECT(evaluate_expr_data(FuncEval(SymbolId("exp"), RoundExpr(RoundOpen, 0.1, RoundClose)), ctx)) << '\n'
+               << LVD_REFLECT(std::exp(0.1)) << '\n';
+
+    // Testing ElementEval
+    lvd::g_log << lvd::Log::dbg()
+               << LVD_REFLECT(evaluate_expr_data(ElementEval(sept::Array(0.5, 1.5, 2.5, 3.5), SquareExpr(SquareOpen, sept::Uint32(2), SquareClose)), ctx)) << '\n';
+
+    // Testing Construction
+    lvd::g_log << lvd::Log::dbg()
+               << LVD_REFLECT(evaluate_expr_data(Construction(sept::ArrayES(sept::Float64,sept::Uint32(2)), CurlyExpr(CurlyOpen, sept::Array(1.5, 3.5), CurlyClose)), ctx)) << '\n';
+
+
+    // Attempt to use a typedef
+    ctx.current_scope()->define_symbol(SymbolId("Complex"), sept::ArrayES(sept::Float64, sept::Uint32(2)));
+    lvd::g_log << lvd::Log::dbg()
+               << LVD_REFLECT(evaluate_expr_data(SymbolId("Complex"), ctx).deref()) << '\n'
+               << LVD_REFLECT(evaluate_expr_data(SymbolId("Complex"), ctx).deref()) << '\n'
+               << LVD_REFLECT(evaluate_expr_data(Construction(SymbolId("Complex"), CurlyExpr(CurlyOpen, sept::Array(8.1, 9.2), CurlyClose)), ctx)) << '\n'
+               << LVD_REFLECT(
+                    inhabits_data(
+                        evaluate_expr_data(Construction(SymbolId("Complex"), CurlyExpr(CurlyOpen, sept::Array(8.1, 9.2), CurlyClose)), ctx),
+                        SymbolId("Complex")
+                    )
+                ) << '\n'
+               << LVD_REFLECT(
+                    inhabits_data(
+                        sept::Array(8.1, 9.2),
+                        evaluate_expr_data(SymbolId("Complex"), ctx)
+                    )
+                ) << '\n'
+               << LVD_REFLECT(sept::Array(8.1, 9.2)) << '\n'
+               << LVD_REFLECT(sept::ArrayES(sept::Float64, sept::Uint32(2))(8.1, 9.2)) << '\n'
+               << LVD_REFLECT(
+                    inhabits_data(
+                        sept::Array(8.1, 9.2),
+                        sept::Array
+                    )
+                ) << '\n'
+               << LVD_REFLECT(
+                    inhabits_data(
+                        sept::Array(8.1, 9.2),
+                        sept::ArrayES(sept::Float64, sept::Uint32(2))
+                    )
+                ) << '\n'
+               << LVD_REFLECT(
+                    inhabits_data(
+                        sept::ArrayES(sept::Float64, sept::Uint32(2))(8.1, 9.2),
+                        sept::Array
+                    )
+                ) << '\n'
+               << LVD_REFLECT(
+                    inhabits_data(
+                        sept::ArrayES(sept::Float64, sept::Uint32(2))(8.1, 9.2),
+                        sept::ArrayES(sept::Float64, sept::Uint32(2))
+                    )
+                ) << '\n'
+               << LVD_REFLECT(
+                    inhabits_data(
+                        sept::Array(8.1, 9.2),
+                        evaluate_expr_data(SymbolId("Complex"), ctx)
+                    )
+                ) << '\n'
+               << LVD_REFLECT(
+                    inhabits_data(
+                        sept::ArrayES(sept::Float64, sept::Uint32(2))(8.1, 9.2),
+                        evaluate_expr_data(SymbolId("Complex"), ctx)
+                    )
+                ) << '\n'
+               << LVD_REFLECT(
+                    evaluate_expr_data(sept::ArrayES(sept::Float64, sept::Uint32(2))(8.1, 9.2), ctx)
+                ) << '\n'
+               << '\n';
+
+    ctx.current_scope()->define_symbol(
+        SymbolId("Complex_square"),
+        FuncLiteral(
+            FuncPrototype(
+                SymbolTypeDecl(SymbolId("z"), DeclaredAs, SymbolId("Complex")),
+                MapsTo,
+                SymbolId("Complex")
+            ),
+            BlockExpr(
+                StmtArray(
+                    SymbolDefn(SymbolId("re"), DefinedAs, ElementEval(SymbolId("z"), SquareExpr(SquareOpen, sept::Uint32(0), SquareClose))),
+                    SymbolDefn(SymbolId("im"), DefinedAs, ElementEval(SymbolId("z"), SquareExpr(SquareOpen, sept::Uint32(1), SquareClose)))
+                ),
+                Construction(
+                    SymbolId("Complex"),
+                    CurlyExpr(
+                        CurlyOpen,
+                        sept::Array(
+                            BinOpExpr(BinOpExpr(SymbolId("re"), Mul, SymbolId("re")), Sub, BinOpExpr(SymbolId("im"), Mul, SymbolId("im"))),
+                            BinOpExpr(2.0, Mul, BinOpExpr(SymbolId("re"), Mul, SymbolId("im")))
+                        ),
+                        CurlyClose
+                    )
+                )
+            )
+        )
+    );
+    lvd::g_log << lvd::Log::dbg()
+               << LVD_REFLECT(
+                    evaluate_expr_data(
+                        FuncEval(
+                            SymbolId("Complex_square"),
+                            RoundExpr(
+                                RoundOpen,
+                                Construction(
+                                    SymbolId("Complex"),
+                                    CurlyExpr(
+                                        CurlyOpen,
+                                        sept::Array(3.0, 4.0),
+                                        CurlyClose
+                                    )
+                                ),
+                                RoundClose
+                            )
+                        ),
+                        ctx
+                    )
+                ) << '\n';
 
     return 0;
 }
