@@ -9,9 +9,9 @@ namespace sept {
 MemRef_c MemRef;
 MemRefType_c MemRefType;
 
-Data MemRefTermImpl::referenced_data () && {
+Data MemRefTermImpl::move_referenced_data () && {
 //     return std::move(*m_ptr);
-    LVD_ABORT("rvalue-ref accessing form of MemRefTermImpl::referenced_data has been disabled to see if it's actually necessary");
+    LVD_ABORT("MemRefTermImpl::move_referenced_data has been disabled to see if it's actually necessary");
 }
 
 MemRefTermImpl::operator lvd::OstreamDelegate () const {

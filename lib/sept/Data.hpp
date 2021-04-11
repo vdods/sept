@@ -137,8 +137,8 @@ public:
     }
     // This dereferences all wrapped RefTerm_c levels.  I.e. if this data is RefTerm_c, then it will call
     // deref() on it and return.  Otherwise it will return *this.
-    Data deref () && {
-        return is_ref() ? std::move(deref_once().deref()) : std::move(*this);
+    Data move_deref () && {
+        return is_ref() ? std::move(*this).move_deref_once().move_deref() : std::move(*this);
     }
 
     // For determining if this Data contains a RefTerm_c value.
@@ -154,8 +154,8 @@ public:
         return raw__cast<RefTerm_c &>();
     }
     // For accessing the underlying RefTerm_c, if is_ref() returns true.  Otherwise will throw.
-    RefTerm_c as_ref () && {
-        return std::move(raw__cast<RefTerm_c &>());
+    RefTerm_c move_as_ref () && {
+        return std::move(*this).raw__move_cast<RefTerm_c>();
     }
 
 private:
@@ -164,8 +164,8 @@ private:
     Data const &deref_once () const &;
     // Returns the referenced_data if this data is RefTerm_c (recursively).  Otherwise will throw.
     Data &deref_once () &;
-    // Returns the referenced_data if this data is RefTerm_c (recursively).  Otherwise will throw.
-    Data deref_once () &&;
+    // Returns the moved referenced_data if this data is RefTerm_c (recursively).  Otherwise will throw.
+    Data move_deref_once () &&;
 
 public:
 
@@ -214,8 +214,8 @@ public:
     // It automatically handles dereferencing if this data is RefTerm_c.
     // TODO: Maybe use std::decay_t and then return `std::decay_t<T_> &&`
     template <typename T_>
-    T_ cast () && {
-        return deref().raw__cast<T_>();
+    T_ move_cast () && {
+        return std::move(*this).move_deref().raw__move_cast<T_>();
     }
 
     // This is a run-time type assertion that this Data actually holds T_.  This call then just type-casts this
@@ -233,8 +233,8 @@ public:
 //     // This is a run-time type assertion that this Data actually holds T_.  This call then just type-casts this
 //     // to the more-specific type Data_t<T_> &&.
 //     template <typename T_>
-//     Data_t<T_> &&as () && {
-//         return deref().raw__as<T_>();
+//     Data_t<T_> &&move_as () && {
+//         return move_deref().raw__move_as<T_>();
 //     }
 
     //
@@ -270,8 +270,8 @@ public:
     }
     // Essentially performs std::any_cast<T_> on this object, except with nicer syntax.
     template <typename T_>
-    T_ raw__cast () && {
-        return std::move(std::any_cast<T_>(static_cast<std::any &>(*this)));
+    T_ raw__move_cast () && {
+        return std::move(std::any_cast<T_ &>(static_cast<std::any &>(*this)));
     }
 
     // This is a run-time type assertion that this Data actually holds T_.  This call then just type-casts this
@@ -290,8 +290,9 @@ public:
     }
 //     // This is a run-time type assertion that this Data actually holds T_.  This call then just type-casts this
 //     // to the more-specific type Data_t<T_> &&.
+//     // TODO: Figure out if this is right (it's probably not)
 //     template <typename T_>
-//     Data_t<T_> &&raw__as () && {
+//     Data_t<T_> &&raw__move_as () && {
 //         std::any_cast<T_>(static_cast<std::any &&>(*this)); // This will throw std::bad_any_cast if the cast is invalid.
 //         return static_cast<Data_t<T_>&&>(*this);
 //     }

@@ -21,8 +21,8 @@ Data &LocalSymRefTermImpl::referenced_data () & {
     return m_symbol_table->resolve_symbol_nonconst(m_symbol_id);
 }
 
-Data LocalSymRefTermImpl::referenced_data () && {
-    LVD_ABORT("rvalue-ref accessing form of LocalSymRefTermImpl::referenced_data has been disabled to see if it's actually necessary");
+Data LocalSymRefTermImpl::move_referenced_data () && {
+    LVD_ABORT("LocalSymRefTermImpl::move_referenced_data has been disabled to see if it's actually necessary");
 }
 
 LocalSymRefTermImpl::operator lvd::OstreamDelegate () const {

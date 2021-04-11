@@ -29,7 +29,7 @@ public:
     // Value of the referenced Data.
     virtual Data &referenced_data () & = 0;
     // Value of the referenced Data.
-    virtual Data referenced_data () && = 0;
+    virtual Data move_referenced_data () && = 0;
 
     virtual operator lvd::OstreamDelegate () const = 0;
 };
@@ -59,7 +59,7 @@ public:
     Data &referenced_data () & { return ref_base_get().referenced_data(); }
     // Value of the referenced Data.
     // TODO: Figure out if this one makes sense to have.
-    Data referenced_data () &&;
+    Data move_referenced_data () &&;
 
     // Forward this call to the referenced_data.  Can only do so through registered construct_inhabitant_of functions.
     Data operator() (Data const &argument) const;

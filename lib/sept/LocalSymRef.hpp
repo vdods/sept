@@ -41,7 +41,7 @@ public:
 
     virtual Data const &referenced_data () const & override;
     virtual Data &referenced_data () & override;
-    virtual Data referenced_data () && override;
+    virtual Data move_referenced_data () && override;
 
     virtual operator lvd::OstreamDelegate () const override;
 

@@ -17,8 +17,8 @@ Data &GlobalSymRefTermImpl::referenced_data () & {
     return ms_symbol_table->resolve_symbol_nonconst(m_symbol_id);
 }
 
-Data GlobalSymRefTermImpl::referenced_data () && {
-    LVD_ABORT("rvalue-ref accessing form of GlobalSymRefTermImpl::referenced_data has been disabled to see if it's actually necessary");
+Data GlobalSymRefTermImpl::move_referenced_data () && {
+    LVD_ABORT("GlobalSymRefTermImpl::move_referenced_data has been disabled to see if it's actually necessary");
 }
 
 GlobalSymRefTermImpl::operator lvd::OstreamDelegate () const {

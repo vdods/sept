@@ -17,7 +17,7 @@ extern TupleType_c TupleType;
 inline constexpr NonParametricType_c const &abstract_type_of (TupleType_c const &) { return NonParametricType; }
 inline constexpr TupleType_c const &abstract_type_of (Tuple_c const &) { return TupleType; }
 
-inline bool inhabits (TupleTerm_c const &a, Tuple_c const &t) { return true; }
+inline bool constexpr inhabits (TupleTerm_c const &a, Tuple_c const &t) { return true; }
 
 inline bool inhabits (Data const &value, Tuple_c const &t) {
     return value.can_cast<TupleTerm_c>() && inhabits(value.cast<TupleTerm_c const &>(), t);

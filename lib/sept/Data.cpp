@@ -33,8 +33,8 @@ Data &Data::deref_once () & {
     return as_ref().referenced_data();
 }
 
-Data Data::deref_once () && {
-    return std::move(as_ref().referenced_data());
+Data Data::move_deref_once () && {
+    return std::move(*this).move_as_ref().move_referenced_data();
 }
 
 void print_data (std::ostream &out, Data const &data) {
@@ -92,6 +92,9 @@ Data abstract_type_of_data (Data const &value_data) {
 }
 
 bool inhabits_data (Data const &value_data, Data const &type_data) {
+//     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << lvd::IndentGuard() << '\n'
+//                << LVD_REFLECT(value_data) << '\n'
+//                << LVD_REFLECT(type_data) << '\n';
     // Everything is a Term
     if (type_data.type() == typeid(Term_c))
         return true;
@@ -117,8 +120,12 @@ bool inhabits_data (Data const &value_data, Data const &type_data) {
 
     auto const &predicate = it->second;
     // If predicate == nullptr, then by convention, value always inhabits type, and it doesn't depend on any runtime value.
-    if (predicate == nullptr)
+    if (predicate == nullptr) {
+//         lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - returning true by convention because predicate == nullptr for\n" << lvd::IndentGuard()
+//                    << LVD_REFLECT(value_data) << '\n'
+//                    << LVD_REFLECT(type_data) << '\n';
         return true;
+    }
 
     // Otherwise delegate to predicate.
     return predicate(value_data, type_data);
@@ -318,7 +325,7 @@ Data construct_inhabitant_of_data (Data const &type_data, Data const &argument_d
         it = evaluator_map.find(TypeIndexPair{std::type_index(type_data.type()), std::type_index(typeid(Data))});
         if (it == evaluator_map.end()) {
 //             throw std::runtime_error(LVD_FMT("no construct_inhabitant_of function registered for type " << type_data << " and argument " << argument_data));
-            throw std::runtime_error(LVD_FMT("no construct_inhabitant_of function registered for type " << type_data.type().name() << " and argument " << argument_data.type().name() << " or Data"));
+            throw std::runtime_error(LVD_FMT("no construct_inhabitant_of function registered for type " << type_data.type().name() << " and argument " << argument_data.type().name() << " or Data; type_data: " << type_data << ", argument_data: " << argument_data));
         }
     }
 
@@ -326,11 +333,11 @@ Data construct_inhabitant_of_data (Data const &type_data, Data const &argument_d
     // TODO: Maybe use a kind of default implementation
     if (evaluator == nullptr) {
         // Just check if the argument is already an inhabitant.
-        if (!inhabits_data(argument_data, type_data))
-            throw std::runtime_error(LVD_FMT("abstract construct_inhabitant_of condition (that argument inhabits type) failed for type " << type_data << " and argument " << argument_data));
+        if (!inhabits_data(argument_data.deref(), type_data.deref()))
+            throw std::runtime_error(LVD_FMT("abstract construct_inhabitant_of condition (that argument inhabits type) failed for type " << type_data.deref() << " and argument " << argument_data.deref()));
         return argument_data;
     } else {
-        return evaluator(type_data, argument_data);
+        return evaluator(type_data.deref(), argument_data.deref());
     }
 }
 

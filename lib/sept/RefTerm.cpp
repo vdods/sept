@@ -7,9 +7,9 @@
 
 namespace sept {
 
-Data RefTerm_c::referenced_data () && {
+Data RefTerm_c::move_referenced_data () && {
 //     return referenced_data();
-    LVD_ABORT("rvalue-ref accessing form of RefTerm_c::referenced_data has been disabled to see if it's actually necessary");
+    LVD_ABORT("RefTerm_c::move_referenced_data has been disabled to see if it's actually necessary");
 }
 
 Data RefTerm_c::operator() (Data const &argument) const {
