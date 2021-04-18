@@ -4,6 +4,7 @@
 
 #include <array>
 #include <experimental/array> // for std::make_array
+#include <lvd/comma.hpp>
 #include "sept/core.hpp"
 #include "sept/Data.hpp"
 #include "sept/hash.hpp"
@@ -20,14 +21,21 @@ DataArray_t<ELEMENT_COUNT_> make_DataArray_t (Args_&&... args) {
 }
 
 template <size_t ELEMENT_COUNT_>
-std::ostream &operator << (std::ostream &out, DataArray_t<ELEMENT_COUNT_> const &a) {
+void print (std::ostream &out, DataPrintCtx &ctx, DataArray_t<ELEMENT_COUNT_> const &value) {
+    auto cspace_delim = lvd::make_comma_space_delimiter();
     out << '(';
-    for (size_t i = 0; i < ELEMENT_COUNT_; ++i) {
-        out << a[i];
-        if (i+1 < ELEMENT_COUNT_)
-            out << ", ";
+    for (auto const &element : value) {
+        out << cspace_delim;
+        print_data(out, ctx, element);
     }
-    return out << ')';
+    out << ')';
+}
+
+template <size_t ELEMENT_COUNT_>
+std::ostream &operator << (std::ostream &out, DataArray_t<ELEMENT_COUNT_> const &a) {
+    DataPrintCtx ctx;
+    print(out, ctx, a);
+    return out;
 }
 
 // Returns true iff the given value is equal to at least one of the elements in the container.

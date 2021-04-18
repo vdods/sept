@@ -38,11 +38,7 @@ public:
 
     Data const &value () const { return elements()[0]; }
 
-    operator lvd::OstreamDelegate () const {
-        return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
-            out << "OutputTerm_c(" << value() << ')';
-        });
-    }
+    operator lvd::OstreamDelegate () const;
 };
 
 // This is used to construct OutputTerm_c more efficiently (std::initializer_list lacks move semantics for some dumb
@@ -50,6 +46,12 @@ public:
 template <typename... Args_>
 OutputTerm_c make_output_term (Args_&&... args) {
     return OutputTerm_c(std::forward<Args_>(args)...);
+}
+
+inline void print (std::ostream &out, DataPrintCtx &ctx, OutputTerm_c const &value) {
+    out << "OutputTerm_c(";
+    print_data(out, ctx, value.value());
+    out << ')';
 }
 
 } // end namespace ctl

@@ -31,11 +31,7 @@ public:
         return m_term;
     }
 
-    operator lvd::OstreamDelegate () const {
-        return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
-            out << "FormalTypeOf(" << term() << ')';
-        });
-    }
+    operator lvd::OstreamDelegate () const;
 
 private:
 
@@ -44,6 +40,12 @@ private:
 
 inline bool operator== (FormalTypeOf_Term_c const &lhs, FormalTypeOf_Term_c const &rhs) {
     return lhs.term() == rhs.term();
+}
+
+inline void print (std::ostream &out, DataPrintCtx &ctx, FormalTypeOf_Term_c const &value) {
+    out << "FormalTypeOf(";
+    print_data(out, ctx, value.term());
+    out << ')';
 }
 
 using FormalTypeOf_c = NonParametricType_t<NPTerm::FORMAL_TYPE_OF,FormalTypeOf_Term_c>;

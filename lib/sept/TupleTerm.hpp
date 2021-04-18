@@ -62,12 +62,13 @@ public:
         return this->operator()(TupleTerm_c(std::forward<First_>(first), std::forward<Rest_>(rest)...));
     }
 
-    operator lvd::OstreamDelegate () const {
-        return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
-            out << "TupleTerm_c" << elements();
-        });
-    }
+    operator lvd::OstreamDelegate () const;
 };
+
+inline void print (std::ostream &out, DataPrintCtx &ctx, TupleTerm_c const &value) {
+    out << "TupleTerm_c";
+    print(out, ctx, value.elements());
+}
 
 // // This is used to construct TupleTerm_c more efficiently (std::initializer_list lacks move semantics for some dumb
 // // reason), as well as to avoid a potential infinite loop in constructors between TupleTerm_c, Data, and std::any.

@@ -88,6 +88,7 @@ public:
 private:
 
     RefTermBase_i &ref_base_get () & { return static_cast<RefTermBase_i &>(*m_ref_base.get().get()); }
+    // NOTE: Not sure if this is right.
     RefTermBase_i &&ref_base_get () && { return static_cast<RefTermBase_i &&>(*m_ref_base.get().get()); }
 
     lvd::nnup<RefTermBase_i> m_ref_base;
@@ -97,6 +98,10 @@ bool operator== (RefTerm_c const &lhs, RefTerm_c const &rhs);
 // // NOTE: These aren't yet present in DataEq registration, since it isn't yet build to take asymmetric type equality
 // bool operator== (RefTerm_c const &lhs, Data const &rhs);
 // bool operator== (Data const &lhs, RefTerm_c const &rhs);
+
+class DataPrintCtx;
+
+void print (std::ostream &out, DataPrintCtx &ctx, RefTerm_c const &value);
 
 // Forward to referenced_data
 Data abstract_type_of (RefTerm_c const &r);

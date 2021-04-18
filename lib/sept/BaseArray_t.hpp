@@ -68,11 +68,7 @@ public:
     DataVector::iterator begin () { return m_elements.begin(); }
     DataVector::iterator end () { return m_elements.end(); }
 
-    operator lvd::OstreamDelegate () const {
-        return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
-            out << "BaseArray_t" << elements();
-        });
-    }
+    operator lvd::OstreamDelegate () const;
 
 private:
 
@@ -80,6 +76,20 @@ private:
     // of having one per element as is in the case of DataVector (noting that Data derives from std::any)
     DataVector m_elements;
 };
+
+template <typename Derived_>
+void print (std::ostream &out, DataPrintCtx &ctx, BaseArray_t<Derived_> const &value) {
+    out << "BaseArray_t";
+    print(out, ctx, value.elements());
+}
+
+template <typename Derived_>
+BaseArray_t<Derived_>::operator lvd::OstreamDelegate () const {
+    return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
+        DataPrintCtx ctx;
+        print(out, ctx, *this);
+    });
+}
 
 // This is used to construct BaseArray_t more efficiently (std::initializer_list lacks move semantics for some dumb
 // reason), as well as to avoid a potential infinite loop in constructors between SyntacTupleT, Data, and std::any.

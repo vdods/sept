@@ -5,6 +5,13 @@
 namespace sept {
 namespace ctl {
 
+OutputTerm_c::operator lvd::OstreamDelegate () const {
+    return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
+        DataPrintCtx ctx;
+        print(out, ctx, *this);
+    });
+}
+
 OutputType_c OutputType;
 Output_c Output;
 

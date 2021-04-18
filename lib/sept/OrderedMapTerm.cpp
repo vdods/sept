@@ -7,6 +7,13 @@
 
 namespace sept {
 
+OrderedMapConstraint::operator lvd::OstreamDelegate () const {
+    return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
+        DataPrintCtx ctx;
+        print(out, ctx, *this);
+    });
+}
+
 std::ostream &operator << (std::ostream &out, DataOrderedMap const &m) {
     out << '{';
     size_t i = 0;
@@ -31,6 +38,13 @@ void OrderedMapConstraint::verify_constraint_or_throw (DataOrderedMap const &m) 
     } else {
         throw std::runtime_error(LVD_FMT("invalid array type " << m_ordered_map_type.type()));
     }
+}
+
+OrderedMapTerm_c::operator lvd::OstreamDelegate () const {
+    return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
+        DataPrintCtx ctx;
+        print(out, ctx, *this);
+    });
 }
 
 void serialize (OrderedMapTerm_c const &v, std::ostream &out) {

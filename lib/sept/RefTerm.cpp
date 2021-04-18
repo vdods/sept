@@ -8,7 +8,6 @@
 namespace sept {
 
 Data RefTerm_c::move_referenced_data () && {
-//     return referenced_data();
     LVD_ABORT("RefTerm_c::move_referenced_data has been disabled to see if it's actually necessary");
 }
 
@@ -21,11 +20,10 @@ Data RefTerm_c::operator[] (Data const &param) const {
 }
 
 RefTerm_c::operator lvd::OstreamDelegate () const {
-//     return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
-//         // TODO: This will print a cyclic reference in an infinite loop unless something stops it
-//         out << "RefTerm_c(" << *m_ptr << ')';
-//     });
-    return referenced_data().operator lvd::OstreamDelegate();
+    return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
+        DataPrintCtx ctx;
+        print(out, ctx, *this);
+    });
 }
 
 //
@@ -36,8 +34,8 @@ bool operator== (RefTerm_c const &lhs, RefTerm_c const &rhs) {
 //     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << lvd::IndentGuard() << '\n'
 //                << LVD_REFLECT(&lhs.referenced_data()) << '\n'
 //                << LVD_REFLECT(&rhs.referenced_data()) << '\n';
-    // TODO: Because references can be stacked, this really should check the innermost reference addresses first.
-    return &lhs.referenced_data() == &rhs.referenced_data() || lhs.referenced_data() == rhs.referenced_data();
+    // TODO: Because references can be stacked, this should/could check the innermost reference values for equality first.
+    return lhs.referenced_data() == rhs.referenced_data();
 }
 // // NOTE: These aren't yet present in DataEq registration, since it isn't yet built to take asymmetric type equality
 // bool operator== (RefTerm_c const &lhs, Data const &rhs) {
@@ -46,6 +44,12 @@ bool operator== (RefTerm_c const &lhs, RefTerm_c const &rhs) {
 // bool operator== (Data const &lhs, RefTerm_c const &rhs) {
 //     return lhs == rhs.referenced_data();
 // }
+
+void print (std::ostream &out, DataPrintCtx &ctx, RefTerm_c const &value) {
+    out << "RefTerm_c(" << value.ref_base_get() << "; ";
+    print_data(out, ctx, value.referenced_data());
+    out << ')';
+}
 
 // Forward to referenced_data
 Data abstract_type_of (RefTerm_c const &r) {

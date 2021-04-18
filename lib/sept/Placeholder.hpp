@@ -28,12 +28,14 @@ public:
     Data const &index () const & { return elements()[0]; }
 //     Data &index () & { return elements()[0]; }
 
-    operator lvd::OstreamDelegate () const {
-        return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
-            out << "Placeholder(" << index() << ')';
-        });
-    }
+    operator lvd::OstreamDelegate () const;
 };
+
+inline void print (std::ostream &out, DataPrintCtx &ctx, PlaceholderTerm_c const &value) {
+    out << "Placeholder(";
+    print_data(out, ctx, value.index());
+    out << ')';
+}
 
 using PlaceholderType_c = NonParametricType_t<NPTerm::PLACEHOLDER_TYPE>;
 using Placeholder_c = NonParametricType_t<NPTerm::PLACEHOLDER, PlaceholderTerm_c>;

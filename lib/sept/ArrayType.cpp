@@ -14,6 +14,10 @@ ArrayES_c ArrayES;
 ArrayE_c ArrayE;
 ArrayS_c ArrayS;
 
+//
+// ArrayESTerm_c
+//
+
 bool ArrayESTerm_c::constraint_is_satisfied (DataVector const &elements) const {
     if (m_size != elements.size())
         return false;
@@ -31,6 +35,17 @@ void ArrayESTerm_c::verify_constraint_or_throw (DataVector const &elements) cons
             throw std::runtime_error(LVD_FMT("element " << i << " had type " << abstract_type_of_data(elements[i]) << " but was expected to be of type " << m_element_type));
 }
 
+ArrayESTerm_c::operator lvd::OstreamDelegate () const {
+    return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
+        DataPrintCtx ctx;
+        print(out, ctx, *this);
+    });
+}
+
+//
+// ArrayETerm_c
+//
+
 bool ArrayETerm_c::constraint_is_satisfied (DataVector const &elements) const {
     for (size_t i = 0; i < elements.size(); ++i)
         if (!inhabits_data(elements[i], m_element_type))
@@ -44,6 +59,17 @@ void ArrayETerm_c::verify_constraint_or_throw (DataVector const &elements) const
             throw std::runtime_error(LVD_FMT("element " << i << " had type " << abstract_type_of_data(elements[i]) << " but was expected to be of type " << m_element_type));
 }
 
+ArrayETerm_c::operator lvd::OstreamDelegate () const {
+    return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
+        DataPrintCtx ctx;
+        print(out, ctx, *this);
+    });
+}
+
+//
+// ArraySTerm_c
+//
+
 bool ArraySTerm_c::constraint_is_satisfied (DataVector const &elements) const {
     return m_size == elements.size();
 }
@@ -52,6 +78,17 @@ void ArraySTerm_c::verify_constraint_or_throw (DataVector const &elements) const
     if (m_size != elements.size())
         throw std::runtime_error(LVD_FMT("expected " << m_size << " elements, but there were " << elements.size()));
 }
+
+ArraySTerm_c::operator lvd::OstreamDelegate () const {
+    return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
+        DataPrintCtx ctx;
+        print(out, ctx, *this);
+    });
+}
+
+//
+// Other stuff
+//
 
 bool inhabits (ArrayTerm_c const &a, ArrayESTerm_c const &t) {
     if (a.size() != t.size())

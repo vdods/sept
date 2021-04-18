@@ -13,6 +13,10 @@ OrderedMapDC_c OrderedMapDC;
 OrderedMapD_c OrderedMapD;
 OrderedMapC_c OrderedMapC;
 
+//
+// OrderedMapDCTerm_c
+//
+
 bool OrderedMapDCTerm_c::constraint_is_satisfied (DataOrderedMap const &m) const {
     for (auto const &pair : m) {
         if (!inhabits_data(pair.first, m_domain))
@@ -32,6 +36,17 @@ void OrderedMapDCTerm_c::verify_constraint_or_throw (DataOrderedMap const &m) co
     }
 }
 
+OrderedMapDCTerm_c::operator lvd::OstreamDelegate () const {
+    return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
+        DataPrintCtx ctx;
+        print(out, ctx, *this);
+    });
+}
+
+//
+// OrderedMapDTerm_c
+//
+
 bool OrderedMapDTerm_c::constraint_is_satisfied (DataOrderedMap const &m) const {
     for (auto const &pair : m)
         if (!inhabits_data(pair.first, m_domain))
@@ -45,6 +60,17 @@ void OrderedMapDTerm_c::verify_constraint_or_throw (DataOrderedMap const &m) con
             throw std::runtime_error(LVD_FMT("key " << pair.first << " had type " << abstract_type_of_data(pair.first) << " but was expected to be of type " << m_domain));
 }
 
+OrderedMapDTerm_c::operator lvd::OstreamDelegate () const {
+    return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
+        DataPrintCtx ctx;
+        print(out, ctx, *this);
+    });
+}
+
+//
+// OrderedMapCTerm_c
+//
+
 bool OrderedMapCTerm_c::constraint_is_satisfied (DataOrderedMap const &m) const {
     for (auto const &pair : m)
         if (!inhabits_data(pair.second, m_codomain))
@@ -57,6 +83,17 @@ void OrderedMapCTerm_c::verify_constraint_or_throw (DataOrderedMap const &m) con
         if (!inhabits_data(pair.second, m_codomain))
             throw std::runtime_error(LVD_FMT("value " << pair.second << " had type " << abstract_type_of_data(pair.second) << " but was expected to be of type " << m_codomain));
 }
+
+OrderedMapCTerm_c::operator lvd::OstreamDelegate () const {
+    return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
+        DataPrintCtx ctx;
+        print(out, ctx, *this);
+    });
+}
+
+//
+// Other stuff
+//
 
 bool inhabits (OrderedMapTerm_c const &m, OrderedMapDCTerm_c const &t) {
     return m.domain() == t.domain() && m.codomain() == t.codomain();

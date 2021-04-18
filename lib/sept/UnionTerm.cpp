@@ -7,6 +7,13 @@
 
 namespace sept {
 
+UnionTerm_c::operator lvd::OstreamDelegate () const {
+    return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
+        DataPrintCtx ctx;
+        print(out, ctx, *this);
+    });
+}
+
 void serialize (UnionTerm_c const &t, std::ostream &out) {
     serialize(SerializedTopLevelCode::PARAMETRIC_TERM, out);
     serialize(UnionType, out);

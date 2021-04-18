@@ -16,6 +16,8 @@ namespace sept {
 // Refers to a symbol in a locally defined table in memory.  This is one step more context-dependent
 // than GlobalSymRefTermImpl.
 // NOTE: Don't use this class directly, use sept::LocalSymRef("<symbol-id>", <shared-ptr-to-symbol-table>) to construct a term of that type.
+// TODO: Make SymbolTable a first-class type (maybe it could just be an UnorderedMap of some kind)
+// and then use a reference to it instead of a shared_ptr.
 class LocalSymRefTermImpl : public RefTermBase_i {
 public:
 

@@ -39,11 +39,7 @@ public:
 
     Data const &requested_type () const { return elements()[0]; }
 
-    operator lvd::OstreamDelegate () const {
-        return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
-            out << "RequestSyncInputTerm_c(" << requested_type().operator lvd::OstreamDelegate() << ')';
-        });
-    }
+    operator lvd::OstreamDelegate () const;
 };
 
 // This is used to construct RequestSyncInputTerm_c more efficiently (std::initializer_list lacks move semantics for some dumb
@@ -51,6 +47,12 @@ public:
 template <typename... Args_>
 RequestSyncInputTerm_c make_request_sync_input_term (Args_&&... args) {
     return RequestSyncInputTerm_c(std::forward<Args_>(args)...);
+}
+
+inline void print (std::ostream &out, DataPrintCtx &ctx, RequestSyncInputTerm_c const &value) {
+    out << "RequestSyncInputTerm_c(";
+    print_data(out, ctx, value.requested_type());
+    out << ')';
 }
 
 } // end namespace ctl

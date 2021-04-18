@@ -5,6 +5,13 @@
 namespace sept {
 namespace ctl {
 
+RequestSyncInputTerm_c::operator lvd::OstreamDelegate () const {
+    return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
+        DataPrintCtx ctx;
+        print(out, ctx, *this);
+    });
+}
+
 RequestSyncInputType_c RequestSyncInputType;
 RequestSyncInput_c RequestSyncInput;
 

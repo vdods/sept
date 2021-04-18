@@ -44,16 +44,18 @@ public:
 
     void verify_constraint_or_throw (DataOrderedMap const &m) const;
 
-    operator lvd::OstreamDelegate () const {
-        return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
-            out << "OrderedMapConstraint(" << m_ordered_map_type << ')';
-        });
-    }
+    operator lvd::OstreamDelegate () const;
 
 private:
 
     Data m_ordered_map_type;
 };
+
+inline void print (std::ostream &out, DataPrintCtx &ctx, OrderedMapConstraint const &value) {
+    out << "OrderedMapConstraint(";
+    print_data(out, ctx, value.ordered_map_type());
+    out << ')';
+}
 
 //
 // OrderedMapTerm_c
@@ -191,11 +193,7 @@ public:
         return std::move(*this);
     }
 
-    operator lvd::OstreamDelegate () const {
-        return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
-            out << "OrderedMapTerm_c<" << domain() << ',' << codomain() << '>' << pairs();
-        });
-    }
+    operator lvd::OstreamDelegate () const;
 
 private:
 
@@ -219,6 +217,15 @@ OrderedMapTerm_c make_ordered_map (Args_&&... args) {
     // This is a fold expression -- see https://en.cppreference.com/w/cpp/language/fold
     (pairs.emplace(std::forward<Args_>(args)), ...);
     return OrderedMapTerm_c(std::move(pairs));
+}
+
+inline void print (std::ostream &out, DataPrintCtx &ctx, OrderedMapTerm_c const &value) {
+    out << "OrderedMapTerm_c<";
+    print_data(out, ctx, value.domain());
+    out << ',';
+    print_data(out, ctx, value.codomain());
+    out << '>';
+    print(out, ctx, value.pairs());
 }
 
 void serialize (OrderedMapTerm_c const &v, std::ostream &out);

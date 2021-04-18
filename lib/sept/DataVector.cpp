@@ -2,16 +2,24 @@
 
 #include "sept/DataVector.hpp"
 
+#include <lvd/comma.hpp>
+
 namespace sept {
 
-std::ostream &operator << (std::ostream &out, DataVector const &v) {
+void print (std::ostream &out, DataPrintCtx &ctx, DataVector const &value) {
+    auto cspace_delim = lvd::make_comma_space_delimiter();
     out << '(';
-    for (size_t i = 0; i < v.size(); ++i) {
-        out << v[i];
-        if (i+1 < v.size())
-            out << ", ";
+    for (auto const &element : value) {
+        out << cspace_delim;
+        print_data(out, ctx, element);
     }
-    return out << ')';
+    out << ')';
+}
+
+std::ostream &operator << (std::ostream &out, DataVector const &v) {
+    DataPrintCtx ctx;
+    print(out, ctx, v);
+    return out;
 }
 
 bool is_member (Data const &value, DataVector const &container) {

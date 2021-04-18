@@ -63,12 +63,13 @@ public:
     }
     // TODO: Make a Data-accepting one, and then ensure the above one disallows Argument_==Data
 
-    operator lvd::OstreamDelegate () const {
-        return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
-            out << "UnionTerm_c" << elements();
-        });
-    }
+    operator lvd::OstreamDelegate () const;
 };
+
+inline void print (std::ostream &out, DataPrintCtx &ctx, UnionTerm_c const &value) {
+    out << "UnionTerm_c";
+    print(out, ctx, value.elements());
+}
 
 // // This is used to construct UnionTerm_c more efficiently (std::initializer_list lacks move semantics for some dumb
 // // reason), as well as to avoid a potential infinite loop in constructors between UnionTerm_c, Data, and std::any.

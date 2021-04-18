@@ -37,20 +37,42 @@ Data Data::move_deref_once () && {
     return std::move(*this).move_as_ref().move_referenced_data();
 }
 
-void print_data (std::ostream &out, Data const &data) {
-    // First check if it's a RefTerm_c.
+Data::operator lvd::OstreamDelegate () const {
+    assert(this->has_value());
+    return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
+        DataPrintCtx ctx;
+        print_data(out, ctx, *this);
+    });
+}
+
+void print_data (std::ostream &out, DataPrintCtx &ctx, Data const &data) {
     if (data.is_ref()) {
-        out << "RefTerm_c(...)";
-        return;
+        Data const &referenced_data = data.deref();
+//         lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << '\n'
+//                    << LVD_REFLECT(&referenced_data) << '\n'
+//                    << LVD_REFLECT(ctx) << '\n';
+
+        out << "Ref(" << data.as_ref().ref_base_get() << "; ";
+//         out << "Ref(" << &referenced_data << "; ";
+        if (ctx.has_been_visited(&referenced_data))
+            out << "<previously-visited>";
+        else {
+            // This is more economical, but won't print minimally.
+//             auto scope_guard = ctx.push(&referenced_data);
+            // This uses more memory, but will print fewer Data instances.
+            ctx.mark_visited(&referenced_data);
+            print_data(out, ctx, referenced_data);
+        }
+        out << ')';
+    } else {
+        // Look up the type in the predicate map.
+        auto const &data_printing_function_map = lvd::static_association_singleton<sept::_Data_Print>();
+        auto it = data_printing_function_map.find(std::type_index(data.type()));
+        if (it == data_printing_function_map.end())
+            throw std::runtime_error(LVD_FMT("Data type " << data.type().name() << " not registered in _Data_Print for use in print_data"));
+
+        it->second(out, ctx, data);
     }
-
-    // Look up the type in the predicate map.
-    auto const &data_printing_function_map = lvd::static_association_singleton<sept::_Data_Print>();
-    auto it = data_printing_function_map.find(std::type_index(data.type()));
-    if (it == data_printing_function_map.end())
-        throw std::runtime_error(LVD_FMT("Data type " << data.type().name() << " not registered in _Data_Print for use in print_data"));
-
-    it->second(out, data);
 }
 
 bool eq_data (Data const &lhs, Data const &rhs) {

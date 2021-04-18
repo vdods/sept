@@ -2,6 +2,7 @@
 
 #include "sept/GlobalSymRef.hpp"
 
+#include <lvd/literal.hpp>
 #include "sept/Data.hpp"
 
 namespace sept {
@@ -23,7 +24,8 @@ Data GlobalSymRefTermImpl::move_referenced_data () && {
 
 GlobalSymRefTermImpl::operator lvd::OstreamDelegate () const {
     return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
-        out << "GlobalSymRefTermImpl(" << m_symbol_id << ')';
+        // Print it as an opaque reference.  Printing through a transparent reference is done by Data methods.
+        out << "GlobalSymRef(" << lvd::literal_of(m_symbol_id) << ')';
     });
 }
 

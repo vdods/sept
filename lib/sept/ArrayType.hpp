@@ -14,11 +14,18 @@
 
 namespace sept {
 
+class ArrayESTerm_c;
+class ArrayETerm_c;
+class ArraySTerm_c;
 class ArrayTerm_c;
 
 template <typename T_> struct is_an_array_type : std::false_type { };
 
 template <typename T_> inline constexpr bool is_an_array_type_v = is_an_array_type<T_>::value;
+
+void print (std::ostream &out, DataPrintCtx &ctx, ArrayESTerm_c const &value);
+void print (std::ostream &out, DataPrintCtx &ctx, ArrayETerm_c const &value);
+void print (std::ostream &out, DataPrintCtx &ctx, ArraySTerm_c const &value);
 
 // TODO: Make this inherit ArrayETerm_c and ArraySTerm_c
 class ArrayESTerm_c {
@@ -57,11 +64,7 @@ public:
     bool constraint_is_satisfied (DataVector const &elements) const;
     void verify_constraint_or_throw (DataVector const &elements) const;
 
-    operator lvd::OstreamDelegate () const {
-        return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
-            out << "ArrayES(" << element_type() << ',' << size() << ')';
-        });
-    }
+    operator lvd::OstreamDelegate () const;
 
 private:
 
@@ -102,11 +105,7 @@ public:
     bool constraint_is_satisfied (DataVector const &elements) const;
     void verify_constraint_or_throw (DataVector const &elements) const;
 
-    operator lvd::OstreamDelegate () const {
-        return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
-            out << "ArrayE(" << element_type() << ')';
-        });
-    }
+    operator lvd::OstreamDelegate () const;
 
 private:
 
@@ -134,11 +133,7 @@ public:
     bool constraint_is_satisfied (DataVector const &elements) const;
     void verify_constraint_or_throw (DataVector const &elements) const;
 
-    operator lvd::OstreamDelegate () const {
-        return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
-            out << "ArrayS(" << size() << ')';
-        });
-    }
+    operator lvd::OstreamDelegate () const;
 
 private:
 
@@ -160,6 +155,22 @@ public:
     bool constraint_is_satisfied (DataVector const &elements) const { return true; } // No constraints.
     void verify_constraint_or_throw (DataVector const &elements) const { } // No constraints.
 };
+
+inline void print (std::ostream &out, DataPrintCtx &ctx, ArrayESTerm_c const &value) {
+    out << "ArrayES(";
+    print_data(out, ctx, value.element_type());
+    out << ',' << value.size() << ')';
+}
+
+inline void print (std::ostream &out, DataPrintCtx &ctx, ArrayETerm_c const &value) {
+    out << "ArrayE(";
+    print_data(out, ctx, value.element_type());
+    out << ')';
+}
+
+inline void print (std::ostream &out, DataPrintCtx &ctx, ArraySTerm_c const &value) {
+    out << "ArrayS(" << value.size() << ')';
+}
 
 using ArrayType_c = NonParametricType_t<NPTerm::ARRAY_TYPE>;
 // ArrayES_c, ArrayE_c, and ArrayS_c really just provide a syntactic way to access their respective term constructors.

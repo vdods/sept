@@ -2,6 +2,7 @@
 
 #include "sept/LocalSymRef.hpp"
 
+#include <lvd/literal.hpp>
 #include "sept/Data.hpp"
 
 namespace sept {
@@ -27,7 +28,8 @@ Data LocalSymRefTermImpl::move_referenced_data () && {
 
 LocalSymRefTermImpl::operator lvd::OstreamDelegate () const {
     return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
-        out << "LocalSymRefTermImpl(" << m_symbol_id << ", " << m_symbol_table.get() << ')';
+        // Print it as an opaque reference.  Printing through a transparent reference is done by Data methods.
+        out << "LocalSymRef(" << lvd::literal_of(m_symbol_id) << ", " << m_symbol_table.get() << ')';
     });
 }
 

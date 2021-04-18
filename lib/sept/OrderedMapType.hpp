@@ -13,11 +13,18 @@
 
 namespace sept {
 
+class OrderedMapDCTerm_c;
+class OrderedMapDTerm_c;
+class OrderedMapCTerm_c;
 class OrderedMapTerm_c;
 
 template <typename T_> struct is_an_ordered_map_type : std::false_type { };
 
 template <typename T_> inline constexpr bool is_an_ordered_map_type_v = is_an_ordered_map_type<T_>::value;
+
+void print (std::ostream &out, DataPrintCtx &ctx, OrderedMapDCTerm_c const &value);
+void print (std::ostream &out, DataPrintCtx &ctx, OrderedMapDTerm_c const &value);
+void print (std::ostream &out, DataPrintCtx &ctx, OrderedMapCTerm_c const &value);
 
 struct DataOrder {
     bool operator () (Data const &lhs, Data const &rhs) const {
@@ -62,11 +69,7 @@ public:
     bool constraint_is_satisfied (DataOrderedMap const &m) const;
     void verify_constraint_or_throw (DataOrderedMap const &m) const;
 
-    operator lvd::OstreamDelegate () const {
-        return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
-            out << "OrderedMapDC(" << domain() << ',' << codomain() << ')';
-        });
-    }
+    operator lvd::OstreamDelegate () const;
 
 private:
 
@@ -103,11 +106,7 @@ public:
     bool constraint_is_satisfied (DataOrderedMap const &m) const;
     void verify_constraint_or_throw (DataOrderedMap const &m) const;
 
-    operator lvd::OstreamDelegate () const {
-        return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
-            out << "OrderedMapD(" << domain() << ')';
-        });
-    }
+    operator lvd::OstreamDelegate () const;
 
 private:
 
@@ -143,16 +142,32 @@ public:
     bool constraint_is_satisfied (DataOrderedMap const &m) const;
     void verify_constraint_or_throw (DataOrderedMap const &m) const;
 
-    operator lvd::OstreamDelegate () const {
-        return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
-            out << "OrderedMapC(" << codomain() << ')';
-        });
-    }
+    operator lvd::OstreamDelegate () const;
 
 private:
 
     Data m_codomain;
 };
+
+inline void print (std::ostream &out, DataPrintCtx &ctx, OrderedMapDCTerm_c const &value) {
+    out << "OrderedMapDC(";
+    print_data(out, ctx, value.domain());
+    out << ',';
+    print_data(out, ctx, value.codomain());
+    out << ')';
+}
+
+inline void print (std::ostream &out, DataPrintCtx &ctx, OrderedMapDTerm_c const &value) {
+    out << "OrderedMapD(";
+    print_data(out, ctx, value.domain());
+    out << ')';
+}
+
+inline void print (std::ostream &out, DataPrintCtx &ctx, OrderedMapCTerm_c const &value) {
+    out << "OrderedMapC(";
+    print_data(out, ctx, value.codomain());
+    out << ')';
+}
 
 class OrderedMapTerm_c;
 

@@ -20,6 +20,8 @@ DataVector make_DataVector (Args_&&... args) {
     return retval;
 }
 
+void print (std::ostream &out, DataPrintCtx &ctx, DataVector const &value);
+
 std::ostream &operator << (std::ostream &out, DataVector const &v);
 
 // Returns true iff the given value is equal to at least one of the elements in the container.

@@ -7,6 +7,12 @@
 
 namespace sept {
 
+template <typename T_>
+class Data_t;
+
+template <typename T_>
+void print (std::ostream &out, DataPrintCtx &ctx, Data_t<T_> const &value);
+
 // This is a version of Data which already "knows" the type it's populated with.  The trick is
 // that the run-time type check is done before this type is even constructed.
 template <typename T_>
@@ -128,6 +134,13 @@ inline bool operator == (Data_t<T_> const &lhs, Data_t<T_> const &rhs) {
 template <typename T_>
 inline bool operator != (Data_t<T_> const &lhs, Data_t<T_> const &rhs) {
     return lhs.value() != rhs.value();
+}
+
+template <typename T_>
+void print (std::ostream &out, DataPrintCtx &ctx, Data_t<T_> const &value) {
+    out << "Data_t(";
+    print_data(out, ctx, value.value());
+    out << ')';
 }
 
 } // end namespace sept

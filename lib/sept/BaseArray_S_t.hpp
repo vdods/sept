@@ -69,16 +69,26 @@ public:
     DataArray &elements () & { return m_elements; }
     DataArray elements () && { return std::move(m_elements); }
 
-    operator lvd::OstreamDelegate () const {
-        return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
-            out << "BaseArray_S_t<" << ELEMENT_COUNT_ << ',' << typeid(Derived).name() << '>' << elements();
-        });
-    }
+    operator lvd::OstreamDelegate () const;
 
 private:
 
     DataArray m_elements;
 };
+
+template <size_t ELEMENT_COUNT_, typename Derived_>
+void print (std::ostream &out, DataPrintCtx &ctx, BaseArray_S_t<ELEMENT_COUNT_,Derived_> const &value) {
+    out << "BaseArray_S_t<" << ELEMENT_COUNT_ << ',' << typeid(typename BaseArray_S_t<ELEMENT_COUNT_,Derived_>::Derived).name() << '>';
+    print(out, ctx, value.elements());
+}
+
+template <size_t ELEMENT_COUNT_, typename Derived_>
+BaseArray_S_t<ELEMENT_COUNT_,Derived_>::operator lvd::OstreamDelegate () const {
+    return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
+        DataPrintCtx ctx;
+        print(out, ctx, *this);
+    });
+}
 
 // This is used to construct BaseArray_S_t more efficiently (std::initializer_list lacks move semantics for some dumb
 // reason), as well as to avoid a potential infinite loop in constructors between BaseArray_S_t, Data, and std::any.

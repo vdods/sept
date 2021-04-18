@@ -10,6 +10,7 @@
 #include <lvd/OstreamDelegate.hpp>
 #include <lvd/StaticAssociation_t.hpp>
 #include "sept/core.hpp"
+#include "sept/DataPrintCtx.hpp"
 #include "sept/hash.hpp"
 #include "sept/RefTerm.hpp"
 #include <typeindex>
@@ -36,7 +37,8 @@ class Data_t;
 
 // Forward declaration of print_data, with necessary forward declaration of Data.
 class Data;
-void print_data (std::ostream &out, Data const &data);
+class DataPrintCtx;
+void print_data (std::ostream &out, DataPrintCtx &ctx, Data const &data);
 Data element_of_data (Data const &container, Data const &param);
 Data construct_inhabitant_of_data (Data const &type_data, Data const &argument_data);
 
@@ -298,12 +300,7 @@ public:
 //     }
 
     // Convenient way to get an overload for operator<< on std::ostream.
-    operator lvd::OstreamDelegate () const {
-        assert(this->has_value());
-        return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
-            print_data(out, *this);
-        });
-    }
+    operator lvd::OstreamDelegate () const;
 
     //
     // Data model methods
@@ -350,7 +347,7 @@ T_ RefTerm_c::cast () {
 // StaticAssociation_t for Data::operator lvd::OstreamDelegate
 //
 
-using DataPrintFunction = std::function<void(std::ostream &, Data const &)>;
+using DataPrintFunction = std::function<void(std::ostream &, DataPrintCtx &, Data const &)>;
 using DataPrintFunctionMap = std::unordered_map<std::type_index,DataPrintFunction>;
 LVD_STATIC_ASSOCIATION_DEFINE(_Data_Print, DataPrintFunctionMap)
 
@@ -359,14 +356,21 @@ LVD_STATIC_ASSOCIATION_DEFINE(_Data_Print, DataPrintFunctionMap)
         _Data_Print, \
         unique_id, \
         std::type_index(typeid(Type)), \
-        [](std::ostream &out, Data const &data){ \
-            out << data.cast<Type const &>(); \
+        [](std::ostream &out, DataPrintCtx &ctx, Data const &value_data){ \
+            auto const &value = value_data.cast<Type const &>(); \
+            print(out, ctx, value); \
         } \
     )
 #define SEPT__REGISTER__PRINT(Type) \
     SEPT__REGISTER__PRINT__GIVE_ID(Type, Type)
 
-void print_data (std::ostream &out, Data const &data);
+void print_data (std::ostream &out, DataPrintCtx &ctx, Data const &data);
+
+// Fallback default for printing.
+template <typename T_>
+void print (std::ostream &out, DataPrintCtx &ctx, T_ const &value) {
+    out << value;
+}
 
 //
 // StaticAssociation_t for eq_data

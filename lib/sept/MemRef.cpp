@@ -16,8 +16,8 @@ Data MemRefTermImpl::move_referenced_data () && {
 
 MemRefTermImpl::operator lvd::OstreamDelegate () const {
     return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
-        // TODO: This will print a cyclic reference in an infinite loop unless something stops it
-        out << "MemRefTermImpl(" << *m_ptr << ')';
+        // Print it as an opaque reference.  Printing through a transparent reference is done by Data methods.
+        out << "MemRef(" << m_ptr << ')';
     });
 }
 

@@ -4,6 +4,13 @@
 
 namespace sept {
 
+ArrayTerm_c::operator lvd::OstreamDelegate () const {
+    return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
+        DataPrintCtx ctx;
+        print(out, ctx, *this);
+    });
+}
+
 void serialize (ArrayTerm_c const &v, std::ostream &out) {
     serialize(SerializedTopLevelCode::PARAMETRIC_TERM, out);
     serialize_data(v.abstract_type(), out);

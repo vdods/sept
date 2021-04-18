@@ -55,16 +55,28 @@ public:
     Data &abstract_type () & { return m_abstract_type; }
     Data abstract_type () && { return std::move(m_abstract_type); }
 
-    operator lvd::OstreamDelegate () const {
-        return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
-            out << "BaseArrayT_t<" << abstract_type() << '>' << this->elements();
-        });
-    }
+    operator lvd::OstreamDelegate () const;
 
 private:
 
     Data m_abstract_type;
 };
+
+template <typename Derived_>
+void print (std::ostream &out, DataPrintCtx &ctx, BaseArrayT_t<Derived_> const &value) {
+    out << "BaseArrayT_t<";
+    print_data(out, ctx, value.abstract_type());
+    out << '>';
+    print(out, ctx, value.elements());
+}
+
+template <typename Derived_>
+BaseArrayT_t<Derived_>::operator lvd::OstreamDelegate () const {
+    return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
+        DataPrintCtx ctx;
+        print(out, ctx, *this);
+    });
+}
 
 // // This is used to construct BaseArrayT_t more efficiently (std::initializer_list lacks move semantics for some dumb
 // // reason), as well as to avoid a potential infinite loop in constructors between BaseArrayT_t, Data, and std::any.

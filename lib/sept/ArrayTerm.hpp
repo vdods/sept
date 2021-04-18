@@ -89,11 +89,7 @@ public:
         return std::move(*this);
     }
 
-    operator lvd::OstreamDelegate () const {
-        return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
-            out << "ArrayTerm_c<" << element_type() << ',' << size() << '>' << elements();
-        });
-    }
+    operator lvd::OstreamDelegate () const;
 
 private:
 
@@ -116,6 +112,13 @@ private:
 template <typename... Args_>
 ArrayTerm_c make_array (Args_&&... args) {
     return ArrayTerm_c(make_DataVector(std::forward<Args_>(args)...));
+}
+
+inline void print (std::ostream &out, DataPrintCtx &ctx, ArrayTerm_c const &value) {
+    out << "ArrayTerm_c<";
+    print_data(out, ctx, value.element_type());
+    out << ',' << value.size() << '>';
+    print(out, ctx, value.elements());
 }
 
 void serialize (ArrayTerm_c const &v, std::ostream &out);

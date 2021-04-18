@@ -6,6 +6,13 @@ namespace sept {
 
 FormalTypeOf_c FormalTypeOf;
 
+FormalTypeOf_Term_c::operator lvd::OstreamDelegate () const {
+    return lvd::OstreamDelegate::OutFunc([this](std::ostream &out){
+        DataPrintCtx ctx;
+        print(out, ctx, *this);
+    });
+}
+
 //
 // Registrations for Data functions
 //

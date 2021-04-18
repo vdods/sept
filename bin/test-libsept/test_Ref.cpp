@@ -7,6 +7,7 @@
 #include "sept/LocalSymRef.hpp"
 #include "sept/MemRef.hpp"
 #include "sept/NPType.hpp"
+#include "sept/Tuple.hpp"
 
 LVD_TEST_BEGIN(572__Ref__0)
     // Test MemRef's instantiation.
@@ -179,10 +180,35 @@ LVD_TEST_BEGIN(572__Ref__3__LocalSymRef)
         LVD_TEST_REQ_EQ(sept::LocalSymRef("hippo", base_symbol_table), d);
 
         lvd::test::call_function_and_expect_exception<std::runtime_error>([&](){
-            test_log << lvd::Log::trc() << sept::LocalSymRef("donkey", base_symbol_table);
+            auto x = sept::LocalSymRef("donkey", base_symbol_table).referenced_data();
+            test_log << lvd::Log::trc() << LVD_REFLECT(x.type()) << ", " << LVD_REFLECT(x) << '\n';
         });
         lvd::test::call_function_and_expect_exception<std::runtime_error>([&](){
-            test_log << lvd::Log::trc() << sept::LocalSymRef("nonexistent", base_symbol_table);
+            auto x = sept::LocalSymRef("nonexistent", base_symbol_table).referenced_data();
+            test_log << lvd::Log::trc() << LVD_REFLECT(x.type()) << ", " << LVD_REFLECT(x) << '\n';
         });
     }
+LVD_TEST_END
+
+LVD_TEST_BEGIN(572__Ref__4__Printing)
+    auto d0 = sept::Data{sept::Uint32(123)};
+    auto d1 = sept::Data{sept::Uint32(456)};
+    auto d2 = sept::Data{sept::Tuple(sept::MemRef(&d0), sept::MemRef(&d1))};
+    auto d3 = sept::Data{sept::Tuple(sept::MemRef(&d2))};
+    auto d4 = sept::Data{sept::MemRef(&d3)};
+    test_log << lvd::Log::trc()
+             << LVD_REFLECT(d0) << '\n'
+             << LVD_REFLECT(d1) << '\n'
+             << LVD_REFLECT(d2) << '\n'
+             << LVD_REFLECT(d3) << '\n'
+             << LVD_REFLECT(d4) << '\n'
+             << '\n';
+    d2.cast<sept::TupleTerm_c &>()[1] = sept::MemRef(&d4);
+    test_log << lvd::Log::trc()
+             << LVD_REFLECT(d0) << '\n'
+             << LVD_REFLECT(d1) << '\n'
+             << LVD_REFLECT(d2) << '\n'
+             << LVD_REFLECT(d3) << '\n'
+             << LVD_REFLECT(d4) << '\n'
+             << '\n';
 LVD_TEST_END
