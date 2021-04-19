@@ -387,15 +387,6 @@ auto const TypeTerminal = sept::Union(
 );
 // TODO: Could define variables for each as well
 
-// These are effectively structural subtypes (indistinguishable from the specific tuple terms)
-auto const BinOpExpr = sept::Tuple(Expr_as_Ref, BinOp, Expr_as_Ref);
-// NOTE: This should be called LeftUnOpExpr
-auto const UnOpExpr = sept::Tuple(UnOp, Expr_as_Ref);
-auto const CondExpr = sept::Tuple(sept::FormalTypeOf(If), Expr_as_Ref, sept::FormalTypeOf(Then), Expr_as_Ref, sept::FormalTypeOf(Else), Expr_as_Ref);
-auto const RoundExpr = sept::Tuple(sept::FormalTypeOf(RoundOpen), Expr_as_Ref, sept::FormalTypeOf(RoundClose));
-auto const SquareExpr = sept::Tuple(sept::FormalTypeOf(SquareOpen), Expr_as_Ref, sept::FormalTypeOf(SquareClose));
-auto const CurlyExpr = sept::Tuple(sept::FormalTypeOf(CurlyOpen), Expr_as_Ref, sept::FormalTypeOf(CurlyClose));
-
 auto const SymbolDefn = sept::Tuple(SymbolId, sept::FormalTypeOf(DefinedAs), Expr_as_Ref);
 // TODO: Eventually this must support assignment to lvalues, not just symbols.
 auto const Assignment = sept::Tuple(SymbolId, sept::FormalTypeOf(AssignFrom), Expr_as_Ref);
@@ -406,10 +397,20 @@ auto const ExprArray = sept::ArrayE(Expr_as_Ref);
 // This defines a Rust-style block expression, where the last expression is the produced value of the block.
 auto const BlockExpr = sept::Tuple(StmtArray, Expr_as_Ref);
 
+// These are effectively structural subtypes (indistinguishable from the specific tuple terms)
+auto const BinOpExpr = sept::Tuple(Expr_as_Ref, BinOp, Expr_as_Ref);
+// NOTE: This should be called LeftUnOpExpr
+auto const UnOpExpr = sept::Tuple(UnOp, Expr_as_Ref);
+auto const CondExpr = sept::Tuple(sept::FormalTypeOf(If), Expr_as_Ref, sept::FormalTypeOf(Then), Expr_as_Ref, sept::FormalTypeOf(Else), Expr_as_Ref);
+auto const RoundExpr = sept::Tuple(sept::FormalTypeOf(RoundOpen), ExprArray, sept::FormalTypeOf(RoundClose));
+auto const SquareExpr = sept::Tuple(sept::FormalTypeOf(SquareOpen), Expr_as_Ref, sept::FormalTypeOf(SquareClose)); // TODO: change to sept::Tuple(Expr_as_Ref)
+auto const CurlyExpr = sept::Tuple(sept::FormalTypeOf(CurlyOpen), Expr_as_Ref, sept::FormalTypeOf(CurlyClose)); // TODO: change to sept::Tuple(Expr_as_Ref)
+
 // TODO: SymbolId has to be std::string basically
 auto const SymbolTypeDecl = sept::Tuple(SymbolId, sept::FormalTypeOf(DeclaredAs), TypeExpr_as_Ref);
 auto const FuncType = sept::Tuple(TypeExpr_as_Ref, sept::FormalTypeOf(MapsTo), TypeExpr_as_Ref);
-auto const FuncPrototype = sept::Tuple(SymbolTypeDecl, sept::FormalTypeOf(MapsTo), TypeExpr_as_Ref);
+auto const FuncPrototypeParams = sept::ArrayE(SymbolTypeDecl);
+auto const FuncPrototype = sept::Tuple(FuncPrototypeParams, sept::FormalTypeOf(MapsTo), TypeExpr_as_Ref);
 auto const FuncLiteral = sept::Tuple(FuncPrototype, Expr_as_Ref);
 auto const FuncEval = sept::Tuple(SymbolId, RoundExpr);
 auto const ElementEval = sept::Tuple(Expr_as_Ref, SquareExpr);
@@ -446,6 +447,20 @@ sept::Data TypeExpr_as_Data{
     )
 };
 auto const &TypeExpr = TypeExpr_as_Data.cast<sept::UnionTerm_c const &>();
+
+sept::ArrayTerm_c func_param_type_array_of (sept::ArrayTerm_c const &param_array) {
+//     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << '\n'
+//                << LVD_REFLECT(param_array) << '\n'
+//                << LVD_REFLECT(ExprArray) << '\n';
+    assert(inhabits(param_array, ExprArray));
+    sept::DataVector param_types;
+    param_types.reserve(param_array.size());
+    for (auto const &param : param_array.elements()) {
+        assert(inhabits_data(param, SymbolTypeDecl));
+        param_types.emplace_back(param[2]);
+    }
+    return sept::ArrayTerm_c{std::move(param_types)};
+}
 
 //
 // Definitions of inhabits
@@ -569,9 +584,14 @@ sept::Data evaluate_expr__as_CondExpr (sept::TupleTerm_c const &t, EvalCtx &ctx)
     return evaluate_expr_data(t[condition ? 3 : 5], ctx);
 }
 
-sept::Data evaluate_expr__as_RoundExpr (sept::TupleTerm_c const &t, EvalCtx &ctx) {
+sept::ArrayTerm_c evaluate_expr__as_RoundExpr (sept::TupleTerm_c const &t, EvalCtx &ctx) {
     assert(inhabits(t, RoundExpr));
-    return evaluate_expr_data(t[1], ctx);
+    auto const &round_expr_array = t[1].cast<sept::ArrayTerm_c const &>();
+    sept::DataVector evaluated_elements;
+    evaluated_elements.reserve(round_expr_array.size());
+    for (auto const &element : round_expr_array.elements())
+        evaluated_elements.emplace_back(evaluate_expr_data(element, ctx));
+    return sept::ArrayTerm_c{std::move(evaluated_elements)};
 }
 
 sept::Data evaluate_expr__as_BlockExpr (sept::TupleTerm_c const &t, EvalCtx &ctx) {
@@ -593,17 +613,17 @@ sept::Data evaluate_expr__as_SymbolId (std::string const &symbol_id, EvalCtx &ct
 sept::Data evaluate_expr__as_Construction (sept::TupleTerm_c const &t, EvalCtx &ctx) {
     assert(inhabits(t, Construction));
     // Resolve the type that will be constructed.
-    lvd::g_log << lvd::Log::trc() << '\n' << LVD_CALL_SITE() << " - " << LVD_REFLECT(t) << '\n';
-    lvd::g_log << lvd::Log::trc() << '\n' << LVD_CALL_SITE() << " - " << LVD_REFLECT(t[0]) << '\n';
+//     lvd::g_log << lvd::Log::trc() << '\n' << LVD_CALL_SITE() << " - " << LVD_REFLECT(t) << '\n';
+//     lvd::g_log << lvd::Log::trc() << '\n' << LVD_CALL_SITE() << " - " << LVD_REFLECT(t[0]) << '\n';
     auto type_to_construct = evaluate_expr_data(t[0], ctx);
-    lvd::g_log << lvd::Log::trc() << '\n' << LVD_CALL_SITE() << " - " << LVD_REFLECT(type_to_construct) << '\n';
+//     lvd::g_log << lvd::Log::trc() << '\n' << LVD_CALL_SITE() << " - " << LVD_REFLECT(type_to_construct) << '\n';
     auto curly_param = t[1];
-    lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(curly_param) << '\n';
+//     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(curly_param) << '\n';
     assert(inhabits_data(curly_param, CurlyExpr));
     auto param = curly_param[1];
-    lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(param) << '\n';
+//     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(param) << '\n';
     auto evaled_param = evaluate_expr_data(param, ctx);
-    lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(evaled_param) << '\n';
+//     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(evaled_param) << '\n';
     return type_to_construct(evaled_param).deref();
 }
 
@@ -611,14 +631,14 @@ sept::Data evaluate_expr__as_ElementEval (sept::TupleTerm_c const &t, EvalCtx &c
     assert(inhabits(t, ElementEval));
     // Resolve the container whose element will be eval'ed
     auto container = evaluate_expr_data(t[0], ctx);
-    lvd::g_log << lvd::Log::trc() << '\n' << LVD_CALL_SITE() << " - " << LVD_REFLECT(container) << '\n';
+//     lvd::g_log << lvd::Log::trc() << '\n' << LVD_CALL_SITE() << " - " << LVD_REFLECT(container) << '\n';
     auto square_param = t[1];
-    lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(square_param) << '\n';
+//     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(square_param) << '\n';
     assert(inhabits_data(square_param, SquareExpr));
     auto param = square_param[1];
-    lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(param) << '\n';
+//     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(param) << '\n';
     auto evaled_param = evaluate_expr_data(param, ctx);
-    lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(evaled_param) << '\n';
+//     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(evaled_param) << '\n';
 
     return container[evaled_param].deref();
 }
@@ -629,35 +649,46 @@ sept::Data evaluate_expr__as_FuncEval (sept::TupleTerm_c const &t, EvalCtx &ctx)
     assert(!inhabits(t, ElementEval));
     // Resolve the function symbol
     auto func = ctx.current_scope()->resolve_symbol_const(t[0].cast<std::string>());
-    lvd::g_log << lvd::Log::trc() << '\n' << LVD_CALL_SITE() << " - " << LVD_REFLECT(func) << '\n';
+//     lvd::g_log << lvd::Log::trc() << '\n' << LVD_CALL_SITE() << " - " << LVD_REFLECT(func) << '\n';
     assert(sept::inhabits_data(func, FuncLiteral));
     auto round_param = t[1];
-    lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(round_param) << '\n';
-    auto param = round_param[1];
-    lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(param) << '\n';
-    auto evaled_param = evaluate_expr_data(param, ctx);
-    lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(evaled_param) << '\n';
+    auto evaled_param_array = evaluate_expr__as_RoundExpr(round_param.cast<sept::TupleTerm_c const &>(), ctx);
+//     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(evaled_param_array) << '\n';
+
     // Identify the parameter symbol decl
     // NOTE: This probably copy-constructs, instead of returning a const ref.
     // TODO: Could have the stuff return a MemRef.
-    auto func_prototype = func[0];
-    auto symbol_decl = func_prototype[0];
-    auto symbol_id = symbol_decl[0];
-    assert(symbol_id.can_cast<std::string>());
-    auto symbol_type = symbol_decl[2];
-    lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(symbol_type) << '\n';
-    auto symbol_type_eval = evaluate_expr_data(symbol_type, ctx);
-    lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(symbol_type_eval) << '\n';
-    // Check that the parameter is the correct type
-    if (!sept::inhabits_data(evaled_param, symbol_type_eval))
-        throw std::runtime_error(LVD_FMT("Expected parameter " << param << " to evaluate to a term of type " << symbol_type << " but it didn't; evaled_param: " << evaled_param.deref()));
+    auto func_prototype = func[0].cast<sept::TupleTerm_c const &>();
+//     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(func_prototype) << '\n';
+    auto const &func_prototype_param_array = func_prototype.elements()[0].cast<sept::ArrayTerm_c const &>();
+//     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(func_prototype_param_array) << '\n';
+    auto func_param_type_array = func_param_type_array_of(func_prototype_param_array);
+    // Check that there are the expected number of parameters in the FuncEval
+    // TODO: Could check this earlier.
+    if (func_param_type_array.size() != evaled_param_array.size())
+        throw std::runtime_error(LVD_FMT("Expected " << func_param_type_array.size() << " parameters in call to function " << t[0] << ", but got " << evaled_param_array.size()));
+    // Now check that all the param types are as expected.
+    for (size_t i = 0; i < func_param_type_array.size(); ++i) {
+        auto const &evaled_param = evaled_param_array.elements()[i];
+        auto const &func_param_type = func_param_type_array.elements()[i];
+        // NOTE/TEMP HACK: This will resolve any symbolic references in the param types using the local symbol table,
+        // and not the symbol table of the scope that the function was declared in.  TODO: Fix this.
+        auto evaled_func_param_type = evaluate_expr_data(func_param_type, ctx);
+        if (!inhabits_data(evaled_param, evaled_func_param_type))
+            throw std::runtime_error(LVD_FMT("In parameter " << i << " in call to function " << t[0] << ": Expected a value of type " << evaled_func_param_type << " but got " << evaled_param << " (which has abstract type " << sept::abstract_type_of_data(evaled_param) << ')'));
+    }
 
     auto return_type = func_prototype[2];
     auto return_type_eval = evaluate_expr_data(return_type, ctx);
 
     // Push a context, define the function param(s).
     auto scope_guard = ctx.push_scope();
-    ctx.current_scope()->define_symbol(symbol_id.cast<std::string>(), std::move(evaled_param));
+    for (size_t i = 0; i < func_param_type_array.size(); ++i) {
+        auto &evaled_param = evaled_param_array.elements()[i];
+        auto const &func_param_symbol_type_decl = func_prototype_param_array.elements()[i].cast<sept::TupleTerm_c const &>();
+        auto const &func_param_symbol_id = func_param_symbol_type_decl.elements()[0].cast<std::string const &>();
+        ctx.current_scope()->define_symbol(func_param_symbol_id, std::move(evaled_param));
+    }
     // Evaluate the function body using the new scope.
     auto func_body = func[1];
     // Have to deref the data, since this might be a reference.
@@ -844,8 +875,9 @@ int main (int argc, char **argv) {
                << LVD_REFLECT(inhabits(sept::TupleTerm_c(std::string("hippo10"), DeclaredAs, sept::Float64), SymbolTypeDecl)) << '\n'
                << LVD_REFLECT(inhabits(sept::TupleTerm_c(sept::Float64, MapsTo, sept::Bool), FuncType)) << '\n'
                << LVD_REFLECT(inhabits(sept::TupleTerm_c(sept::Float64, MapsTo, sept::TupleTerm_c(sept::Bool, MapsTo, sept::Uint32)), FuncType)) << '\n'
-               << LVD_REFLECT(inhabits(sept::TupleTerm_c(sept::TupleTerm_c("hippo11", DeclaredAs, sept::Float64), MapsTo, sept::Bool), FuncPrototype)) << '\n'
-               << LVD_REFLECT(inhabits(sept::TupleTerm_c(sept::TupleTerm_c(std::string("hippo12"), DeclaredAs, sept::Float64), MapsTo, sept::Bool), FuncPrototype)) << '\n'
+               << LVD_REFLECT(inhabits(sept::TupleTerm_c(FuncPrototypeParams(sept::TupleTerm_c("hippo11", DeclaredAs, sept::Float64)), MapsTo, sept::Bool), FuncPrototype)) << '\n'
+               << LVD_REFLECT(inhabits(sept::TupleTerm_c(FuncPrototypeParams(sept::TupleTerm_c(std::string("hippo12"), DeclaredAs, sept::Float64)), MapsTo, sept::Bool), FuncPrototype)) << '\n'
+               << LVD_REFLECT(inhabits(sept::TupleTerm_c(FuncPrototypeParams(sept::TupleTerm_c(std::string("hippo13"), DeclaredAs, sept::Float64), sept::TupleTerm_c(std::string("ostrich44"), DeclaredAs, sept::Uint32)), MapsTo, sept::Bool), FuncPrototype)) << '\n'
                << '\n';
     lvd::g_log << lvd::Log::dbg()
                << LVD_REFLECT(ValueTerminal(123.45)) << '\n'
@@ -860,16 +892,17 @@ int main (int argc, char **argv) {
                << LVD_REFLECT(evaluate_expr_data(true, ctx)) << '\n'
                << LVD_REFLECT(evaluate_expr_data(BinOpExpr(123.45, Add, 0.05), ctx)) << '\n'
                << LVD_REFLECT(evaluate_expr_data(CondExpr(If, true, Then, 1.2, Else, 0.05), ctx)) << '\n'
-               << LVD_REFLECT(evaluate_expr_data(RoundExpr(RoundOpen, 1.2, RoundClose), ctx)) << '\n'
-               << LVD_REFLECT(evaluate_expr_data(RoundExpr(RoundOpen, RoundExpr(RoundOpen, false, RoundClose), RoundClose), ctx)) << '\n'
+               << LVD_REFLECT(evaluate_expr_data(RoundExpr(RoundOpen, ExprArray(1.2), RoundClose), ctx)) << '\n'
+               << LVD_REFLECT(evaluate_expr_data(RoundExpr(RoundOpen, ExprArray(1.2, 3.4, 5.6), RoundClose), ctx)) << '\n'
+               << LVD_REFLECT(evaluate_expr_data(RoundExpr(RoundOpen, ExprArray(RoundExpr(RoundOpen, ExprArray(false), RoundClose)), RoundClose), ctx)) << '\n'
                << '\n';
     lvd::g_log << lvd::Log::trc()
                << LVD_REFLECT(inhabits_data(RoundOpen, sept::FormalTypeOf(RoundOpen))) << '\n'
                << LVD_REFLECT(inhabits_data(SquareOpen, sept::FormalTypeOf(RoundOpen))) << '\n'
                << LVD_REFLECT(inhabits_data(CurlyOpen, sept::FormalTypeOf(RoundOpen))) << '\n'
-               << LVD_REFLECT(inhabits_data(sept::Tuple(RoundOpen, 1.0, RoundClose), RoundExpr)) << '\n'
-               << LVD_REFLECT(inhabits_data(sept::Tuple(RoundOpen, 1.0, RoundClose), SquareExpr)) << '\n'
-               << LVD_REFLECT(inhabits_data(sept::Tuple(RoundOpen, 1.0, RoundClose), CurlyExpr)) << '\n'
+               << LVD_REFLECT(inhabits_data(sept::Tuple(RoundOpen, ExprArray(1.0), RoundClose), RoundExpr)) << '\n'
+               << LVD_REFLECT(inhabits_data(sept::Tuple(RoundOpen, ExprArray(1.0), RoundClose), SquareExpr)) << '\n'
+               << LVD_REFLECT(inhabits_data(sept::Tuple(RoundOpen, ExprArray(1.0), RoundClose), CurlyExpr)) << '\n'
                << LVD_REFLECT(inhabits_data(sept::Tuple(SquareOpen, 1.0, SquareClose), RoundExpr)) << '\n'
                << LVD_REFLECT(inhabits_data(sept::Tuple(SquareOpen, 1.0, SquareClose), SquareExpr)) << '\n'
                << LVD_REFLECT(inhabits_data(sept::Tuple(SquareOpen, 1.0, SquareClose), CurlyExpr)) << '\n'
@@ -978,7 +1011,9 @@ int main (int argc, char **argv) {
         SymbolId("square"),
         FuncLiteral(
             FuncPrototype(
-                SymbolTypeDecl(SymbolId("x"), DeclaredAs, sept::Float64),
+                FuncPrototypeParams(
+                    SymbolTypeDecl(SymbolId("x"), DeclaredAs, sept::Float64)
+                ),
                 MapsTo,
                 sept::Float64
             ),
@@ -986,8 +1021,11 @@ int main (int argc, char **argv) {
         )
     );
     lvd::g_log << lvd::Log::dbg()
-               << LVD_REFLECT(FuncEval(SymbolId("square"), RoundExpr(RoundOpen, sept::Float64(100.1), RoundClose))) << '\n'
-               << LVD_REFLECT(evaluate_expr__as_FuncEval(FuncEval(SymbolId("square"), RoundExpr(RoundOpen, sept::Float64(100.1), RoundClose)), ctx)) << '\n'
+               << LVD_REFLECT(ExprArray(sept::Float64(100.1))) << '\n'
+               << LVD_REFLECT(ExprArray(sept::Float64(100.1), sept::Uint32(1234))) << '\n'
+               << LVD_REFLECT(RoundExpr(RoundOpen, ExprArray(sept::Float64(100.1)), RoundClose)) << '\n'
+               << LVD_REFLECT(FuncEval(SymbolId("square"), RoundExpr(RoundOpen, ExprArray(sept::Float64(100.1)), RoundClose))) << '\n'
+               << LVD_REFLECT(evaluate_expr__as_FuncEval(FuncEval(SymbolId("square"), RoundExpr(RoundOpen, ExprArray(sept::Float64(100.1)), RoundClose)), ctx)) << '\n'
                << LVD_REFLECT(Stmt) << '\n'
                << LVD_REFLECT(StmtArray) << '\n'
                << LVD_REFLECT(ExprArray) << '\n'
@@ -1061,7 +1099,9 @@ int main (int argc, char **argv) {
         SymbolId("exp"),
         FuncLiteral(
             FuncPrototype(
-                SymbolTypeDecl(SymbolId("x"), DeclaredAs, sept::Float64),
+                FuncPrototypeParams(
+                    SymbolTypeDecl(SymbolId("x"), DeclaredAs, sept::Float64)
+                ),
                 MapsTo,
                 sept::Float64
             ),
@@ -1106,7 +1146,7 @@ int main (int argc, char **argv) {
         )
     );
     lvd::g_log << lvd::Log::dbg()
-               << LVD_REFLECT(evaluate_expr_data(FuncEval(SymbolId("exp"), RoundExpr(RoundOpen, 0.1, RoundClose)), ctx)) << '\n'
+               << LVD_REFLECT(evaluate_expr_data(FuncEval(SymbolId("exp"), RoundExpr(RoundOpen, ExprArray(0.1), RoundClose)), ctx)) << '\n'
                << LVD_REFLECT(std::exp(0.1)) << '\n';
 
     // Testing ElementEval
@@ -1183,7 +1223,9 @@ int main (int argc, char **argv) {
         SymbolId("Complex_square"),
         FuncLiteral(
             FuncPrototype(
-                SymbolTypeDecl(SymbolId("z"), DeclaredAs, SymbolId("Complex")),
+                FuncPrototypeParams(
+                    SymbolTypeDecl(SymbolId("z"), DeclaredAs, SymbolId("Complex"))
+                ),
                 MapsTo,
                 SymbolId("Complex")
             ),
@@ -1213,12 +1255,78 @@ int main (int argc, char **argv) {
                             SymbolId("Complex_square"),
                             RoundExpr(
                                 RoundOpen,
-                                Construction(
-                                    SymbolId("Complex"),
-                                    CurlyExpr(
-                                        CurlyOpen,
-                                        sept::Array(3.0, 4.0),
-                                        CurlyClose
+                                ExprArray(
+                                    Construction(
+                                        SymbolId("Complex"),
+                                        CurlyExpr(
+                                            CurlyOpen,
+                                            sept::Array(3.0, 4.0),
+                                            CurlyClose
+                                        )
+                                    )
+                                ),
+                                RoundClose
+                            )
+                        ),
+                        ctx
+                    )
+                ) << '\n';
+
+    ctx.current_scope()->define_symbol(
+        SymbolId("Complex_mul"),
+        FuncLiteral(
+            FuncPrototype(
+                FuncPrototypeParams(
+                    SymbolTypeDecl(SymbolId("w"), DeclaredAs, SymbolId("Complex")),
+                    SymbolTypeDecl(SymbolId("z"), DeclaredAs, SymbolId("Complex"))
+                ),
+                MapsTo,
+                SymbolId("Complex")
+            ),
+            BlockExpr(
+                StmtArray(
+                    SymbolDefn(SymbolId("w_re"), DefinedAs, ElementEval(SymbolId("w"), SquareExpr(SquareOpen, sept::Uint32(0), SquareClose))),
+                    SymbolDefn(SymbolId("w_im"), DefinedAs, ElementEval(SymbolId("w"), SquareExpr(SquareOpen, sept::Uint32(1), SquareClose))),
+                    SymbolDefn(SymbolId("z_re"), DefinedAs, ElementEval(SymbolId("z"), SquareExpr(SquareOpen, sept::Uint32(0), SquareClose))),
+                    SymbolDefn(SymbolId("z_im"), DefinedAs, ElementEval(SymbolId("z"), SquareExpr(SquareOpen, sept::Uint32(1), SquareClose)))
+                ),
+                Construction(
+                    SymbolId("Complex"),
+                    CurlyExpr(
+                        CurlyOpen,
+                        sept::Array(
+                            BinOpExpr(BinOpExpr(SymbolId("w_re"), Mul, SymbolId("z_re")), Sub, BinOpExpr(SymbolId("w_im"), Mul, SymbolId("z_im"))),
+                            BinOpExpr(BinOpExpr(SymbolId("w_re"), Mul, SymbolId("z_im")), Add, BinOpExpr(SymbolId("w_im"), Mul, SymbolId("z_re")))
+                        ),
+                        CurlyClose
+                    )
+                )
+            )
+        )
+    );
+    lvd::g_log << lvd::Log::dbg()
+               << LVD_REFLECT(
+                    evaluate_expr_data(
+                        FuncEval(
+                            SymbolId("Complex_mul"),
+                            RoundExpr(
+                                RoundOpen,
+                                ExprArray(
+                                    Construction(
+                                        SymbolId("Complex"),
+                                        CurlyExpr(
+                                            CurlyOpen,
+                                            sept::Array(3.0, 4.0),
+                                            CurlyClose
+                                        )
+                                    ),
+                                    Construction(
+                                        SymbolId("Complex"),
+                                        CurlyExpr(
+                                            CurlyOpen,
+                                            sept::Array(1.0, -2.0),
+                                            CurlyClose
+                                        )
                                     )
                                 ),
                                 RoundClose

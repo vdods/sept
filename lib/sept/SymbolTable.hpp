@@ -15,7 +15,9 @@ namespace sept {
 // TODO: Maybe add an identifier to the table
 // TODO: Maybe add unresolved symbol handler that could either return Data or throw.
 // TODO: Allow the symbol ID to be Data, so that more sophisticated symbols can be used, e.g.
-// canonically induced symbols such as TypeOf(x), where x is a symbol.
+// canonically induced symbols such as ConcreteTypeOf(x), where x is a symbol; this would theoretically
+// allow the symbol table entry for x to only know its storage layout, because then ConcreteTypeOf(x)
+// would dictate the rest.
 class SymbolTable : public std::enable_shared_from_this<SymbolTable> {
 public:
 

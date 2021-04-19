@@ -115,10 +115,12 @@ ArrayTerm_c make_array (Args_&&... args) {
 }
 
 inline void print (std::ostream &out, DataPrintCtx &ctx, ArrayTerm_c const &value) {
-    out << "ArrayTerm_c<";
-    print_data(out, ctx, value.element_type());
-    out << ',' << value.size() << '>';
+    out << "Array";
     print(out, ctx, value.elements());
+//     out << "ArrayTerm_c<";
+//     print_data(out, ctx, value.element_type());
+//     out << ',' << value.size() << '>';
+//     print(out, ctx, value.elements());
 }
 
 void serialize (ArrayTerm_c const &v, std::ostream &out);
