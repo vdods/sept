@@ -19,7 +19,7 @@ public:
     bool has_been_visited (Data const *ptr) const { return m_visited_data_ptrs.find(ptr) != m_visited_data_ptrs.end(); }
     void mark_visited (Data const *ptr) { m_visited_data_ptrs.insert(ptr); }
 //     void unmark_visited (Data const *ptr) { m_visited_data_ptrs.erase(ptr); }
-    lvd::ScopeGuard push (Data const *ptr) {
+    [[nodiscard]] lvd::ScopeGuard push (Data const *ptr) {
         m_visited_data_ptrs.insert(ptr);
         return lvd::ScopeGuard([=](){ m_visited_data_ptrs.erase(ptr); });
     }
