@@ -4929,14 +4929,43 @@ Structured Expression Project Toolkit Design Document
         -   POC: Basic strong documentation -- to make this have significant value, some sort of reference
             mechanism is needed, e.g. symbolic references into a symbol table, some pointer-like references
             into local memory, or URI references (which would also need a table to function efficiently).
-        -   Make a struct metatype?
+            -   Relevant types
+                -   Text content (e.g. ASCII string; perhaps ArrayE(AsciiChar), or define an abstract
+                    type that includes all text types)
+                -   Paragraph (semantic subtype; underlying type should be a Tuple)
+                -   In-line list (semantic subtype; underlying type should be a Tuple)
+                -   Bulletpointed list (semantic subtype; underlying type should be a Tuple)
+                -   Table (semantic subtype; underlying type would be some sort of tabular data structure)
+                -   Image
+                -   Tabbed content
+            -   Implement relationships like:
+                -   Asides (side notes)
+                -   Collapsible content
+                -   Abbreviations
+                -   Glossary
+                -   Cross references
+                -   Floating boxes
+                -   Derived content, e.g. table of contents; this is a projection.
+        -   Make a Struct metatype
             -   This would be a tuple whose elements are named, which would require having a string type
             x   Would this require defining a tuple type first?  Since right now there's
                 only Array, which can't force different elements to have distinct types.
+            -   A Struct term can be projected to the underlying Tuple type.
+            -   A Struct term has a sequence of names for its elements.  The names are unique.
+            -   A Struct term has a map from names to element indexes.
         -   POC: Make a simple AST hierarchy (ideally without introducing any new types)
-            and a simple interpreter for a simple functional language (no state, only pure
-            functions)
+            and a simple interpreter for a simple language.
+            -   TODO
+                -   Add sept types to global SymbolTable (this could be considered the prelude)
+                -   Add AST types to global SymbolTable
+                -   Add destructuring functions that unpack Data that inhabits a particular type
+                    into the constituent parts (or into C++ structs representing those things).
+                    Could this potentially be done with no copying by using Data_t?  I.e. just
+                    casting elements of the thing to the expected types?  Or even if the C++
+                    structs just contained references to the elements in the destructured Data,
+                    that would also work.
         -   POC: Start implementing the (algebra? of) diffs and branching/merging
+        -   POC: Semantic subtypes
     -   Make sept GUI program accept input (from stdin or from a child process) so it can
         render and manipulate the output of headless sept programs
     -   Implement hyperbolic tree view
@@ -5360,3 +5389,59 @@ Structured Expression Project Toolkit Design Document
         sort of "<already-seen>" could be printed in its place.  This would be necessary for the
         sept GUI, since the main part of its mission is to be able to view and navigate arbitrary
         sept data.
+-   Notes on the sept-ast POC
+    -   Now that symbolic references have been added, in order to determine an expression's type,
+        a symbol resolution is necessary.
+    -   There also seems to be a need to distinguish const from nonconst references (immutable vs mutable).
+        Need to think about how this could work in a language-agnostic way (in particular, compatible
+        with both C++ and Rust).
+
+2021.04.09
+
+-   Probably need to use eq instead of operator== for the registration for eq_data
+-   TODO: Make "destructuring" functions for the sept-ast types, which handle all the type checking.
+
+2021.04.11
+
+-   More notes on semantic subtyping
+    -   There should be a type SemanticTerm(S, v) where S is a semantic class or abstract type and v
+        is a term.  S must be compatible with v.  There should be accessors for S and v, and the
+        following functions should be defined:
+        -   abstract_type_of(SemanticTerm(S, v)) := S
+            or should this be defined as `SemanticSubtype(S, abstract_type_of(v))`?
+        -   concrete_value_of(SemanticTerm(S, v)) := concrete_value_of(v)
+    -   There should be a type SemanticSubtype(S, T) where S is a semantic class and T is a type.
+        S and T must be compatible (e.g. S := Positive and T := Float64).  There should be accessors
+        for S and T, and the following functions should be defined:
+        -   abstract_type_of(SemanticSubtype(S, T)) := abstract_type_of(S)
+        -   concrete_type_of(SemanticSubtype(S, T)) := concrete_type_of(T)
+
+        SemanticSubtype(S, T) should have a constructor which takes a term v of type T and produces
+        SemanticTerm(S, v).
+
+        Once the `Struct` metatype is implemented, SemanticTerm and SemanticSubtype could each be
+        implemented as a term of type Struct.
+
+    The semantic class is not allowed to carry any "concrete" information, only semantic information.
+
+2021.04.16
+
+-   Notes on improving print_data as it pertains to "previously visited" references.
+    -   It could be useful to have some syntax that indicates that something is a reference, even though
+        references are meant to be referentially transparent.  This would only happen in the printout,
+        and potentially could be indicated as a format variable in DataPrintCtx.
+    -   The tricky bit is if there's a reference to some element of another structure (analogous
+        to a reference to a stack variable).  There's no way from that element alone to know that
+        it's been linked to by a reference (this would be where some Rust-borrow-checker-style
+        pattern could come in).
+-   Idea for optimization for GlobalSymRef (and maybe also LocalSymRef) -- create "resolved" version of
+    GlobalSymRef which stores a pointer (maybe std::shared_ptr or std::weak_ptr?) to the resolved symbol
+    so that a string lookup in the symbol table isn't necessary for each access of that symbol.  This
+    would depend on some additional conditions, such as
+    -   The symbol could not be deleted
+    -   The symbol could not change address
+    unless some sort of check for those conditions was made.  Perhaps use of std::shared_ptr could help
+    address these conditions.
+
+    Doing the same for LocalSymRef would have more conditions, since the local SymbolTable may come in and
+    out of existence.
