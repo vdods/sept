@@ -505,7 +505,7 @@ LVD_STATIC_ASSOCIATION_DEFINE(_Data_Inhabits, DataInhabitsPredicateMap)
             return inhabits(value, type); \
         } \
     )
-// DATA indicates that the parameter of element_of_data will not be converted, and will be passed as Data,
+// DATA indicates that the value parameter of inhabits_data will not be converted, and will be passed as Data,
 // e.g. as in `bool inhabits (Data const &, Uint32 const &)`.
 #define SEPT__REGISTER__INHABITS__GIVE_ID__DATA(Value, Type, unique_id) \
     SEPT__REGISTER__INHABITS__GIVE_ID__EVALUATOR( \

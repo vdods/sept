@@ -17,7 +17,7 @@
 #include "sept/NPType.hpp"
 #include "sept/Tuple.hpp"
 #include "sept/Union.hpp"
-// #include <variant>
+#include <variant>
 
 /*
 AST design notes
@@ -124,10 +124,12 @@ sept::Data evaluate_expr_data (sept::Data const &expr_data, EvalCtx &ctx) {
     // Look up the type pair in the evaluator map.
     auto const &evaluator_map = lvd::static_association_singleton<EvaluateExpr>();
     auto it = evaluator_map.find(std::type_index(expr_data.type()));
-    if (it == evaluator_map.end())
+    if (it == evaluator_map.end()) {
 //         throw std::runtime_error(LVD_FMT("Data type " << expr_data.type().name() << " is not registered in EvaluateExpr for use in evaluate_expr_data"));
         // Evaluation is the identity.  TODO: Maybe don't do this, because it makes missing registrations harder to detect.
+        lvd::g_log << lvd::Log::wrn() << LVD_FMT("Data type " << expr_data.type().name() << " is not registered in EvaluateExpr for use in evaluate_expr_data; returning data unchanged.") << '\n';
         return expr_data;
+    }
 
     return it->second(expr_data, ctx);
 }
@@ -451,303 +453,6 @@ sept::Data TypeExpr_as_Data{
 auto const &TypeExpr = TypeExpr_as_Data.cast<sept::UnionTerm_c const &>();
 
 //
-// Semantic term extraction from syntactic term.
-//
-// NOTE: For now, these all use values instead of references.  Ideally they would use references
-// so that copying isn't necessary, but there's difficulty with invalid access to freed memory.
-//
-
-// class BinOpExpr_Term_c;
-// class BlockExpr_Term_c;
-// class CondExpr_Term_c;
-// class Construction_Term_c;
-// class ElementEval_Term_c;
-// class FuncEval_Term_c;
-// class RoundExpr_Term_c;
-// class SymbolId_Term_c;
-// class UnOpExpr_Term_c;
-// class ValueTerminal_Term_c;
-//
-// using Expr_Term_c = std::variant<
-//     BinOpExpr_Term_c,
-//     BlockExpr_Term_c,
-//     CondExpr_Term_c,
-//     Construction_Term_c,
-//     ElementEval_Term_c,
-//     FuncEval_Term_c,
-//     RoundExpr_Term_c,
-//     SymbolId_Term_c,
-//     UnOpExpr_Term_c,
-//     ValueTerminal_Term_c
-// >;
-
-struct BinOpExpr_Term_c {
-    sept::Data m_lhs_expr;
-    ASTNPTerm m_bin_op;
-    sept::Data m_rhs_expr;
-};
-
-BinOpExpr_Term_c extract_BinOpExpr_Term (sept::TupleTerm_c const &t) {
-    assert(inhabits(t, BinOpExpr));
-    return BinOpExpr_Term_c{t[0], t[1].cast<ASTNPTerm>(), t[2]};
-}
-
-BinOpExpr_Term_c extract_BinOpExpr_Term (sept::Data const &d) {
-    assert(inhabits_data(d, sept::Tuple));
-    return extract_BinOpExpr_Term(d.cast<sept::TupleTerm_c const &>());
-}
-
-struct UnOpExpr_Term_c {
-    ASTNPTerm m_un_op;
-    sept::Data m_operand;
-};
-
-UnOpExpr_Term_c extract_UnOpExpr_Term (sept::TupleTerm_c const &t) {
-    assert(inhabits(t, UnOpExpr));
-    return UnOpExpr_Term_c{t[0].cast<ASTNPTerm>(), t[1]};
-}
-
-UnOpExpr_Term_c extract_UnOpExpr_Term (sept::Data const &d) {
-    assert(inhabits_data(d, sept::Tuple));
-    return extract_UnOpExpr_Term(d.cast<sept::TupleTerm_c const &>());
-}
-
-struct BlockExpr_Term_c {
-    sept::ArrayTerm_c m_stmt_array;
-    // TODO: Eventually this would be something like Expr_Term_c, which would be a variant.
-    sept::Data m_final_expr;
-};
-
-BlockExpr_Term_c extract_BlockExpr_Term (sept::TupleTerm_c const &t) {
-    assert(inhabits(t, BlockExpr));
-    return BlockExpr_Term_c{
-        t[0].cast<sept::ArrayTerm_c const &>(),
-        t[1]
-    };
-}
-
-BlockExpr_Term_c extract_BlockExpr_Term (sept::Data const &d) {
-    assert(inhabits_data(d, sept::Tuple));
-    return extract_BlockExpr_Term(d.cast<sept::TupleTerm_c const &>());
-}
-
-struct CondExpr_Term_c {
-    sept::Data m_condition;
-    sept::Data m_positive_expr;
-    sept::Data m_negative_expr;
-};
-
-CondExpr_Term_c extract_CondExpr_Term (sept::TupleTerm_c const &t) {
-    assert(inhabits(t, CondExpr));
-    // t[0], t[2], t[4] are If, Then, Else respectively.
-    return CondExpr_Term_c{t[1], t[3], t[5]};
-}
-
-CondExpr_Term_c extract_CondExpr_Term (sept::Data const &d) {
-    assert(inhabits_data(d, sept::Tuple));
-    return extract_CondExpr_Term(d.cast<sept::TupleTerm_c const &>());
-}
-
-struct RoundExpr_Term_c {
-    sept::ArrayTerm_c m_expr_array;
-};
-
-RoundExpr_Term_c extract_RoundExpr_Term (sept::Data const &d) {
-    assert(inhabits_data(d, RoundExpr));
-    auto const &t = d.cast<sept::TupleTerm_c const &>();
-    // t[0] and t[2] are the Round brackets, i.e. (), and are only used for syntactical distinction.
-    return RoundExpr_Term_c{t[1].cast<sept::ArrayTerm_c const &>()};
-}
-
-struct SquareExpr_Term_c {
-    sept::ArrayTerm_c m_expr_array;
-};
-
-SquareExpr_Term_c extract_SquareExpr_Term (sept::Data const &d) {
-    assert(inhabits_data(d, SquareExpr));
-    auto const &t = d.cast<sept::TupleTerm_c const &>();
-    // t[0] and t[2] are the Square brackets, i.e. [], and are only used for syntactical distinction.
-    return SquareExpr_Term_c{t[1].cast<sept::ArrayTerm_c const &>()};
-}
-
-struct CurlyExpr_Term_c {
-    sept::ArrayTerm_c m_expr_array;
-};
-
-CurlyExpr_Term_c extract_CurlyExpr_Term (sept::Data const &d) {
-    assert(inhabits_data(d, CurlyExpr));
-    auto const &t = d.cast<sept::TupleTerm_c const &>();
-    // t[0] and t[2] are the Curly brackets, i.e. {}, and are only used for syntactical distinction.
-    return CurlyExpr_Term_c{t[1].cast<sept::ArrayTerm_c const &>()};
-}
-
-struct FuncEval_Term_c {
-    std::string m_func_symbol_id;
-    RoundExpr_Term_c m_params;
-};
-
-FuncEval_Term_c extract_FuncEval_Term (sept::Data const &d) {
-    assert(inhabits_data(d, FuncEval));
-    auto const &t = d.cast<sept::TupleTerm_c const &>();
-    return FuncEval_Term_c{
-        t[0].cast<std::string const &>(),
-        extract_RoundExpr_Term(t[1])
-    };
-}
-
-struct ElementEval_Term_c {
-    // TODO: This would eventually be destructured into some Expr_Term_c type which is probably a std::variant.
-    sept::Data m_container;
-    SquareExpr_Term_c m_params;
-};
-
-ElementEval_Term_c extract_ElementEval_Term (sept::Data const &d) {
-    assert(inhabits_data(d, ElementEval));
-    auto const &t = d.cast<sept::TupleTerm_c const &>();
-    return ElementEval_Term_c{
-        t[0],
-        extract_SquareExpr_Term(t[1])
-    };
-}
-
-struct Construction_Term_c {
-    // TODO: This would eventually be destructured into some TypeExpr_Term_c type which is probably a std::variant.
-    sept::Data m_type_to_construct;
-    CurlyExpr_Term_c m_params;
-};
-
-Construction_Term_c extract_Construction_Term (sept::TupleTerm_c const &t) {
-    assert(inhabits_data(t, Construction));
-    return Construction_Term_c{
-        t[0],
-        extract_CurlyExpr_Term(t[1])
-    };
-}
-
-Construction_Term_c extract_Construction_Term (sept::Data const &d) {
-    assert(inhabits_data(d, sept::Tuple));
-    return extract_Construction_Term(d.cast<sept::TupleTerm_c const &>());
-}
-
-// TODO
-// - Add `sept::TupleTerm_c syntactical_form () const` so this can easily be turned back into the syntactical form (though
-//   this would not be able to use references and would necessarily copy, unless sept::MemRef were used).
-// - Maybe distinguish `SymbolTypeDecl = sept::Tuple(SymbolId, sept::FormalTypeOf(DeclaredAs), TypeExpr_as_Ref)` by calling it
-//   something like `SyntacticalSymbolTypeDecl`, since the syntactical one is just meant as a syntactical representation.
-struct SymbolTypeDecl_Term_c {
-    std::string m_symbol_id;
-    // TODO: If some sort of validation is done, this could potentially be destructured into TypeExpr or something.
-    sept::Data m_decl_type;
-};
-
-SymbolTypeDecl_Term_c extract_SymbolTypeDecl_Term (sept::Data const &d) {
-    assert(inhabits_data(d, SymbolTypeDecl));
-    auto const &t = d.cast<sept::TupleTerm_c const &>();
-    // Note that t[1] is DeclaredAs, which is only used for syntactical distinction.
-    return SymbolTypeDecl_Term_c{
-        t[0].cast<std::string const &>(),
-        t[2]
-    };
-}
-
-struct SymbolDefn_Term_c {
-    std::string m_symbol_id;
-    sept::Data m_defn;
-};
-
-SymbolDefn_Term_c extract_SymbolDefn_Term (sept::TupleTerm_c const &t) {
-    assert(inhabits_data(t, SymbolDefn));
-    // Note that t[1] is DefinedAs, which is only used for syntactical distinction.
-    return SymbolDefn_Term_c{
-        t[0].cast<std::string const &>(),
-        t[2]
-    };
-}
-
-SymbolDefn_Term_c extract_SymbolDefn_Term (sept::Data const &d) {
-    assert(inhabits_data(d, sept::Tuple));
-    return extract_SymbolDefn_Term(d.cast<sept::TupleTerm_c const &>());
-}
-
-std::vector<SymbolTypeDecl_Term_c> extract_SymbolTypeDeclArray_Term (sept::Data const &d) {
-    assert(inhabits_data(d, SymbolTypeDeclArray));
-    auto const &a = d.cast<sept::ArrayTerm_c const &>();
-    std::vector<SymbolTypeDecl_Term_c> retval;
-    retval.reserve(a.size());
-    for (auto const &symbol_type_decl : a)
-        retval.emplace_back(extract_SymbolTypeDecl_Term(symbol_type_decl));
-    return retval;
-}
-
-struct FuncPrototype_Term_c {
-    std::vector<SymbolTypeDecl_Term_c> m_param_decls;
-    // TODO: This would eventually be TypeExpr
-    sept::Data m_codomain;
-};
-
-FuncPrototype_Term_c extract_FuncPrototype_Term (sept::Data const &d) {
-    assert(inhabits_data(d, FuncPrototype));
-    auto const &t = d.cast<sept::TupleTerm_c const &>();
-    // t[1] is MapsTo, which is only used for syntactical distinction.
-    return FuncPrototype_Term_c{
-        extract_SymbolTypeDeclArray_Term(t[0]),
-        t[2]
-    };
-}
-
-struct FuncLiteral_Term_c {
-    FuncPrototype_Term_c m_prototype;
-    sept::Data m_body_expr;
-};
-
-FuncLiteral_Term_c extract_FuncLiteral_Term (sept::Data const &d) {
-    assert(inhabits_data(d, FuncLiteral));
-    auto const &t = d.cast<sept::TupleTerm_c const &>();
-    return FuncLiteral_Term_c{
-        extract_FuncPrototype_Term(t[0]),
-        t[1]
-    };
-}
-
-struct Assignment_Term_c {
-    std::string m_symbol_id;
-    sept::Data m_value;
-};
-
-Assignment_Term_c extract_Assignment_Term (sept::TupleTerm_c const &t) {
-    assert(inhabits_data(t, Assignment));
-    // Note that t[1] is AssignFrom, which is only used for syntactical distinction.
-    return Assignment_Term_c{
-        t[0].cast<std::string const &>(),
-        t[2]
-    };
-}
-
-Assignment_Term_c extract_Assignment_Term (sept::Data const &d) {
-    assert(inhabits_data(d, sept::Tuple));
-    return extract_Assignment_Term(d.cast<sept::TupleTerm_c const &>());
-}
-
-struct SymbolId_Term_c {
-    std::string m_symbol_id;
-};
-
-SymbolId_Term_c extract_SymbolId_Term (sept::Data const &d) {
-    assert(inhabits_data(d, SymbolId));
-    return SymbolId_Term_c{d.cast<std::string const &>()};
-}
-
-// TODO: Make this a std::variant
-struct ValueTerminal_Term_c {
-    sept::Data m_value;
-};
-
-ValueTerminal_Term_c extract_ValueTerminal_Term (sept::Data const &d) {
-    assert(inhabits_data(d, SymbolId));
-    return ValueTerminal_Term_c{d};
-}
-
-//
 // Definitions of inhabits
 //
 
@@ -776,8 +481,508 @@ inline bool constexpr inhabits (char const *, SymbolId_c const &) {
 }
 
 //
-// evaluate
+// Semantic term extraction from syntactic term.
 //
+// NOTE: For now, these all use values instead of references.  Ideally they would use references
+// so that copying isn't necessary, but there's difficulty with invalid access to freed memory.
+//
+
+class BinOpExpr_Term_c;
+class BlockExpr_Term_c;
+class CondExpr_Term_c;
+class Construction_Term_c;
+class ElementEval_Term_c;
+class FuncEval_Term_c;
+class RoundExpr_Term_c;
+class SymbolId_Term_c;
+class UnOpExpr_Term_c;
+class ValueTerminal_Term_c;
+
+using Expr_Term_c = std::variant<
+    BinOpExpr_Term_c,
+    BlockExpr_Term_c,
+    CondExpr_Term_c,
+    Construction_Term_c,
+    ElementEval_Term_c,
+    FuncEval_Term_c,
+    RoundExpr_Term_c,
+    SymbolId_Term_c,
+    UnOpExpr_Term_c,
+    ValueTerminal_Term_c
+>;
+
+std::ostream &operator<< (std::ostream &out, Expr_Term_c const &expr_term);
+
+using ExprArray_Term_c = std::vector<Expr_Term_c>;
+
+std::ostream &operator<< (std::ostream &out, ExprArray_Term_c const &expr_array_term);
+
+ExprArray_Term_c extract_ExprArray_Term (sept::ArrayTerm_c const &a);
+
+ExprArray_Term_c extract_ExprArray_Term (sept::Data const &d) {
+    assert(inhabits_data(d, ExprArray));
+    return extract_ExprArray_Term(d.cast<sept::ArrayTerm_c const &>());
+}
+
+struct BinOpExpr_Term_c {
+    sept::Data m_lhs_expr;
+    ASTNPTerm m_bin_op;
+    sept::Data m_rhs_expr;
+};
+
+std::ostream &operator<< (std::ostream &out, BinOpExpr_Term_c const &bin_op_expr_term);
+
+BinOpExpr_Term_c extract_BinOpExpr_Term (sept::TupleTerm_c const &t) {
+    assert(inhabits(t, BinOpExpr));
+    return BinOpExpr_Term_c{t[0], t[1].cast<ASTNPTerm>(), t[2]};
+}
+
+BinOpExpr_Term_c extract_BinOpExpr_Term (sept::Data const &d) {
+    assert(inhabits_data(d, sept::Tuple));
+    return extract_BinOpExpr_Term(d.cast<sept::TupleTerm_c const &>());
+}
+
+struct UnOpExpr_Term_c {
+    ASTNPTerm m_un_op;
+    sept::Data m_operand;
+};
+
+std::ostream &operator<< (std::ostream &out, UnOpExpr_Term_c const &un_op_expr_term);
+
+UnOpExpr_Term_c extract_UnOpExpr_Term (sept::TupleTerm_c const &t) {
+    assert(inhabits(t, UnOpExpr));
+    return UnOpExpr_Term_c{t[0].cast<ASTNPTerm>(), t[1]};
+}
+
+UnOpExpr_Term_c extract_UnOpExpr_Term (sept::Data const &d) {
+    assert(inhabits_data(d, sept::Tuple));
+    return extract_UnOpExpr_Term(d.cast<sept::TupleTerm_c const &>());
+}
+
+struct BlockExpr_Term_c {
+    sept::ArrayTerm_c m_stmt_array;
+    // TODO: Eventually this would be something like Expr_Term_c, which would be a variant.
+    sept::Data m_final_expr;
+};
+
+std::ostream &operator<< (std::ostream &out, BlockExpr_Term_c const &block_expr_term);
+
+BlockExpr_Term_c extract_BlockExpr_Term (sept::TupleTerm_c const &t) {
+    assert(inhabits(t, BlockExpr));
+    return BlockExpr_Term_c{
+        t[0].cast<sept::ArrayTerm_c const &>(),
+        t[1]
+    };
+}
+
+BlockExpr_Term_c extract_BlockExpr_Term (sept::Data const &d) {
+    assert(inhabits_data(d, sept::Tuple));
+    return extract_BlockExpr_Term(d.cast<sept::TupleTerm_c const &>());
+}
+
+struct CondExpr_Term_c {
+    sept::Data m_condition;
+    sept::Data m_positive_expr;
+    sept::Data m_negative_expr;
+};
+
+std::ostream &operator<< (std::ostream &out, CondExpr_Term_c const &cond_expr_term);
+
+CondExpr_Term_c extract_CondExpr_Term (sept::TupleTerm_c const &t) {
+    assert(inhabits(t, CondExpr));
+    // t[0], t[2], t[4] are If, Then, Else respectively.
+    return CondExpr_Term_c{t[1], t[3], t[5]};
+}
+
+CondExpr_Term_c extract_CondExpr_Term (sept::Data const &d) {
+    assert(inhabits_data(d, sept::Tuple));
+    return extract_CondExpr_Term(d.cast<sept::TupleTerm_c const &>());
+}
+
+struct RoundExpr_Term_c {
+    ExprArray_Term_c m_expr_array;
+};
+
+std::ostream &operator<< (std::ostream &out, RoundExpr_Term_c const &round_expr_term);
+
+RoundExpr_Term_c extract_RoundExpr_Term (sept::Data const &d) {
+    assert(inhabits_data(d, RoundExpr));
+    auto const &t = d.cast<sept::TupleTerm_c const &>();
+    // t[0] and t[2] are the Round brackets, i.e. (), and are only used for syntactical distinction.
+    return RoundExpr_Term_c{extract_ExprArray_Term(t[1])};
+}
+
+struct SquareExpr_Term_c {
+    ExprArray_Term_c m_expr_array;
+};
+
+std::ostream &operator<< (std::ostream &out, SquareExpr_Term_c const &square_expr_term);
+
+SquareExpr_Term_c extract_SquareExpr_Term (sept::Data const &d) {
+    assert(inhabits_data(d, SquareExpr));
+    auto const &t = d.cast<sept::TupleTerm_c const &>();
+    // t[0] and t[2] are the Square brackets, i.e. [], and are only used for syntactical distinction.
+    return SquareExpr_Term_c{extract_ExprArray_Term(t[1])};
+}
+
+struct CurlyExpr_Term_c {
+    ExprArray_Term_c m_expr_array;
+};
+
+std::ostream &operator<< (std::ostream &out, CurlyExpr_Term_c const &curly_expr_term);
+
+CurlyExpr_Term_c extract_CurlyExpr_Term (sept::Data const &d) {
+    assert(inhabits_data(d, CurlyExpr));
+    auto const &t = d.cast<sept::TupleTerm_c const &>();
+    // t[0] and t[2] are the Curly brackets, i.e. {}, and are only used for syntactical distinction.
+    return CurlyExpr_Term_c{extract_ExprArray_Term(t[1])};
+}
+
+struct FuncEval_Term_c {
+    std::string m_func_symbol_id;
+    ExprArray_Term_c m_params;
+};
+
+std::ostream &operator<< (std::ostream &out, FuncEval_Term_c const &func_eval_term);
+
+FuncEval_Term_c extract_FuncEval_Term (sept::Data const &d) {
+    assert(inhabits_data(d, FuncEval));
+    auto const &t = d.cast<sept::TupleTerm_c const &>();
+    return FuncEval_Term_c{
+        t[0].cast<std::string const &>(),
+        std::move(extract_RoundExpr_Term(t[1]).m_expr_array)
+    };
+}
+
+struct ElementEval_Term_c {
+    // TODO: This would eventually be destructured into some Expr_Term_c type which is probably a std::variant.
+    sept::Data m_container;
+    ExprArray_Term_c m_params;
+};
+
+std::ostream &operator<< (std::ostream &out, ElementEval_Term_c const &element_eval_term);
+
+ElementEval_Term_c extract_ElementEval_Term (sept::Data const &d) {
+    assert(inhabits_data(d, ElementEval));
+    auto const &t = d.cast<sept::TupleTerm_c const &>();
+    return ElementEval_Term_c{
+        t[0],
+        std::move(extract_SquareExpr_Term(t[1]).m_expr_array)
+    };
+}
+
+struct Construction_Term_c {
+    // TODO: This would eventually be destructured into some TypeExpr_Term_c type which is probably a std::variant.
+    sept::Data m_type_to_construct;
+    ExprArray_Term_c m_params;
+};
+
+std::ostream &operator<< (std::ostream &out, Construction_Term_c const &construction_term);
+
+Construction_Term_c extract_Construction_Term (sept::TupleTerm_c const &t) {
+    assert(inhabits_data(t, Construction));
+    return Construction_Term_c{
+        t[0],
+        std::move(extract_CurlyExpr_Term(t[1]).m_expr_array)
+    };
+}
+
+Construction_Term_c extract_Construction_Term (sept::Data const &d) {
+    assert(inhabits_data(d, sept::Tuple));
+    return extract_Construction_Term(d.cast<sept::TupleTerm_c const &>());
+}
+
+// TODO
+// - Add `sept::TupleTerm_c syntactical_form () const` so this can easily be turned back into the syntactical form (though
+//   this would not be able to use references and would necessarily copy, unless sept::MemRef were used).
+// - Maybe distinguish `SymbolTypeDecl = sept::Tuple(SymbolId, sept::FormalTypeOf(DeclaredAs), TypeExpr_as_Ref)` by calling it
+//   something like `SyntacticalSymbolTypeDecl`, since the syntactical one is just meant as a syntactical representation.
+struct SymbolTypeDecl_Term_c {
+    std::string m_symbol_id;
+    // TODO: If some sort of validation is done, this could potentially be destructured into TypeExpr or something.
+    sept::Data m_decl_type;
+};
+
+std::ostream &operator<< (std::ostream &out, SymbolTypeDecl_Term_c const &symbol_type_decl_term);
+
+SymbolTypeDecl_Term_c extract_SymbolTypeDecl_Term (sept::Data const &d) {
+    assert(inhabits_data(d, SymbolTypeDecl));
+    auto const &t = d.cast<sept::TupleTerm_c const &>();
+    // Note that t[1] is DeclaredAs, which is only used for syntactical distinction.
+    return SymbolTypeDecl_Term_c{
+        t[0].cast<std::string const &>(),
+        t[2]
+    };
+}
+
+struct SymbolDefn_Term_c {
+    std::string m_symbol_id;
+    sept::Data m_defn;
+};
+
+std::ostream &operator<< (std::ostream &out, SymbolDefn_Term_c const &symbol_defn_term);
+
+SymbolDefn_Term_c extract_SymbolDefn_Term (sept::TupleTerm_c const &t) {
+    assert(inhabits_data(t, SymbolDefn));
+    // Note that t[1] is DefinedAs, which is only used for syntactical distinction.
+    return SymbolDefn_Term_c{
+        t[0].cast<std::string const &>(),
+        t[2]
+    };
+}
+
+SymbolDefn_Term_c extract_SymbolDefn_Term (sept::Data const &d) {
+    assert(inhabits_data(d, sept::Tuple));
+    return extract_SymbolDefn_Term(d.cast<sept::TupleTerm_c const &>());
+}
+
+using SymbolTypeDeclArray_Term_c = std::vector<SymbolTypeDecl_Term_c>;
+
+std::ostream &operator<< (std::ostream &out, SymbolTypeDeclArray_Term_c const &v);
+
+SymbolTypeDeclArray_Term_c extract_SymbolTypeDeclArray_Term (sept::Data const &d) {
+    assert(inhabits_data(d, SymbolTypeDeclArray));
+    auto const &a = d.cast<sept::ArrayTerm_c const &>();
+    SymbolTypeDeclArray_Term_c retval;
+    retval.reserve(a.size());
+    for (auto const &symbol_type_decl : a)
+        retval.emplace_back(extract_SymbolTypeDecl_Term(symbol_type_decl));
+    return retval;
+}
+
+struct FuncPrototype_Term_c {
+    std::vector<SymbolTypeDecl_Term_c> m_param_decls;
+    // TODO: This would eventually be TypeExpr
+    sept::Data m_codomain;
+};
+
+std::ostream &operator<< (std::ostream &out, FuncPrototype_Term_c const &func_prototype_term);
+
+FuncPrototype_Term_c extract_FuncPrototype_Term (sept::Data const &d) {
+    assert(inhabits_data(d, FuncPrototype));
+    auto const &t = d.cast<sept::TupleTerm_c const &>();
+    // t[1] is MapsTo, which is only used for syntactical distinction.
+    return FuncPrototype_Term_c{
+        extract_SymbolTypeDeclArray_Term(t[0]),
+        t[2]
+    };
+}
+
+struct FuncLiteral_Term_c {
+    FuncPrototype_Term_c m_prototype;
+    sept::Data m_body_expr;
+};
+
+std::ostream &operator<< (std::ostream &out, FuncLiteral_Term_c const &func_literal_term);
+
+FuncLiteral_Term_c extract_FuncLiteral_Term (sept::Data const &d) {
+    assert(inhabits_data(d, FuncLiteral));
+    auto const &t = d.cast<sept::TupleTerm_c const &>();
+    return FuncLiteral_Term_c{
+        extract_FuncPrototype_Term(t[0]),
+        t[1]
+    };
+}
+
+struct Assignment_Term_c {
+    std::string m_symbol_id;
+    sept::Data m_value;
+};
+
+std::ostream &operator<< (std::ostream &out, Assignment_Term_c const &assignment_term);
+
+Assignment_Term_c extract_Assignment_Term (sept::TupleTerm_c const &t) {
+    assert(inhabits_data(t, Assignment));
+    // Note that t[1] is AssignFrom, which is only used for syntactical distinction.
+    return Assignment_Term_c{
+        t[0].cast<std::string const &>(),
+        t[2]
+    };
+}
+
+Assignment_Term_c extract_Assignment_Term (sept::Data const &d) {
+    assert(inhabits_data(d, sept::Tuple));
+    return extract_Assignment_Term(d.cast<sept::TupleTerm_c const &>());
+}
+
+struct SymbolId_Term_c {
+    std::string m_symbol_id;
+};
+
+std::ostream &operator<< (std::ostream &out, SymbolId_Term_c const &symbol_id_term);
+
+SymbolId_Term_c extract_SymbolId_Term (std::string const &s) {
+    assert(inhabits(s, SymbolId));
+    return SymbolId_Term_c{s};
+}
+
+SymbolId_Term_c extract_SymbolId_Term (sept::Data const &d) {
+    assert(inhabits_data(d, SymbolId));
+    return extract_SymbolId_Term(d.cast<std::string const &>());
+}
+
+// TODO: Make this a std::variant -- or not?  sept::Data is more flexible and extensible,
+// and the memory footprint is probably smaller (though it uses heap memory for larger types)
+struct ValueTerminal_Term_c {
+    sept::Data m_value;
+};
+
+std::ostream &operator<< (std::ostream &out, ValueTerminal_Term_c const &value_terminal_term);
+
+ValueTerminal_Term_c extract_ValueTerminal_Term (sept::Data const &d) {
+    assert(inhabits_data(d, ValueTerminal));
+    return ValueTerminal_Term_c{d};
+}
+
+inline bool inhabits (ValueTerminal_Term_c const &vt, sept::Data const &d) {
+    return inhabits_data(vt.m_value, d);
+}
+
+Expr_Term_c extract_Expr_Term (sept::Data const &d) {
+    assert(inhabits_data(d, Expr));
+    // TODO: Implement this search using a poset
+    if (false)
+        { }
+    else if (inhabits_data(d, BinOpExpr))
+        return Expr_Term_c{extract_BinOpExpr_Term(d)};
+    else if (inhabits_data(d, BlockExpr))
+        return Expr_Term_c{extract_BlockExpr_Term(d)};
+    else if (inhabits_data(d, CondExpr))
+        return Expr_Term_c{extract_CondExpr_Term(d)};
+    else if (inhabits_data(d, Construction))
+        return Expr_Term_c{extract_Construction_Term(d)};
+    else if (inhabits_data(d, ElementEval))
+        return Expr_Term_c{extract_ElementEval_Term(d)};
+    else if (inhabits_data(d, FuncEval))
+        return Expr_Term_c{extract_FuncEval_Term(d)};
+    else if (inhabits_data(d, RoundExpr))
+        return Expr_Term_c{extract_RoundExpr_Term(d)};
+    else if (inhabits_data(d, SymbolId))
+        return Expr_Term_c{extract_SymbolId_Term(d)};
+    else if (inhabits_data(d, UnOpExpr))
+        return Expr_Term_c{extract_UnOpExpr_Term(d)};
+    else if (inhabits_data(d, ValueTerminal))
+        return Expr_Term_c{extract_ValueTerminal_Term(d)};
+    else
+        LVD_ABORT(LVD_FMT("data not recognized as Expr: " << d));
+}
+
+std::ostream &operator<< (std::ostream &out, ExprArray_Term_c const &expr_array_term) {
+    auto cspace_delim = lvd::make_comma_space_delimiter();
+    out << "ExprArray_Term_c(";
+    for (auto const &expr : expr_array_term)
+        out << cspace_delim << expr;
+    return out << ')';
+}
+
+ExprArray_Term_c extract_ExprArray_Term (sept::ArrayTerm_c const &a);
+
+std::ostream &operator<< (std::ostream &out, BinOpExpr_Term_c const &bin_op_expr_term) {
+    return out << "BinOpExpr_Term_c(" << bin_op_expr_term.m_lhs_expr << ", " << bin_op_expr_term.m_bin_op << ", " << bin_op_expr_term.m_rhs_expr << ')';
+}
+
+std::ostream &operator<< (std::ostream &out, BlockExpr_Term_c const &block_expr_term) {
+    return out << "BlockExpr_Term_c(" << block_expr_term.m_stmt_array << ", " << block_expr_term.m_final_expr << ')';
+}
+
+std::ostream &operator<< (std::ostream &out, CondExpr_Term_c const &cond_expr_term) {
+    return out << "CondExpr_Term_c(" << cond_expr_term.m_condition << ", " << cond_expr_term.m_positive_expr << ", " << cond_expr_term.m_negative_expr << ')';
+}
+
+std::ostream &operator<< (std::ostream &out, FuncEval_Term_c const &func_eval_term) {
+    return out << "FuncEval_Term_c(" << func_eval_term.m_func_symbol_id << ", " << func_eval_term.m_params << ')';
+}
+
+std::ostream &operator<< (std::ostream &out, ElementEval_Term_c const &element_eval_term) {
+    return out << "ElementEval_Term_c(" << element_eval_term.m_container << ", " << element_eval_term.m_params << ')';
+}
+
+std::ostream &operator<< (std::ostream &out, Construction_Term_c const &construction_term) {
+    return out << "Construction_Term_c(" << construction_term.m_type_to_construct << ", " << construction_term.m_params << ')';
+}
+
+std::ostream &operator<< (std::ostream &out, SymbolTypeDecl_Term_c const &symbol_type_decl_term) {
+    return out << "SymbolTypeDecl_Term_c(" << symbol_type_decl_term.m_symbol_id << ", " << symbol_type_decl_term.m_decl_type << ')';
+}
+
+std::ostream &operator<< (std::ostream &out, SymbolDefn_Term_c const &symbol_defn_term) {
+    return out << "SymbolDefn_Term_c(" << symbol_defn_term.m_symbol_id << ", " << symbol_defn_term.m_defn << ')';
+}
+
+std::ostream &operator<< (std::ostream &out, SymbolTypeDeclArray_Term_c const &v) {
+    auto cspace_delim = lvd::make_comma_space_delimiter();
+    out << "SymbolTypeDeclArray_Term_c(";
+    for (auto const &element : v)
+        out << cspace_delim << element;
+    return out << ')';
+}
+
+std::ostream &operator<< (std::ostream &out, FuncPrototype_Term_c const &func_prototype_term) {
+    return out << "FuncPrototype_Term_c(" << func_prototype_term.m_param_decls << ", " << func_prototype_term.m_codomain << ')';
+}
+
+std::ostream &operator<< (std::ostream &out, FuncLiteral_Term_c const &func_literal_term) {
+    return out << "FuncLiteral_Term_c(" << func_literal_term.m_prototype << ", " << func_literal_term.m_body_expr << ')';
+}
+
+std::ostream &operator<< (std::ostream &out, Assignment_Term_c const &assignment_term) {
+    return out << "Assignment_Term_c(" << assignment_term.m_symbol_id << ", " << assignment_term.m_value << ')';
+}
+
+std::ostream &operator<< (std::ostream &out, SymbolId_Term_c const &symbol_id_term) {
+    return out << "SymbolId_Term_c(" << symbol_id_term.m_symbol_id << ')';
+}
+
+std::ostream &operator<< (std::ostream &out, ValueTerminal_Term_c const &value_terminal_term) {
+    return out << "ValueTerminal_Term_c(" << value_terminal_term.m_value << ')';
+}
+
+std::ostream &operator<< (std::ostream &out, UnOpExpr_Term_c const &un_op_expr_term) {
+    return out << "UnOpExpr_Term_c(" << un_op_expr_term.m_un_op << ", " << un_op_expr_term.m_operand << ')';
+}
+
+std::ostream &operator<< (std::ostream &out, RoundExpr_Term_c const &round_expr_term) {
+    return out << "RoundExpr_Term_c(" << round_expr_term.m_expr_array << ')';
+}
+
+std::ostream &operator<< (std::ostream &out, SquareExpr_Term_c const &square_expr_term) {
+    return out << "SquareExpr_Term_c(" << square_expr_term.m_expr_array << ')';
+}
+
+std::ostream &operator<< (std::ostream &out, CurlyExpr_Term_c const &curly_expr_term) {
+    return out << "CurlyExpr_Term_c(" << curly_expr_term.m_expr_array << ')';
+}
+
+// Helper for std::visit
+template<class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
+template<class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
+
+std::ostream &operator<< (std::ostream &out, Expr_Term_c const &expr_term) {
+    return std::visit(
+        overloaded{
+            [&out](BinOpExpr_Term_c const &expr) -> std::ostream& { return out << expr; },
+            [&out](BlockExpr_Term_c const &expr) -> std::ostream& { return out << expr; },
+            [&out](CondExpr_Term_c const &expr) -> std::ostream& { return out << expr; },
+            [&out](Construction_Term_c const &expr) -> std::ostream& { return out << expr; },
+            [&out](ElementEval_Term_c const &expr) -> std::ostream& { return out << expr; },
+            [&out](FuncEval_Term_c const &expr) -> std::ostream& { return out << expr; },
+            [&out](RoundExpr_Term_c const &expr) -> std::ostream& { return out << expr; },
+            [&out](SymbolId_Term_c const &expr) -> std::ostream& { return out << expr; },
+            [&out](UnOpExpr_Term_c const &expr) -> std::ostream& { return out << expr; },
+            [&out](ValueTerminal_Term_c const &expr) -> std::ostream& { return out << expr; }
+        },
+        expr_term
+    );
+}
+
+ExprArray_Term_c extract_ExprArray_Term (sept::ArrayTerm_c const &a) {
+    assert(inhabits(a, ExprArray));
+    ExprArray_Term_c retval;
+    retval.reserve(a.size());
+    for (auto const &element : a.elements())
+        retval.emplace_back(extract_Expr_Term(element));
+    return retval;
+}
 
 class EvalCtx {
 public:
@@ -805,11 +1010,169 @@ private:
     lvd::nnsp<sept::SymbolTable> m_current_scope;
 };
 
+//
 // Forward declarations
+//
+
+sept::ArrayTerm_c evaluate_ExprArray_Term (ExprArray_Term_c const &expr_array_term, EvalCtx &ctx);
+
 sept::ArrayTerm_c evaluate_expr__as_ExprArray (sept::ArrayTerm_c const &a, EvalCtx &ctx);
 sept::Data evaluate_expr__as_SymbolId (std::string const &symbol_id, EvalCtx &ctx);
 void execute_stmt__as_StmtArray (sept::Data const &stmt, EvalCtx &ctx);
 void execute_stmt__as_StmtArray (sept::ArrayTerm_c const &stmt_array, EvalCtx &ctx);
+
+
+sept::Data evaluate_BinOpExpr_Term (BinOpExpr_Term_c const &bin_op_expr_term, EvalCtx &ctx) {
+    auto evaled_lhs_expr = evaluate_expr_data(bin_op_expr_term.m_lhs_expr, ctx);
+    auto evaled_rhs_expr = evaluate_expr_data(bin_op_expr_term.m_rhs_expr, ctx);
+    switch (bin_op_expr_term.m_bin_op) {
+        case ASTNPTerm::AND: return evaled_lhs_expr.cast<bool>() && evaled_rhs_expr.cast<bool>();
+        case ASTNPTerm::OR:  return evaled_lhs_expr.cast<bool>() || evaled_rhs_expr.cast<bool>();
+        case ASTNPTerm::XOR: return evaled_lhs_expr.cast<bool>() != evaled_rhs_expr.cast<bool>();
+        case ASTNPTerm::ADD: return evaled_lhs_expr.cast<double>() + evaled_rhs_expr.cast<double>();
+        case ASTNPTerm::SUB: return evaled_lhs_expr.cast<double>() - evaled_rhs_expr.cast<double>();
+        case ASTNPTerm::MUL: return evaled_lhs_expr.cast<double>() * evaled_rhs_expr.cast<double>();
+        case ASTNPTerm::DIV: return evaled_lhs_expr.cast<double>() / evaled_rhs_expr.cast<double>();
+        case ASTNPTerm::POW: return std::pow(evaled_lhs_expr.cast<double>(), evaled_rhs_expr.cast<double>());
+        default: LVD_ABORT(LVD_FMT("invalid ASTNPTerm for use as a BinOp: " << uint32_t(bin_op_expr_term.m_bin_op)));
+    }
+}
+
+sept::Data evaluate_BlockExpr_Term (BlockExpr_Term_c const &block_expr_term, EvalCtx &ctx) {
+    // Push a new scope for this block.
+    auto scope_guard = ctx.push_scope();
+    // Execute all the statements in the block before the final expression.
+    execute_stmt__as_StmtArray(block_expr_term.m_stmt_array, ctx);
+    // Evaluate the final expression, which is what renders the value of the BlockExpr
+    return evaluate_expr_data(block_expr_term.m_final_expr, ctx);
+}
+
+sept::Data evaluate_CondExpr_Term (CondExpr_Term_c const &cond_expr_term, EvalCtx &ctx) {
+    auto condition = evaluate_expr_data(cond_expr_term.m_condition, ctx).cast<bool>();
+    return evaluate_expr_data(condition ? cond_expr_term.m_positive_expr : cond_expr_term.m_negative_expr, ctx);
+}
+
+sept::Data evaluate_Construction_Term (Construction_Term_c const &construction_term, EvalCtx &ctx) {
+    auto evaled_type_to_construct = evaluate_expr_data(construction_term.m_type_to_construct, ctx);
+    auto evaled_param_array = evaluate_ExprArray_Term(construction_term.m_params, ctx);
+//     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << '\n' << lvd::IndentGuard()
+//                << LVD_REFLECT(evaled_type_to_construct) << '\n'
+//                << LVD_REFLECT(construction_term.m_params.m_expr_array) << '\n'
+//                << LVD_REFLECT(evaled_param_array) << '\n';
+    // TEMP HACK -- this unwraps the ExprArray, which is assumed to contain only a single element for now.
+    assert(evaled_param_array.size() == 1);
+    return evaled_type_to_construct(evaled_param_array[0]).deref();
+}
+
+sept::Data evaluate_ElementEval_Term (ElementEval_Term_c const &element_eval_term, EvalCtx &ctx) {
+    auto evaled_container = evaluate_expr_data(element_eval_term.m_container, ctx);
+    auto evaled_param_array = evaluate_ExprArray_Term(element_eval_term.m_params, ctx);
+    // TEMP HACK -- this unwraps the ExprArray, which is assumed to contain only a single element for now.
+    assert(evaled_param_array.size() == 1);
+    return evaled_container[evaled_param_array[0]].deref();
+}
+
+sept::ArrayTerm_c evaluate_ExprArray_Term (ExprArray_Term_c const &expr_array_term, EvalCtx &ctx) {
+    sept::DataVector evaluated_elements;
+    evaluated_elements.reserve(expr_array_term.size());
+    for (auto const &element : expr_array_term)
+        evaluated_elements.emplace_back(evaluate_expr_data(element, ctx));
+    return sept::ArrayTerm_c{std::move(evaluated_elements)};
+}
+
+sept::Data evaluate_FuncEval_Term (FuncEval_Term_c const &func_eval_term, EvalCtx &ctx) {
+    lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << '\n'
+               << LVD_REFLECT(func_eval_term.m_func_symbol_id) << '\n'
+               << LVD_REFLECT(func_eval_term.m_params) << '\n';
+
+    // Resolve the function symbol
+    // TODO: Later this will turn into an expression that produces a function.
+    auto func_literal = extract_FuncLiteral_Term(ctx.current_scope()->resolve_symbol_const(func_eval_term.m_func_symbol_id));
+//     lvd::g_log << lvd::Log::trc() << '\n' << LVD_CALL_SITE() << " - " << LVD_REFLECT(func_literal) << '\n';
+
+//     assert(sept::inhabits_data(func, FuncLiteral));
+    auto evaled_param_array = evaluate_ExprArray_Term(func_eval_term.m_params, ctx);
+//     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(evaled_param_array) << '\n';
+
+    // Identify the parameter symbol decl
+    // NOTE: This probably copy-constructs, instead of returning a const ref.
+    // TODO: Could have the stuff return a MemRef.
+    auto const &func_prototype = func_literal.m_prototype;
+    // Check that there are the expected number of parameters in the FuncEval
+    // TODO: Could check this earlier.
+    if (func_prototype.m_param_decls.size() != evaled_param_array.size())
+        throw std::runtime_error(LVD_FMT("Expected " << func_prototype.m_param_decls.size() << " parameters in call to function " << func_eval_term.m_func_symbol_id << ", but got " << evaled_param_array.size()));
+    // Now check that all the param types are as expected.
+    for (size_t i = 0; i < func_prototype.m_param_decls.size(); ++i) {
+        auto const &evaled_param = evaled_param_array[i];
+        auto const &param_decl = func_prototype.m_param_decls[i];
+        // NOTE/TEMP HACK: This will resolve any symbolic references in the param types using the local symbol table,
+        // and not the symbol table of the scope that the function was declared in.  TODO: Fix this.
+        auto evaled_param_decl_type = evaluate_expr_data(param_decl.m_decl_type, ctx);
+        if (!inhabits_data(evaled_param, evaled_param_decl_type))
+            throw std::runtime_error(LVD_FMT("In parameter " << i << " in call to function " << func_eval_term.m_func_symbol_id << ": Expected a value of type " << evaled_param_decl_type << " but got " << evaled_param << " (which has abstract type " << sept::abstract_type_of_data(evaled_param) << ')'));
+    }
+
+    auto return_type_eval = evaluate_expr_data(func_prototype.m_codomain, ctx);
+
+    // Push a context, define the function param(s).
+    auto scope_guard = ctx.push_scope();
+    for (size_t i = 0; i < func_prototype.m_param_decls.size(); ++i) {
+        auto const &param_symbol_id = func_prototype.m_param_decls[i].m_symbol_id;
+        auto &evaled_param = evaled_param_array[i];
+        ctx.current_scope()->define_symbol(param_symbol_id, std::move(evaled_param));
+    }
+    // Evaluate the function body using the new scope.
+    // Have to deref the data, since this might be a reference.
+    auto retval = evaluate_expr_data(func_literal.m_body_expr, ctx).deref();
+    // Check that the parameter is the correct type
+    if (!sept::inhabits_data(retval, return_type_eval))
+        throw std::runtime_error(LVD_FMT("Expected return value " << retval << " to evaluate to a term of type " << func_prototype.m_codomain << " but it didn't; retval: " << retval.deref()));
+    return retval;
+}
+
+sept::ArrayTerm_c evaluate_RoundExpr_Term (RoundExpr_Term_c const &round_expr_term, EvalCtx &ctx) {
+    return evaluate_ExprArray_Term(round_expr_term.m_expr_array, ctx);
+}
+
+sept::Data evaluate_SymbolId_Term (SymbolId_Term_c const &symbol_id_term, EvalCtx &ctx) {
+    return sept::LocalSymRef(symbol_id_term.m_symbol_id, ctx.current_scope());
+}
+
+sept::Data evaluate_UnOpExpr_Term (UnOpExpr_Term_c const &un_op_expr_term, EvalCtx &ctx) {
+    auto evaled_operand = evaluate_expr_data(un_op_expr_term.m_operand, ctx);
+    switch (un_op_expr_term.m_un_op) {
+        case ASTNPTerm::NOT: return !evaled_operand.cast<bool>();
+        case ASTNPTerm::NEG: return -evaled_operand.cast<double>();
+        default: LVD_ABORT(LVD_FMT("invalid ASTNPTerm for use as an UnOp: " << uint32_t(un_op_expr_term.m_un_op)));
+    }
+}
+
+sept::Data evaluate_ValueTerminal_Term (ValueTerminal_Term_c const &value_terminal_term, EvalCtx &ctx) {
+    return evaluate_expr_data(value_terminal_term.m_value, ctx);
+}
+
+sept::Data evaluate_Expr_Term (Expr_Term_c const &expr_term, EvalCtx &ctx) {
+    return std::visit(
+        overloaded{
+            [&ctx](BinOpExpr_Term_c const &expr) -> sept::Data { return evaluate_BinOpExpr_Term(expr, ctx); },
+            [&ctx](BlockExpr_Term_c const &expr) -> sept::Data { return evaluate_BlockExpr_Term(expr, ctx); },
+            [&ctx](CondExpr_Term_c const &expr) -> sept::Data { return evaluate_CondExpr_Term(expr, ctx); },
+            [&ctx](Construction_Term_c const &expr) -> sept::Data { return evaluate_Construction_Term(expr, ctx); },
+            [&ctx](ElementEval_Term_c const &expr) -> sept::Data { return evaluate_ElementEval_Term(expr, ctx); },
+            [&ctx](FuncEval_Term_c const &expr) -> sept::Data { return evaluate_FuncEval_Term(expr, ctx); },
+            [&ctx](RoundExpr_Term_c const &expr) -> sept::Data { return evaluate_RoundExpr_Term(expr, ctx); },
+            [&ctx](SymbolId_Term_c const &expr) -> sept::Data { return evaluate_SymbolId_Term(expr, ctx); },
+            [&ctx](UnOpExpr_Term_c const &expr) -> sept::Data { return evaluate_UnOpExpr_Term(expr, ctx); },
+            [&ctx](ValueTerminal_Term_c const &expr) -> sept::Data { return evaluate_ValueTerminal_Term(expr, ctx); }
+        },
+        expr_term
+    );
+}
+
+//
+// evaluate
+//
 
 bool evaluate_expr (bool const &expr, EvalCtx &ctx) { return expr; }
 sept::BoolTerm_c evaluate_expr (sept::BoolTerm_c const &expr, EvalCtx &ctx) { return expr; }
@@ -836,140 +1199,54 @@ sept::Tuple_c evaluate_expr (sept::Tuple_c const &expr, EvalCtx &ctx) {
 sept::Data evaluate_expr (std::string const &expr, EvalCtx &ctx) {
     return evaluate_expr__as_SymbolId(expr, ctx);
 }
+sept::Data evaluate_expr (ExprArray_Term_c const &expr, EvalCtx &ctx) {
+    return evaluate_ExprArray_Term(expr, ctx);
+}
+sept::Data evaluate_expr (ValueTerminal_Term_c const &expr, EvalCtx &ctx) {
+    return evaluate_ValueTerminal_Term(expr, ctx);
+}
+sept::Data evaluate_expr (Expr_Term_c const &expr, EvalCtx &ctx) {
+    return evaluate_Expr_Term(expr, ctx);
+}
 
 sept::ArrayTerm_c evaluate_expr__as_ExprArray (sept::ArrayTerm_c const &a, EvalCtx &ctx) {
-    assert(inhabits(a, ExprArray));
-    sept::DataVector evaluated_elements;
-    evaluated_elements.reserve(a.size());
-    for (auto const &element : a.elements())
-        evaluated_elements.emplace_back(evaluate_expr_data(element, ctx));
-    return sept::ArrayTerm_c{std::move(evaluated_elements)};
+    return evaluate_ExprArray_Term(extract_ExprArray_Term(a), ctx);
 }
 
 sept::Data evaluate_expr__as_BinOpExpr (sept::TupleTerm_c const &t, EvalCtx &ctx) {
-    auto bin_op_expr_term = extract_BinOpExpr_Term(t);
-    auto evaled_lhs_expr = evaluate_expr_data(bin_op_expr_term.m_lhs_expr, ctx);
-    auto evaled_rhs_expr = evaluate_expr_data(bin_op_expr_term.m_rhs_expr, ctx);
-    switch (bin_op_expr_term.m_bin_op) {
-        case ASTNPTerm::AND: return evaled_lhs_expr.cast<bool>() && evaled_rhs_expr.cast<bool>();
-        case ASTNPTerm::OR:  return evaled_lhs_expr.cast<bool>() || evaled_rhs_expr.cast<bool>();
-        case ASTNPTerm::XOR: return evaled_lhs_expr.cast<bool>() != evaled_rhs_expr.cast<bool>();
-        case ASTNPTerm::ADD: return evaled_lhs_expr.cast<double>() + evaled_rhs_expr.cast<double>();
-        case ASTNPTerm::SUB: return evaled_lhs_expr.cast<double>() - evaled_rhs_expr.cast<double>();
-        case ASTNPTerm::MUL: return evaled_lhs_expr.cast<double>() * evaled_rhs_expr.cast<double>();
-        case ASTNPTerm::DIV: return evaled_lhs_expr.cast<double>() / evaled_rhs_expr.cast<double>();
-        case ASTNPTerm::POW: return std::pow(evaled_lhs_expr.cast<double>(), evaled_rhs_expr.cast<double>());
-        default: LVD_ABORT(LVD_FMT("invalid ASTNPTerm for use as a BinOp: " << uint32_t(bin_op_expr_term.m_bin_op)));
-    }
-}
-
-sept::Data evaluate_expr__as_UnOpExpr (sept::TupleTerm_c const &t, EvalCtx &ctx) {
-    auto un_op_expr_term = extract_UnOpExpr_Term(t);
-    auto evaled_operand = evaluate_expr_data(un_op_expr_term.m_operand, ctx);
-    switch (un_op_expr_term.m_un_op) {
-        case ASTNPTerm::NOT: return !evaled_operand.cast<bool>();
-        case ASTNPTerm::NEG: return -evaled_operand.cast<double>();
-        default: LVD_ABORT(LVD_FMT("invalid ASTNPTerm for use as an UnOp: " << uint32_t(un_op_expr_term.m_un_op)));
-    }
-}
-
-sept::Data evaluate_expr__as_CondExpr (sept::TupleTerm_c const &t, EvalCtx &ctx) {
-    auto cond_expr_term = extract_CondExpr_Term(t);
-    auto condition = evaluate_expr_data(cond_expr_term.m_condition, ctx).cast<bool>();
-    return evaluate_expr_data(condition ? cond_expr_term.m_positive_expr : cond_expr_term.m_negative_expr, ctx);
-}
-
-sept::ArrayTerm_c evaluate_expr__as_RoundExpr (sept::TupleTerm_c const &t, EvalCtx &ctx) {
-    return evaluate_expr__as_ExprArray(extract_RoundExpr_Term(t).m_expr_array, ctx);
+    return evaluate_BinOpExpr_Term(extract_BinOpExpr_Term(t), ctx);
 }
 
 sept::Data evaluate_expr__as_BlockExpr (sept::TupleTerm_c const &t, EvalCtx &ctx) {
-    auto block_expr_term = extract_BlockExpr_Term(t);
-    // Push a new scope for this block.
-    auto scope_guard = ctx.push_scope();
-    // Execute all the statements in the block before the final expression.
-    execute_stmt__as_StmtArray(block_expr_term.m_stmt_array, ctx);
-    // Evaluate the final expression, which is what renders the value of the BlockExpr
-    return evaluate_expr_data(block_expr_term.m_final_expr, ctx);
+    return evaluate_BlockExpr_Term(extract_BlockExpr_Term(t), ctx);
 }
 
-sept::Data evaluate_expr__as_SymbolId (std::string const &symbol_id, EvalCtx &ctx) {
-    assert(inhabits(symbol_id, SymbolId));
-    return sept::LocalSymRef(symbol_id, ctx.current_scope());
+sept::Data evaluate_expr__as_CondExpr (sept::TupleTerm_c const &t, EvalCtx &ctx) {
+    return evaluate_CondExpr_Term(extract_CondExpr_Term(t), ctx);
 }
 
 sept::Data evaluate_expr__as_Construction (sept::TupleTerm_c const &t, EvalCtx &ctx) {
-    auto construction_term = extract_Construction_Term(t);
-    auto evaled_type_to_construct = evaluate_expr_data(construction_term.m_type_to_construct, ctx);
-    auto evaled_param_array = evaluate_expr__as_ExprArray(construction_term.m_params.m_expr_array, ctx);
-    // TEMP HACK -- this unwraps the ExprArray, which is assumed to contain only a single element for now.
-    assert(evaled_param_array.size() == 1);
-    return evaled_type_to_construct(evaled_param_array[0]).deref();
+    return evaluate_Construction_Term(extract_Construction_Term(t), ctx);
 }
 
 sept::Data evaluate_expr__as_ElementEval (sept::TupleTerm_c const &t, EvalCtx &ctx) {
-    auto element_eval_term = extract_ElementEval_Term(t);
-    auto evaled_container = evaluate_expr_data(element_eval_term.m_container, ctx);
-    auto evaled_param_array = evaluate_expr__as_ExprArray(element_eval_term.m_params.m_expr_array, ctx);
-    // TEMP HACK -- this unwraps the ExprArray, which is assumed to contain only a single element for now.
-    assert(evaled_param_array.size() == 1);
-    return evaled_container[evaled_param_array[0]].deref();
+    return evaluate_ElementEval_Term(extract_ElementEval_Term(t), ctx);
+}
+
+sept::Data evaluate_expr__as_UnOpExpr (sept::TupleTerm_c const &t, EvalCtx &ctx) {
+    return evaluate_UnOpExpr_Term(extract_UnOpExpr_Term(t), ctx);
+}
+
+sept::ArrayTerm_c evaluate_expr__as_RoundExpr (sept::TupleTerm_c const &t, EvalCtx &ctx) {
+    return evaluate_RoundExpr_Term(extract_RoundExpr_Term(t), ctx);
+}
+
+sept::Data evaluate_expr__as_SymbolId (std::string const &symbol_id, EvalCtx &ctx) {
+    return evaluate_SymbolId_Term(extract_SymbolId_Term(symbol_id), ctx);
 }
 
 sept::Data evaluate_expr__as_FuncEval (sept::TupleTerm_c const &t, EvalCtx &ctx) {
-    assert(inhabits(t, FuncEval));
-    assert(!inhabits(t, Construction));
-    assert(!inhabits(t, ElementEval));
-
-    auto func_eval_term = extract_FuncEval_Term(t);
-    lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << '\n'
-               << LVD_REFLECT(func_eval_term.m_func_symbol_id) << '\n'
-               << LVD_REFLECT(func_eval_term.m_params.m_expr_array) << '\n';
-
-    // Resolve the function symbol
-    // TODO: Later this will turn into an expression that produces a function.
-    auto func_literal = extract_FuncLiteral_Term(ctx.current_scope()->resolve_symbol_const(func_eval_term.m_func_symbol_id));
-//     lvd::g_log << lvd::Log::trc() << '\n' << LVD_CALL_SITE() << " - " << LVD_REFLECT(func_literal) << '\n';
-
-//     assert(sept::inhabits_data(func, FuncLiteral));
-    auto evaled_param_array = evaluate_expr__as_ExprArray(func_eval_term.m_params.m_expr_array, ctx);
-//     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(evaled_param_array) << '\n';
-
-    // Identify the parameter symbol decl
-    // NOTE: This probably copy-constructs, instead of returning a const ref.
-    // TODO: Could have the stuff return a MemRef.
-    auto const &func_prototype = func_literal.m_prototype;
-    // Check that there are the expected number of parameters in the FuncEval
-    // TODO: Could check this earlier.
-    if (func_prototype.m_param_decls.size() != evaled_param_array.size())
-        throw std::runtime_error(LVD_FMT("Expected " << func_prototype.m_param_decls.size() << " parameters in call to function " << t[0] << ", but got " << evaled_param_array.size()));
-    // Now check that all the param types are as expected.
-    for (size_t i = 0; i < func_prototype.m_param_decls.size(); ++i) {
-        auto const &evaled_param = evaled_param_array[i];
-        auto const &param_decl = func_prototype.m_param_decls[i];
-        // NOTE/TEMP HACK: This will resolve any symbolic references in the param types using the local symbol table,
-        // and not the symbol table of the scope that the function was declared in.  TODO: Fix this.
-        auto evaled_param_decl_type = evaluate_expr_data(param_decl.m_decl_type, ctx);
-        if (!inhabits_data(evaled_param, evaled_param_decl_type))
-            throw std::runtime_error(LVD_FMT("In parameter " << i << " in call to function " << t[0] << ": Expected a value of type " << evaled_param_decl_type << " but got " << evaled_param << " (which has abstract type " << sept::abstract_type_of_data(evaled_param) << ')'));
-    }
-
-    auto return_type_eval = evaluate_expr_data(func_prototype.m_codomain, ctx);
-
-    // Push a context, define the function param(s).
-    auto scope_guard = ctx.push_scope();
-    for (size_t i = 0; i < func_prototype.m_param_decls.size(); ++i) {
-        auto const &param_symbol_id = func_prototype.m_param_decls[i].m_symbol_id;
-        auto &evaled_param = evaled_param_array[i];
-        ctx.current_scope()->define_symbol(param_symbol_id, std::move(evaled_param));
-    }
-    // Evaluate the function body using the new scope.
-    // Have to deref the data, since this might be a reference.
-    auto retval = evaluate_expr_data(func_literal.m_body_expr, ctx).deref();
-    // Check that the parameter is the correct type
-    if (!sept::inhabits_data(retval, return_type_eval))
-        throw std::runtime_error(LVD_FMT("Expected return value " << retval << " to evaluate to a term of type " << func_prototype.m_codomain << " but it didn't; retval: " << retval.deref()));
-    return retval;
+    return evaluate_FuncEval_Term(extract_FuncEval_Term(t), ctx);
 }
 
 sept::Data evaluate_expr (sept::TupleTerm_c const &t, EvalCtx &ctx) {
@@ -1045,8 +1322,9 @@ void execute_stmt (sept::TupleTerm_c const &t, EvalCtx &ctx) {
 namespace sept {
 SEPT__REGISTER__PRINT(ASTNPTerm)
 SEPT__REGISTER__PRINT(BinOp_c)
-SEPT__REGISTER__PRINT(UnOp_c)
+SEPT__REGISTER__PRINT(Expr_Term_c)
 SEPT__REGISTER__PRINT(SymbolId_c)
+SEPT__REGISTER__PRINT(UnOp_c)
 SEPT__REGISTER__PRINT__GIVE_ID(char const *, __char_const_ptr__)
 
 SEPT__REGISTER__EQ(BinOp_c)
@@ -1085,6 +1363,9 @@ SEPT__REGISTER__EVALUATE_EXPR(ArrayESTerm_c)
 SEPT__REGISTER__EVALUATE_EXPR(ArrayETerm_c)
 SEPT__REGISTER__EVALUATE_EXPR(ArraySTerm_c)
 SEPT__REGISTER__EVALUATE_EXPR(ArrayTerm_c)
+SEPT__REGISTER__EVALUATE_EXPR(ValueTerminal_Term_c)
+SEPT__REGISTER__EVALUATE_EXPR(ExprArray_Term_c)
+SEPT__REGISTER__EVALUATE_EXPR(Expr_Term_c)
 
 SEPT__REGISTER__EXECUTE_STMT(TupleTerm_c)
 
@@ -1619,6 +1900,49 @@ int main (int argc, char **argv) {
                         ctx
                     )
                 ) << '\n';
+
+    lvd::g_log << lvd::Log::dbg()
+               << LVD_REFLECT(
+                    extract_Expr_Term(
+                        FuncEval(
+                            SymbolId("Complex_mul"),
+                            RoundExpr(
+                                RoundOpen,
+                                ExprArray(
+                                    Construction(
+                                        SymbolId("Complex"),
+                                        CurlyExpr(
+                                            CurlyOpen,
+                                            ExprArray(
+                                                sept::Array(3.0, 4.0)
+                                            ),
+                                            CurlyClose
+                                        )
+                                    ),
+                                    Construction(
+                                        SymbolId("Complex"),
+                                        CurlyExpr(
+                                            CurlyOpen,
+                                            ExprArray(
+                                                sept::Array(1.0, -2.0)
+                                            ),
+                                            CurlyClose
+                                        )
+                                    )
+                                ),
+                                RoundClose
+                            )
+                        )
+                    )
+                ) << '\n';
+
+
+    lvd::g_log << lvd::Log::dbg()
+               << LVD_REFLECT(extract_Expr_Term(sept::Data{sept::Float64(12.34)})) << '\n'
+               << LVD_REFLECT(extract_Expr_Term(sept::Data{sept::Uint32(1234)})) << '\n'
+               << LVD_REFLECT(evaluate_BinOpExpr_Term(BinOpExpr_Term_c{123.4, Add, 456.7}, ctx)) << '\n'
+               << LVD_REFLECT(evaluate_Expr_Term(BinOpExpr_Term_c{123.4, Add, 456.7}, ctx)) << '\n'
+               << '\n';
 
     return 0;
 }
