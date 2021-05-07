@@ -61,7 +61,7 @@ if(NOT USE_CLANG)
     target_link_libraries(CppStdFilesystem INTERFACE -lstdc++fs)
 endif()
 
-find_package(lvd 0.11.0 REQUIRED)
+find_package(lvd 0.12.0 REQUIRED)
 
 #
 # Libraries
@@ -224,6 +224,12 @@ endif()
 
 if(BUILD_septast)
     set(septast_SOURCES
+        bin/sept-ast/core.hpp
+        bin/sept-ast/EvalCtx.hpp
+        bin/sept-ast/sem.cpp
+        bin/sept-ast/sem.hpp
+        bin/sept-ast/syn.cpp
+        bin/sept-ast/syn.hpp
         bin/sept-ast/main.cpp
     )
     add_executable(sept-ast ${septast_SOURCES})
