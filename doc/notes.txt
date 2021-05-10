@@ -4931,13 +4931,52 @@ Structured Expression Project Toolkit Design Document
             into local memory, or URI references (which would also need a table to function efficiently).
             -   Relevant types
                 -   Text content (e.g. ASCII string; perhaps ArrayE(AsciiChar), or define an abstract
-                    type that includes all text types)
-                -   Paragraph (semantic subtype; underlying type should be a Tuple)
-                -   In-line list (semantic subtype; underlying type should be a Tuple)
-                -   Bulletpointed list (semantic subtype; underlying type should be a Tuple)
+                    type that includes all text types).  Layout within a paragraph (with flow layout)
+                    might be tricky, since it would require breaking up lines of text appropriately.
+                    The following would be a hack, but would be easier: break up separate words into
+                    separate widgets, then flow layout takes care of that.
+
+                    In a way, having words separated might actually be better, because multiple levels
+                    of granularity in selection and manipulation is one of the goals of sept.  So for
+                    example, the whole paragraph could be selected, or a single word, or (eventually)
+                    a single character, or a contiguous sequence of characters, words, or paragraphs.
+
+                    How to achieve in-place editing is not clear.  Maybe for now just bring up some
+                    side panel that has a text editor.
+
+                -   Nested terms, which can be shown in one of several states:
+                    -   Summary/abbreviation
+                    -   In-line, with abbreviated content -- should appear in-line in paragraph
+                    -   In-line, with full content -- should appear in-line in paragraph
+                    -   Expanded, with abbreviated content -- should appear on its own line (similar to LaTeX eqnarray)
+                    -   Expanded, with full content -- should appear on its own line (similar to LaTeX eqnarray)
+                -   Paragraph (semantic subtype; underlying type should be Array)
+                    -   Use QT "flow layout"
+                        file:///usr/share/qt5/doc/qtwidgets/qtwidgets-layouts-flowlayout-example.html#
+                -   In-line list (semantic subtype; underlying type should be a Array).
+                    Should appear in-line in the paragraph.
+                -   Bulletpointed list (semantic subtype; underlying type should be a Array).
+                    Should appear on its own line(s) in the paragraph.
                 -   Table (semantic subtype; underlying type would be some sort of tabular data structure)
                 -   Image
+                    -   Appearing on its own line will be easier
+                    -   Appearing in-line requires some nontrivial layout logic, so the rest of the paragraph
+                        flows around it.
+                -   Aside annotation -- put some link text in-line, and put the content in the side bar.
+                    This would be a good way to handle non-in-line images.
+                -   Mouseover popup -- put some link text in-line, and pop the content up upon mouseover.
+                -   Plot
+                    -   Histogram
+                    -   Graph
+                    -   Scatterplot
                 -   Tabbed content
+
+                An observation is that there are many types of content that can appear in-line in a paragraph,
+                but that some can't.  For the ones that can't, use the following
+                -   Out-of-line (content occupies full width for a certain amount of height)
+                -   Aside with in-line link text
+                -   Mouseover with in-line link text
+
             -   Implement relationships like:
                 -   Asides (side notes)
                 -   Collapsible content
@@ -4958,7 +4997,7 @@ Structured Expression Project Toolkit Design Document
             -   TODO
                 -   Add sept types to global SymbolTable (this could be considered the prelude)
                 -   Add AST types to global SymbolTable
-                -   Add destructuring functions that unpack Data that inhabits a particular type
+                x   Add destructuring functions that unpack Data that inhabits a particular type
                     into the constituent parts (or into C++ structs representing those things).
                     Could this potentially be done with no copying by using Data_t?  I.e. just
                     casting elements of the thing to the expected types?  Or even if the C++
@@ -5445,3 +5484,10 @@ Structured Expression Project Toolkit Design Document
 
     Doing the same for LocalSymRef would have more conditions, since the local SymbolTable may come in and
     out of existence.
+
+    std::weak_ptr should be used so that it can pass out of the cache.  If the std::weak_ptr fails to resolve,
+    then the in-memory cache can be retrieved from its source again.  This sort of caching could be multi-layered
+    as well, where e.g. a URLRef would resolve to a GlobalSymRef (which points to a named copy of the resource
+    on localhost), which itself would resolve to MemRef.  Could add something like DiskFileRef or DBEntryRef
+    which would refer to some persistent storage, and allow in-memory caching.  Then all the caching (at every
+    layer) is automatically handled.
