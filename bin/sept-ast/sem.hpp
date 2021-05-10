@@ -9,6 +9,8 @@
 #include "sept/ArrayTerm.hpp"
 #include "sept/Data.hpp"
 
+namespace sem {
+
 //
 // StaticAssociation_t for evaluate_expr_data
 //
@@ -300,13 +302,13 @@ inline sept::ArraySTerm_c evaluate_expr (sept::ArraySTerm_c const &expr, EvalCtx
     return expr;
 }
 inline sept::ArrayTerm_c evaluate_expr (sept::ArrayTerm_c const &expr, EvalCtx &ctx) {
-    return evaluate_expr__as_ExprArray(expr, ctx);
+    return syn::evaluate_expr__as_ExprArray(expr, ctx);
 }
 inline sept::Tuple_c evaluate_expr (sept::Tuple_c const &expr, EvalCtx &ctx) {
     return expr;
 }
 inline sept::Data evaluate_expr (std::string const &expr, EvalCtx &ctx) {
-    return evaluate_expr__as_SymbolId(expr, ctx);
+    return syn::evaluate_expr__as_SymbolId(expr, ctx);
 }
 inline sept::Data evaluate_expr (ExprArray_Term_c const &expr, EvalCtx &ctx) {
     return evaluate_ExprArray_Term(expr, ctx);
@@ -319,8 +321,22 @@ inline sept::Data evaluate_expr (Expr_Term_c const &expr, EvalCtx &ctx) {
 }
 
 //
+// BEGIN TEMP HACK
+//
+
+// These evaluate/execute syntactical data, which is deprecated.
+sept::Data evaluate_expr (sept::TupleTerm_c const &t, sem::EvalCtx &ctx);
+void execute_stmt (sept::TupleTerm_c const &t, sem::EvalCtx &ctx);
+
+//
+// END TEMP HACK
+//
+
+//
 // execute
 //
 
 void execute_stmt__as_StmtArray (sept::ArrayTerm_c const &stmt_array, EvalCtx &ctx);
 void execute_stmt__as_StmtArray (sept::Data const &stmt, EvalCtx &ctx);
+
+} // end namespace sem

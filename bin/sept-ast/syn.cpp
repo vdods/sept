@@ -5,6 +5,8 @@
 // Includes from this program's source
 #include "sem.hpp"
 
+namespace syn {
+
 sept::RefTerm_c const Expr_as_Ref = sept::MemRef(&Expr_as_Data);
 
 sept::RefTerm_c const TypeExpr_as_Ref = sept::MemRef(&TypeExpr_as_Data);
@@ -117,97 +119,58 @@ sept::UnionTerm_c const &TypeExpr = TypeExpr_as_Data.cast<sept::UnionTerm_c cons
 // TODO: Deprecate these, since semantic term is what does evaluate and execute
 //
 
-sept::ArrayTerm_c evaluate_expr__as_ExprArray (sept::ArrayTerm_c const &a, EvalCtx &ctx) {
-    return evaluate_ExprArray_Term(parse_ExprArray_Term(a), ctx);
+sept::ArrayTerm_c evaluate_expr__as_ExprArray (sept::ArrayTerm_c const &a, sem::EvalCtx &ctx) {
+    return evaluate_ExprArray_Term(sem::parse_ExprArray_Term(a), ctx);
 }
 
-sept::Data evaluate_expr__as_BinOpExpr (sept::TupleTerm_c const &t, EvalCtx &ctx) {
-    return evaluate_BinOpExpr_Term(parse_BinOpExpr_Term(t), ctx);
+sept::Data evaluate_expr__as_BinOpExpr (sept::TupleTerm_c const &t, sem::EvalCtx &ctx) {
+    return evaluate_BinOpExpr_Term(sem::parse_BinOpExpr_Term(t), ctx);
 }
 
-sept::Data evaluate_expr__as_BlockExpr (sept::TupleTerm_c const &t, EvalCtx &ctx) {
-    return evaluate_BlockExpr_Term(parse_BlockExpr_Term(t), ctx);
+sept::Data evaluate_expr__as_BlockExpr (sept::TupleTerm_c const &t, sem::EvalCtx &ctx) {
+    return evaluate_BlockExpr_Term(sem::parse_BlockExpr_Term(t), ctx);
 }
 
-sept::Data evaluate_expr__as_CondExpr (sept::TupleTerm_c const &t, EvalCtx &ctx) {
-    return evaluate_CondExpr_Term(parse_CondExpr_Term(t), ctx);
+sept::Data evaluate_expr__as_CondExpr (sept::TupleTerm_c const &t, sem::EvalCtx &ctx) {
+    return evaluate_CondExpr_Term(sem::parse_CondExpr_Term(t), ctx);
 }
 
-sept::Data evaluate_expr__as_Construction (sept::TupleTerm_c const &t, EvalCtx &ctx) {
-    return evaluate_Construction_Term(parse_Construction_Term(t), ctx);
+sept::Data evaluate_expr__as_Construction (sept::TupleTerm_c const &t, sem::EvalCtx &ctx) {
+    return evaluate_Construction_Term(sem::parse_Construction_Term(t), ctx);
 }
 
-sept::Data evaluate_expr__as_ElementEval (sept::TupleTerm_c const &t, EvalCtx &ctx) {
-    return evaluate_ElementEval_Term(parse_ElementEval_Term(t), ctx);
+sept::Data evaluate_expr__as_ElementEval (sept::TupleTerm_c const &t, sem::EvalCtx &ctx) {
+    return evaluate_ElementEval_Term(sem::parse_ElementEval_Term(t), ctx);
 }
 
-sept::Data evaluate_expr__as_UnOpExpr (sept::TupleTerm_c const &t, EvalCtx &ctx) {
-    return evaluate_UnOpExpr_Term(parse_UnOpExpr_Term(t), ctx);
+sept::Data evaluate_expr__as_UnOpExpr (sept::TupleTerm_c const &t, sem::EvalCtx &ctx) {
+    return evaluate_UnOpExpr_Term(sem::parse_UnOpExpr_Term(t), ctx);
 }
 
-sept::ArrayTerm_c evaluate_expr__as_RoundExpr (sept::TupleTerm_c const &t, EvalCtx &ctx) {
-    return evaluate_RoundExpr_Term(parse_RoundExpr_Term(t), ctx);
+sept::ArrayTerm_c evaluate_expr__as_RoundExpr (sept::TupleTerm_c const &t, sem::EvalCtx &ctx) {
+    return evaluate_RoundExpr_Term(sem::parse_RoundExpr_Term(t), ctx);
 }
 
-sept::Data evaluate_expr__as_SymbolId (std::string const &symbol_id, EvalCtx &ctx) {
-    return evaluate_SymbolId_Term(parse_SymbolId_Term(symbol_id), ctx);
+sept::Data evaluate_expr__as_SymbolId (std::string const &symbol_id, sem::EvalCtx &ctx) {
+    return evaluate_SymbolId_Term(sem::parse_SymbolId_Term(symbol_id), ctx);
 }
 
-sept::Data evaluate_expr__as_FuncEval (sept::TupleTerm_c const &t, EvalCtx &ctx) {
-    return evaluate_FuncEval_Term(parse_FuncEval_Term(t), ctx);
+sept::Data evaluate_expr__as_FuncEval (sept::TupleTerm_c const &t, sem::EvalCtx &ctx) {
+    return evaluate_FuncEval_Term(sem::parse_FuncEval_Term(t), ctx);
 }
 
-sept::Data evaluate_expr (sept::TupleTerm_c const &t, EvalCtx &ctx) {
-    // TODO: Make this efficient -- some sort of poset search.
-    if (false)
-        { }
-    else if (inhabits(t, BinOpExpr))
-        return evaluate_expr__as_BinOpExpr(t, ctx);
-    else if (inhabits(t, BlockExpr))
-        return evaluate_expr__as_BlockExpr(t, ctx);
-    else if (inhabits(t, CondExpr))
-        return evaluate_expr__as_CondExpr(t, ctx);
-    else if (inhabits(t, Construction))
-        return evaluate_expr__as_Construction(t, ctx);
-    else if (inhabits(t, ElementEval))
-        return evaluate_expr__as_ElementEval(t, ctx);
-    else if (inhabits(t, FuncEval))
-        return evaluate_expr__as_FuncEval(t, ctx);
-    else if (inhabits(t, RoundExpr))
-        return evaluate_expr__as_RoundExpr(t, ctx);
-    else if (inhabits(t, UnOpExpr))
-        return evaluate_expr__as_UnOpExpr(t, ctx);
-    else if (inhabits(t, Expr)) {
-        LVD_ABORT(LVD_FMT("unhandled Expr: " << t));
-//         return t; // Just a plain Tuple.
-    } else
-        LVD_ABORT(LVD_FMT("attempting to evaluate_expr for a non-Expr: " << t));
-}
-
-void execute_stmt__as_SymbolDefn (sept::TupleTerm_c const &t, EvalCtx &ctx) {
-    auto symbol_defn_term = parse_SymbolDefn_Term(t);
+void execute_stmt__as_SymbolDefn (sept::TupleTerm_c const &t, sem::EvalCtx &ctx) {
+    auto symbol_defn_term = sem::parse_SymbolDefn_Term(t);
     // Simply define the symbol in the current scope.
     ctx.current_scope()->define_symbol(symbol_defn_term.m_symbol_id, evaluate_expr_data(symbol_defn_term.m_defn, ctx));
     // If a SymbolDefn were a valid Expr, then return Void, or potentially return value, or symbol_id, or some reference.
 }
 
-void execute_stmt__as_Assignment (sept::TupleTerm_c const &t, EvalCtx &ctx) {
-    auto assignment_term = parse_Assignment_Term(t);
+void execute_stmt__as_Assignment (sept::TupleTerm_c const &t, sem::EvalCtx &ctx) {
+    auto assignment_term = sem::parse_Assignment_Term(t);
     // Simply assign the symbol in the current scope.
     ctx.current_scope()->resolve_symbol_nonconst(assignment_term.m_symbol_id) = evaluate_expr_data(assignment_term.m_value, ctx);
     // If an Assignment were a valid Expr, then return value, or symbol_id, or some reference.
 }
 
-void execute_stmt (sept::TupleTerm_c const &t, EvalCtx &ctx) {
-    // TODO: Make this efficient -- some sort of poset search.
-    if (false)
-        { }
-    else if (inhabits(t, Assignment))
-        return execute_stmt__as_Assignment(t, ctx);
-    else if (inhabits(t, SymbolDefn))
-        return execute_stmt__as_SymbolDefn(t, ctx);
-    else if (inhabits(t, Stmt))
-        LVD_ABORT(LVD_FMT("unhandled Stmt: " << t));
-    else
-        LVD_ABORT(LVD_FMT("attempting to execute_stmt for a non-Stmt: " << t));
-}
+} // end namespace syn

@@ -433,7 +433,7 @@ LVD_STATIC_ASSOCIATION_DEFINE(_Data_AbstractTypeOf, DataAbstractTypeOfEvaluatorM
             evaluator_body \
         } \
     )
-#define SEPT__REGISTER__ABSTRACT_TYPE_OF___GIVE_ID(Value, unique_id) \
+#define SEPT__REGISTER__ABSTRACT_TYPE_OF__GIVE_ID(Value, unique_id) \
     SEPT__REGISTER__ABSTRACT_TYPE_OF__GIVE_ID__EVALUATOR_BODY(Value, unique_id, return abstract_type_of(value);)
 #define SEPT__REGISTER__ABSTRACT_TYPE_OF(Value) \
     SEPT__REGISTER__ABSTRACT_TYPE_OF__GIVE_ID__EVALUATOR_BODY(Value, Value, return abstract_type_of(value);)
@@ -734,12 +734,12 @@ LVD_STATIC_ASSOCIATION_DEFINE(_Data_ConstructInhabitantOf, DataConstructInhabita
             evaluator_body \
         } \
     )
-#define SEPT__REGISTER__CONSTRUCT_INHABITANT_OF___GIVE_ID(Type, Argument, unique_id) \
+#define SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__GIVE_ID(Type, Argument, unique_id) \
     SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__GIVE_ID__EVALUATOR_BODY(Type, Argument, unique_id, return type(argument);)
 #define SEPT__REGISTER__CONSTRUCT_INHABITANT_OF(Type, Argument) \
     SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__GIVE_ID__EVALUATOR_BODY(Type, Argument, __##Type##___##Argument##__, return type(argument);)
 // TODO: Need to make a version of this that accepts Data, just like SEPT__REGISTER__ELEMENT_OF__DATA etc
-#define SEPT__REGISTER__CONSTRUCT_INHABITANT_OF___GIVE_ID__ABSTRACT_TYPE(Type, Argument, unique_id) \
+#define SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__GIVE_ID__ABSTRACT_TYPE(Type, Argument, unique_id) \
     SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__GIVE_ID__EVALUATOR(Type, Argument, unique_id, nullptr)
 #define SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(Type, Argument) \
     SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__GIVE_ID__EVALUATOR(Type, Argument, __##Type##___##Argument##__, nullptr)

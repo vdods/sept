@@ -8,6 +8,8 @@
 #include "sept/LocalSymRef.hpp"
 #include "sept/SymbolTable.hpp"
 
+namespace sem {
+
 class EvalCtx {
 public:
 
@@ -33,3 +35,5 @@ private:
 
     lvd::nnsp<sept::SymbolTable> m_current_scope;
 };
+
+} // end namespace sem

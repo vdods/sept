@@ -5,6 +5,8 @@
 #include <cmath>
 #include <lvd/comma.hpp>
 
+namespace sem {
+
 sept::Data evaluate_expr_data (sept::Data const &expr_data, EvalCtx &ctx) {
     // Look up the type pair in the evaluator map.
     auto const &evaluator_map = lvd::static_association_singleton<EvaluateExpr>();
@@ -132,7 +134,7 @@ std::ostream &operator<< (std::ostream &out, Expr_Term_c const &expr_term) {
 }
 
 ExprArray_Term_c parse_ExprArray_Term (sept::ArrayTerm_c const &a) {
-    assert(inhabits(a, ExprArray));
+    assert(inhabits(a, syn::ExprArray));
     ExprArray_Term_c retval;
     retval.reserve(a.size());
     for (auto const &element : a.elements())
@@ -141,12 +143,12 @@ ExprArray_Term_c parse_ExprArray_Term (sept::ArrayTerm_c const &a) {
 }
 
 ExprArray_Term_c parse_ExprArray_Term (sept::Data const &d) {
-    assert(inhabits_data(d, ExprArray));
+    assert(inhabits_data(d, syn::ExprArray));
     return parse_ExprArray_Term(d.cast<sept::ArrayTerm_c const &>());
 }
 
 BinOpExpr_Term_c parse_BinOpExpr_Term (sept::TupleTerm_c const &t) {
-    assert(inhabits(t, BinOpExpr));
+    assert(inhabits(t, syn::BinOpExpr));
     return BinOpExpr_Term_c{t[0], t[1].cast<ASTNPTerm>(), t[2]};
 }
 
@@ -156,7 +158,7 @@ BinOpExpr_Term_c parse_BinOpExpr_Term (sept::Data const &d) {
 }
 
 UnOpExpr_Term_c parse_UnOpExpr_Term (sept::TupleTerm_c const &t) {
-    assert(inhabits(t, UnOpExpr));
+    assert(inhabits(t, syn::UnOpExpr));
     return UnOpExpr_Term_c{t[0].cast<ASTNPTerm>(), t[1]};
 }
 
@@ -166,7 +168,7 @@ UnOpExpr_Term_c parse_UnOpExpr_Term (sept::Data const &d) {
 }
 
 BlockExpr_Term_c parse_BlockExpr_Term (sept::TupleTerm_c const &t) {
-    assert(inhabits(t, BlockExpr));
+    assert(inhabits(t, syn::BlockExpr));
     return BlockExpr_Term_c{
         t[0].cast<sept::ArrayTerm_c const &>(),
         t[1]
@@ -179,7 +181,7 @@ BlockExpr_Term_c parse_BlockExpr_Term (sept::Data const &d) {
 }
 
 CondExpr_Term_c parse_CondExpr_Term (sept::TupleTerm_c const &t) {
-    assert(inhabits(t, CondExpr));
+    assert(inhabits(t, syn::CondExpr));
     // t[0], t[2], t[4] are If, Then, Else respectively.
     return CondExpr_Term_c{t[1], t[3], t[5]};
 }
@@ -190,28 +192,28 @@ CondExpr_Term_c parse_CondExpr_Term (sept::Data const &d) {
 }
 
 RoundExpr_Term_c parse_RoundExpr_Term (sept::Data const &d) {
-    assert(inhabits_data(d, RoundExpr));
+    assert(inhabits_data(d, syn::RoundExpr));
     auto const &t = d.cast<sept::TupleTerm_c const &>();
     // t[0] and t[2] are the Round brackets, i.e. (), and are only used for syntactical distinction.
     return RoundExpr_Term_c{parse_ExprArray_Term(t[1])};
 }
 
 SquareExpr_Term_c parse_SquareExpr_Term (sept::Data const &d) {
-    assert(inhabits_data(d, SquareExpr));
+    assert(inhabits_data(d, syn::SquareExpr));
     auto const &t = d.cast<sept::TupleTerm_c const &>();
     // t[0] and t[2] are the Square brackets, i.e. [], and are only used for syntactical distinction.
     return SquareExpr_Term_c{parse_ExprArray_Term(t[1])};
 }
 
 CurlyExpr_Term_c parse_CurlyExpr_Term (sept::Data const &d) {
-    assert(inhabits_data(d, CurlyExpr));
+    assert(inhabits_data(d, syn::CurlyExpr));
     auto const &t = d.cast<sept::TupleTerm_c const &>();
     // t[0] and t[2] are the Curly brackets, i.e. {}, and are only used for syntactical distinction.
     return CurlyExpr_Term_c{parse_ExprArray_Term(t[1])};
 }
 
 FuncEval_Term_c parse_FuncEval_Term (sept::Data const &d) {
-    assert(inhabits_data(d, FuncEval));
+    assert(inhabits_data(d, syn::FuncEval));
     auto const &t = d.cast<sept::TupleTerm_c const &>();
     return FuncEval_Term_c{
         t[0].cast<std::string const &>(),
@@ -220,7 +222,7 @@ FuncEval_Term_c parse_FuncEval_Term (sept::Data const &d) {
 }
 
 ElementEval_Term_c parse_ElementEval_Term (sept::Data const &d) {
-    assert(inhabits_data(d, ElementEval));
+    assert(inhabits_data(d, syn::ElementEval));
     auto const &t = d.cast<sept::TupleTerm_c const &>();
     return ElementEval_Term_c{
         t[0],
@@ -229,7 +231,7 @@ ElementEval_Term_c parse_ElementEval_Term (sept::Data const &d) {
 }
 
 Construction_Term_c parse_Construction_Term (sept::TupleTerm_c const &t) {
-    assert(inhabits_data(t, Construction));
+    assert(inhabits_data(t, syn::Construction));
     return Construction_Term_c{
         t[0],
         std::move(parse_CurlyExpr_Term(t[1]).m_expr_array)
@@ -242,7 +244,7 @@ Construction_Term_c parse_Construction_Term (sept::Data const &d) {
 }
 
 SymbolTypeDecl_Term_c parse_SymbolTypeDecl_Term (sept::Data const &d) {
-    assert(inhabits_data(d, SymbolTypeDecl));
+    assert(inhabits_data(d, syn::SymbolTypeDecl));
     auto const &t = d.cast<sept::TupleTerm_c const &>();
     // Note that t[1] is DeclaredAs, which is only used for syntactical distinction.
     return SymbolTypeDecl_Term_c{
@@ -252,7 +254,7 @@ SymbolTypeDecl_Term_c parse_SymbolTypeDecl_Term (sept::Data const &d) {
 }
 
 SymbolDefn_Term_c parse_SymbolDefn_Term (sept::TupleTerm_c const &t) {
-    assert(inhabits_data(t, SymbolDefn));
+    assert(inhabits_data(t, syn::SymbolDefn));
     // Note that t[1] is DefinedAs, which is only used for syntactical distinction.
     return SymbolDefn_Term_c{
         t[0].cast<std::string const &>(),
@@ -266,7 +268,7 @@ SymbolDefn_Term_c parse_SymbolDefn_Term (sept::Data const &d) {
 }
 
 SymbolTypeDeclArray_Term_c parse_SymbolTypeDeclArray_Term (sept::Data const &d) {
-    assert(inhabits_data(d, SymbolTypeDeclArray));
+    assert(inhabits_data(d, syn::SymbolTypeDeclArray));
     auto const &a = d.cast<sept::ArrayTerm_c const &>();
     SymbolTypeDeclArray_Term_c retval;
     retval.reserve(a.size());
@@ -276,7 +278,7 @@ SymbolTypeDeclArray_Term_c parse_SymbolTypeDeclArray_Term (sept::Data const &d) 
 }
 
 FuncPrototype_Term_c parse_FuncPrototype_Term (sept::Data const &d) {
-    assert(inhabits_data(d, FuncPrototype));
+    assert(inhabits_data(d, syn::FuncPrototype));
     auto const &t = d.cast<sept::TupleTerm_c const &>();
     // t[1] is MapsTo, which is only used for syntactical distinction.
     return FuncPrototype_Term_c{
@@ -286,7 +288,7 @@ FuncPrototype_Term_c parse_FuncPrototype_Term (sept::Data const &d) {
 }
 
 FuncLiteral_Term_c parse_FuncLiteral_Term (sept::Data const &d) {
-    assert(inhabits_data(d, FuncLiteral));
+    assert(inhabits_data(d, syn::FuncLiteral));
     auto const &t = d.cast<sept::TupleTerm_c const &>();
     return FuncLiteral_Term_c{
         parse_FuncPrototype_Term(t[0]),
@@ -295,7 +297,7 @@ FuncLiteral_Term_c parse_FuncLiteral_Term (sept::Data const &d) {
 }
 
 Assignment_Term_c parse_Assignment_Term (sept::TupleTerm_c const &t) {
-    assert(inhabits_data(t, Assignment));
+    assert(inhabits_data(t, syn::Assignment));
     // Note that t[1] is AssignFrom, which is only used for syntactical distinction.
     return Assignment_Term_c{
         t[0].cast<std::string const &>(),
@@ -309,44 +311,44 @@ Assignment_Term_c parse_Assignment_Term (sept::Data const &d) {
 }
 
 SymbolId_Term_c parse_SymbolId_Term (std::string const &s) {
-    assert(inhabits(s, SymbolId));
+    assert(inhabits(s, syn::SymbolId));
     return SymbolId_Term_c{s};
 }
 
 SymbolId_Term_c parse_SymbolId_Term (sept::Data const &d) {
-    assert(inhabits_data(d, SymbolId));
+    assert(inhabits_data(d, syn::SymbolId));
     return parse_SymbolId_Term(d.cast<std::string const &>());
 }
 
 ValueTerminal_Term_c parse_ValueTerminal_Term (sept::Data const &d) {
-    assert(inhabits_data(d, ValueTerminal));
+    assert(inhabits_data(d, syn::ValueTerminal));
     return ValueTerminal_Term_c{d};
 }
 
 Expr_Term_c parse_Expr_Term (sept::Data const &d) {
-    assert(inhabits_data(d, Expr));
+    assert(inhabits_data(d, syn::Expr));
     // TODO: Implement this search using a poset
     if (false)
         { }
-    else if (inhabits_data(d, BinOpExpr))
+    else if (inhabits_data(d, syn::BinOpExpr))
         return Expr_Term_c{parse_BinOpExpr_Term(d)};
-    else if (inhabits_data(d, BlockExpr))
+    else if (inhabits_data(d, syn::BlockExpr))
         return Expr_Term_c{parse_BlockExpr_Term(d)};
-    else if (inhabits_data(d, CondExpr))
+    else if (inhabits_data(d, syn::CondExpr))
         return Expr_Term_c{parse_CondExpr_Term(d)};
-    else if (inhabits_data(d, Construction))
+    else if (inhabits_data(d, syn::Construction))
         return Expr_Term_c{parse_Construction_Term(d)};
-    else if (inhabits_data(d, ElementEval))
+    else if (inhabits_data(d, syn::ElementEval))
         return Expr_Term_c{parse_ElementEval_Term(d)};
-    else if (inhabits_data(d, FuncEval))
+    else if (inhabits_data(d, syn::FuncEval))
         return Expr_Term_c{parse_FuncEval_Term(d)};
-    else if (inhabits_data(d, RoundExpr))
+    else if (inhabits_data(d, syn::RoundExpr))
         return Expr_Term_c{parse_RoundExpr_Term(d)};
-    else if (inhabits_data(d, SymbolId))
+    else if (inhabits_data(d, syn::SymbolId))
         return Expr_Term_c{parse_SymbolId_Term(d)};
-    else if (inhabits_data(d, UnOpExpr))
+    else if (inhabits_data(d, syn::UnOpExpr))
         return Expr_Term_c{parse_UnOpExpr_Term(d)};
-    else if (inhabits_data(d, ValueTerminal))
+    else if (inhabits_data(d, syn::ValueTerminal))
         return Expr_Term_c{parse_ValueTerminal_Term(d)};
     else
         LVD_ABORT(LVD_FMT("data not recognized as Expr: " << d));
@@ -501,7 +503,7 @@ sept::Data evaluate_Expr_Term (Expr_Term_c const &expr_term, EvalCtx &ctx) {
 }
 
 void execute_stmt__as_StmtArray (sept::ArrayTerm_c const &stmt_array, EvalCtx &ctx) {
-    assert(inhabits(stmt_array, StmtArray));
+    assert(inhabits(stmt_array, syn::StmtArray));
     for (auto const &stmt : stmt_array.elements())
         execute_stmt_data(stmt, ctx);
 }
@@ -510,3 +512,53 @@ void execute_stmt__as_StmtArray (sept::Data const &stmt, EvalCtx &ctx) {
     assert(inhabits_data(stmt, sept::Array));
     execute_stmt__as_StmtArray(stmt.cast<sept::ArrayTerm_c const &>(), ctx);
 }
+
+//
+// BEGIN TEMP HACK
+//
+
+sept::Data evaluate_expr (sept::TupleTerm_c const &t, sem::EvalCtx &ctx) {
+    // TODO: Make this efficient -- some sort of poset search.
+    if (false)
+        { }
+    else if (inhabits(t, syn::BinOpExpr))
+        return syn::evaluate_expr__as_BinOpExpr(t, ctx);
+    else if (inhabits(t, syn::BlockExpr))
+        return syn::evaluate_expr__as_BlockExpr(t, ctx);
+    else if (inhabits(t, syn::CondExpr))
+        return syn::evaluate_expr__as_CondExpr(t, ctx);
+    else if (inhabits(t, syn::Construction))
+        return syn::evaluate_expr__as_Construction(t, ctx);
+    else if (inhabits(t, syn::ElementEval))
+        return syn::evaluate_expr__as_ElementEval(t, ctx);
+    else if (inhabits(t, syn::FuncEval))
+        return syn::evaluate_expr__as_FuncEval(t, ctx);
+    else if (inhabits(t, syn::RoundExpr))
+        return syn::evaluate_expr__as_RoundExpr(t, ctx);
+    else if (inhabits(t, syn::UnOpExpr))
+        return syn::evaluate_expr__as_UnOpExpr(t, ctx);
+    else if (inhabits(t, syn::Expr)) {
+        LVD_ABORT(LVD_FMT("unhandled Expr: " << t));
+//         return t; // Just a plain Tuple.
+    } else
+        LVD_ABORT(LVD_FMT("attempting to evaluate_expr for a non-Expr: " << t));
+}
+
+void execute_stmt (sept::TupleTerm_c const &t, sem::EvalCtx &ctx) {
+    // TODO: Make this efficient -- some sort of poset search.
+    if (false)
+        { }
+    else if (inhabits(t, syn::Assignment))
+        return syn::execute_stmt__as_Assignment(t, ctx);
+    else if (inhabits(t, syn::SymbolDefn))
+        return syn::execute_stmt__as_SymbolDefn(t, ctx);
+    else if (inhabits(t, syn::Stmt))
+        LVD_ABORT(LVD_FMT("unhandled Stmt: " << t));
+    else
+        LVD_ABORT(LVD_FMT("attempting to execute_stmt for a non-Stmt: " << t));
+}
+
+//
+// END TEMP HACK
+//
+} // end namespace sem

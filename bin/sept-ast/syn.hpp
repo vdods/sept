@@ -3,6 +3,7 @@
 #pragma once
 
 // Includes from this program's source
+#include "ASTNPTerm.hpp"
 #include "core.hpp"
 #include "EvalCtx.hpp"
 
@@ -15,134 +16,7 @@
 #include "sept/Union.hpp"
 #include <string>
 
-//
-// Misc
-//
-
-inline int compare (uint8_t lhs, uint8_t rhs) {
-    return int(lhs) - int(rhs);
-}
-
-//
-// Non-parametric terms for this AST POC
-//
-
-// TODO: Could potentially split these up to make them distinct C++ types,
-// which would make certain code be constexpr.
-using ASTNPTermRepr = uint8_t;
-enum class ASTNPTerm : ASTNPTermRepr {
-    // BinOp
-    AND = 0,
-    OR,
-    XOR,
-    ADD,
-    SUB,
-    MUL,
-    DIV,
-    POW,
-    __BinOp_LOWEST__ = AND,
-    __BinOp_HIGHEST__ = POW,
-
-    // UnOp
-    NOT,
-    NEG,
-    __UnOp_LOWEST__ = NOT,
-    __UnOp_HIGHEST__ = NEG,
-
-    //
-    // Misc -- TODO: Categorize
-    //
-
-    MAPS_TO,        // ->
-    DECLARED_AS,    // :
-    DEFINED_AS,     // ::=
-    ASSIGN_FROM,    // =
-    ROUND_OPEN,     // (
-    ROUND_CLOSE,    // )
-    SQUARE_OPEN,    // [
-    SQUARE_CLOSE,   // ]
-    CURLY_OPEN,     // {
-    CURLY_CLOSE,    // }
-    IF,
-    THEN,
-    ELSE,
-    __Misc_LOWEST__ = MAPS_TO,
-    __Misc_HIGHEST__ = ELSE,
-
-    __LOWEST__ = __BinOp_LOWEST__,
-    __HIGHEST__ = __Misc_HIGHEST__,
-};
-
-size_t constexpr AST_NP_TERM_COUNT = size_t(ASTNPTerm::__HIGHEST__)+1 - size_t(ASTNPTerm::__LOWEST__);
-
-inline std::string const &as_string (ASTNPTerm t) {
-    static std::array<std::string,AST_NP_TERM_COUNT> const TABLE{
-        // BinOp
-        "And",
-        "Or",
-        "Xor",
-        "Add",
-        "Sub",
-        "Mul",
-        "Div",
-        "Pow",
-
-        // UnOp
-        "Not",
-        "Neg",
-
-        // Misc
-        "MapsTo",
-        "DeclaredAs",
-        "DefinedAs",
-        "AssignFrom",
-        "RoundOpen",
-        "RoundClose",
-        "SquareOpen",
-        "SquareClose",
-        "CurlyOpen",
-        "CurlyClose",
-        "If",
-        "Then",
-        "Else",
-    };
-    return TABLE.at(size_t(t));
-}
-
-inline std::ostream &operator<< (std::ostream &out, ASTNPTerm const &t) {
-    return out << as_string(t);
-}
-
-inline int compare (ASTNPTerm const &lhs, ASTNPTerm const &rhs) {
-    return compare(ASTNPTermRepr(lhs), ASTNPTermRepr(rhs));
-}
-
-// BinOp
-inline ASTNPTerm constexpr And = ASTNPTerm::AND;
-inline ASTNPTerm constexpr Or  = ASTNPTerm::OR;
-inline ASTNPTerm constexpr Xor = ASTNPTerm::XOR;
-inline ASTNPTerm constexpr Add = ASTNPTerm::ADD;
-inline ASTNPTerm constexpr Sub = ASTNPTerm::SUB;
-inline ASTNPTerm constexpr Mul = ASTNPTerm::MUL;
-inline ASTNPTerm constexpr Div = ASTNPTerm::DIV;
-inline ASTNPTerm constexpr Pow = ASTNPTerm::POW;
-// UnOp
-inline ASTNPTerm constexpr Not = ASTNPTerm::NOT;
-inline ASTNPTerm constexpr Neg = ASTNPTerm::NEG;
-// Misc
-inline ASTNPTerm constexpr MapsTo = ASTNPTerm::MAPS_TO;
-inline ASTNPTerm constexpr DeclaredAs = ASTNPTerm::DECLARED_AS;
-inline ASTNPTerm constexpr DefinedAs = ASTNPTerm::DEFINED_AS;
-inline ASTNPTerm constexpr AssignFrom = ASTNPTerm::ASSIGN_FROM;
-inline ASTNPTerm constexpr RoundOpen = ASTNPTerm::ROUND_OPEN;
-inline ASTNPTerm constexpr RoundClose = ASTNPTerm::ROUND_CLOSE;
-inline ASTNPTerm constexpr SquareOpen = ASTNPTerm::SQUARE_OPEN;
-inline ASTNPTerm constexpr SquareClose = ASTNPTerm::SQUARE_CLOSE;
-inline ASTNPTerm constexpr CurlyOpen = ASTNPTerm::CURLY_OPEN;
-inline ASTNPTerm constexpr CurlyClose = ASTNPTerm::CURLY_CLOSE;
-inline ASTNPTerm constexpr If = ASTNPTerm::IF;
-inline ASTNPTerm constexpr Then = ASTNPTerm::THEN;
-inline ASTNPTerm constexpr Else = ASTNPTerm::ELSE;
+namespace syn {
 
 //
 // Sigils that represent different categories of things.  This is sort of vaguely defined at the moment.
@@ -252,18 +126,18 @@ inline bool constexpr inhabits (char const *, SymbolId_c const &) {
 // TODO: Deprecate these, since semantic terms are what do evaluate and execute
 //
 
-sept::ArrayTerm_c evaluate_expr__as_ExprArray (sept::ArrayTerm_c const &a, EvalCtx &ctx);
-sept::Data evaluate_expr__as_BinOpExpr (sept::TupleTerm_c const &t, EvalCtx &ctx);
-sept::Data evaluate_expr__as_BlockExpr (sept::TupleTerm_c const &t, EvalCtx &ctx);
-sept::Data evaluate_expr__as_CondExpr (sept::TupleTerm_c const &t, EvalCtx &ctx);
-sept::Data evaluate_expr__as_Construction (sept::TupleTerm_c const &t, EvalCtx &ctx);
-sept::Data evaluate_expr__as_ElementEval (sept::TupleTerm_c const &t, EvalCtx &ctx);
-sept::Data evaluate_expr__as_UnOpExpr (sept::TupleTerm_c const &t, EvalCtx &ctx);
-sept::ArrayTerm_c evaluate_expr__as_RoundExpr (sept::TupleTerm_c const &t, EvalCtx &ctx);
-sept::Data evaluate_expr__as_SymbolId (std::string const &symbol_id, EvalCtx &ctx);
-sept::Data evaluate_expr__as_FuncEval (sept::TupleTerm_c const &t, EvalCtx &ctx);
-sept::Data evaluate_expr (sept::TupleTerm_c const &t, EvalCtx &ctx);
+sept::ArrayTerm_c evaluate_expr__as_ExprArray (sept::ArrayTerm_c const &a, sem::EvalCtx &ctx);
+sept::Data evaluate_expr__as_BinOpExpr (sept::TupleTerm_c const &t, sem::EvalCtx &ctx);
+sept::Data evaluate_expr__as_BlockExpr (sept::TupleTerm_c const &t, sem::EvalCtx &ctx);
+sept::Data evaluate_expr__as_CondExpr (sept::TupleTerm_c const &t, sem::EvalCtx &ctx);
+sept::Data evaluate_expr__as_Construction (sept::TupleTerm_c const &t, sem::EvalCtx &ctx);
+sept::Data evaluate_expr__as_ElementEval (sept::TupleTerm_c const &t, sem::EvalCtx &ctx);
+sept::Data evaluate_expr__as_UnOpExpr (sept::TupleTerm_c const &t, sem::EvalCtx &ctx);
+sept::ArrayTerm_c evaluate_expr__as_RoundExpr (sept::TupleTerm_c const &t, sem::EvalCtx &ctx);
+sept::Data evaluate_expr__as_SymbolId (std::string const &symbol_id, sem::EvalCtx &ctx);
+sept::Data evaluate_expr__as_FuncEval (sept::TupleTerm_c const &t, sem::EvalCtx &ctx);
 
-void execute_stmt__as_SymbolDefn (sept::TupleTerm_c const &t, EvalCtx &ctx);
-void execute_stmt__as_Assignment (sept::TupleTerm_c const &t, EvalCtx &ctx);
-void execute_stmt (sept::TupleTerm_c const &t, EvalCtx &ctx);
+void execute_stmt__as_SymbolDefn (sept::TupleTerm_c const &t, sem::EvalCtx &ctx);
+void execute_stmt__as_Assignment (sept::TupleTerm_c const &t, sem::EvalCtx &ctx);
+
+} // end namespace syn
