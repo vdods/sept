@@ -1,6 +1,6 @@
 // 2021.05.08 - Victor Dods
 
-#include "ASTNPTerm.hpp"
+#include "common.hpp"
 
 #include <array>
 

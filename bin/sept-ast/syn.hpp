@@ -3,52 +3,17 @@
 #pragma once
 
 // Includes from this program's source
-#include "ASTNPTerm.hpp"
-#include "core.hpp"
+#include "common.hpp"
 #include "EvalCtx.hpp"
 
 #include <array>
 #include "sept/ArrayTerm.hpp"
-#include "sept/FormalTypeOf.hpp"
 #include "sept/MemRef.hpp"
-#include "sept/NPType.hpp"
 #include "sept/Tuple.hpp"
 #include "sept/Union.hpp"
 #include <string>
 
 namespace syn {
-
-//
-// Sigils that represent different categories of things.  This is sort of vaguely defined at the moment.
-//
-
-struct BinOp_c { ABSTRACT_TYPE_CONSTRUCTOR };
-struct UnOp_c { ABSTRACT_TYPE_CONSTRUCTOR };
-
-struct SymbolId_c {
-    std::string operator() (char const *c_str) const {
-        // Cast to std::string and forward.
-        return this->operator()(std::string(c_str));
-    }
-    ABSTRACT_TYPE_CONSTRUCTOR
-};
-
-// These are all singletons
-inline bool constexpr operator== (BinOp_c const &, BinOp_c const &) { return true; }
-inline bool constexpr operator== (UnOp_c const &, UnOp_c const &) { return true; }
-inline bool constexpr operator== (SymbolId_c const &, SymbolId_c const &) { return true; }
-
-inline std::ostream &operator<< (std::ostream &out, BinOp_c const &) { return out << "BinOp"; }
-inline std::ostream &operator<< (std::ostream &out, UnOp_c const &) { return out << "UnOp"; }
-inline std::ostream &operator<< (std::ostream &out, SymbolId_c const &) { return out << "SymbolId"; }
-
-inline sept::NonParametricType_c abstract_type_of (BinOp_c const &) { return sept::NonParametricType; }
-inline sept::NonParametricType_c abstract_type_of (UnOp_c const &) { return sept::NonParametricType; }
-inline sept::NonParametricType_c abstract_type_of (SymbolId_c const &) { return sept::NonParametricType; }
-
-inline auto constexpr BinOp = BinOp_c{};
-inline auto constexpr UnOp = UnOp_c{};
-inline auto constexpr SymbolId = SymbolId_c{};
 
 // This can't be const.
 // TODO: Figure out how to keep this as sept::UnionTerm_c so that its usage doesn't require Data indirection.
@@ -95,32 +60,6 @@ extern sept::TupleTerm_c const FuncLiteral;
 extern sept::TupleTerm_c const FuncEval;
 extern sept::TupleTerm_c const ElementEval;
 extern sept::TupleTerm_c const Construction;
-
-//
-// Definitions of inhabits
-//
-
-inline bool constexpr inhabits (ASTNPTerm t, BinOp_c const &) {
-    return ASTNPTermRepr(ASTNPTerm::__BinOp_LOWEST__) <= ASTNPTermRepr(t)
-        && ASTNPTermRepr(t) <= ASTNPTermRepr(ASTNPTerm::__BinOp_HIGHEST__);
-}
-
-inline bool constexpr inhabits (ASTNPTerm t, UnOp_c const &) {
-    return ASTNPTermRepr(ASTNPTerm::__UnOp_LOWEST__) <= ASTNPTermRepr(t)
-        && ASTNPTermRepr(t) <= ASTNPTermRepr(ASTNPTerm::__UnOp_HIGHEST__);
-}
-
-inline bool inhabits (ASTNPTerm t, sept::FormalTypeOf_Term_c const &f) {
-    return inhabits(sept::Data(t), f);
-}
-
-// For now just allow any string.
-inline bool constexpr inhabits (std::string const &, SymbolId_c const &) {
-    return true;
-}
-inline bool constexpr inhabits (char const *, SymbolId_c const &) {
-    return true;
-}
 
 //
 // TODO: Deprecate these, since semantic terms are what do evaluate and execute

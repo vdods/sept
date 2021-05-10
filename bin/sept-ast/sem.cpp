@@ -311,12 +311,12 @@ Assignment_Term_c parse_Assignment_Term (sept::Data const &d) {
 }
 
 SymbolId_Term_c parse_SymbolId_Term (std::string const &s) {
-    assert(inhabits(s, syn::SymbolId));
+    assert(inhabits(s, SymbolId));
     return SymbolId_Term_c{s};
 }
 
 SymbolId_Term_c parse_SymbolId_Term (sept::Data const &d) {
-    assert(inhabits_data(d, syn::SymbolId));
+    assert(inhabits_data(d, SymbolId));
     return parse_SymbolId_Term(d.cast<std::string const &>());
 }
 
@@ -344,7 +344,7 @@ Expr_Term_c parse_Expr_Term (sept::Data const &d) {
         return Expr_Term_c{parse_FuncEval_Term(d)};
     else if (inhabits_data(d, syn::RoundExpr))
         return Expr_Term_c{parse_RoundExpr_Term(d)};
-    else if (inhabits_data(d, syn::SymbolId))
+    else if (inhabits_data(d, SymbolId))
         return Expr_Term_c{parse_SymbolId_Term(d)};
     else if (inhabits_data(d, syn::UnOpExpr))
         return Expr_Term_c{parse_UnOpExpr_Term(d)};

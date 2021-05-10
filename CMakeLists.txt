@@ -224,9 +224,8 @@ endif()
 
 if(BUILD_septast)
     set(septast_SOURCES
-        bin/sept-ast/ASTNPTerm.cpp
-        bin/sept-ast/ASTNPTerm.hpp
-        bin/sept-ast/core.hpp
+        bin/sept-ast/common.cpp
+        bin/sept-ast/common.hpp
         bin/sept-ast/EvalCtx.hpp
         bin/sept-ast/sem.cpp
         bin/sept-ast/sem.hpp

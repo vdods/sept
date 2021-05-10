@@ -1,8 +1,5 @@
 // 2021.04.19 - Victor Dods
 
-// Includes from this program's source
-#include "core.hpp"
-
 #include <lvd/aliases.hpp>
 #include "sept/GlobalSymRef.hpp"
 #include "sept/LocalSymRef.hpp"

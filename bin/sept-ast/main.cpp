@@ -1,7 +1,6 @@
 // 2021.03.27 - Victor Dods
 
 // Includes from this program's source
-#include "core.hpp"
 #include "sem.hpp"
 #include "syn.hpp"
 
@@ -87,36 +86,36 @@ AST design notes
 
 namespace sept {
 SEPT__REGISTER__PRINT(ASTNPTerm)
-SEPT__REGISTER__PRINT__GIVE_ID(syn::BinOp_c, __syn__BinOp_c__)
+SEPT__REGISTER__PRINT(BinOp_c)
 SEPT__REGISTER__PRINT__GIVE_ID(sem::Expr_Term_c, __sem__Expr_Term_c__)
-SEPT__REGISTER__PRINT__GIVE_ID(syn::SymbolId_c, __syn__SymbolId_c__)
-SEPT__REGISTER__PRINT__GIVE_ID(syn::UnOp_c, __syn__UnOp_c__)
+SEPT__REGISTER__PRINT(SymbolId_c)
+SEPT__REGISTER__PRINT(UnOp_c)
 SEPT__REGISTER__PRINT__GIVE_ID(char const *, __char_const_ptr__)
 
-SEPT__REGISTER__EQ__GIVE_ID(syn::BinOp_c, __syn__BinOp_c__)
-SEPT__REGISTER__EQ__GIVE_ID(syn::UnOp_c, __syn__UnOp_c__)
+SEPT__REGISTER__EQ(BinOp_c)
+SEPT__REGISTER__EQ(UnOp_c)
 SEPT__REGISTER__EQ(ASTNPTerm)
-SEPT__REGISTER__EQ__GIVE_ID(syn::SymbolId_c, __syn__SymbolId_c__)
+SEPT__REGISTER__EQ(SymbolId_c)
 
-SEPT__REGISTER__ABSTRACT_TYPE_OF__GIVE_ID(syn::BinOp_c, __syn__BinOp_c__)
-SEPT__REGISTER__ABSTRACT_TYPE_OF__GIVE_ID(syn::UnOp_c, __syn__UnOp_c__)
+SEPT__REGISTER__ABSTRACT_TYPE_OF(BinOp_c)
+SEPT__REGISTER__ABSTRACT_TYPE_OF(UnOp_c)
 
-SEPT__REGISTER__INHABITS__GIVE_ID__NONDATA(ASTNPTerm,     syn::BinOp_c, __ASTNPTerm___syn__BinOp_c__)
-SEPT__REGISTER__INHABITS__GIVE_ID__NONDATA(ASTNPTerm,     syn::UnOp_c, __ASTNPTerm___syn__UnOp_c__)
+SEPT__REGISTER__INHABITS__NONDATA(ASTNPTerm, BinOp_c)
+SEPT__REGISTER__INHABITS__NONDATA(ASTNPTerm,     UnOp_c)
 SEPT__REGISTER__INHABITS__GIVE_ID__NONDATA(ASTNPTerm,     FormalTypeOf_Term_c, __ASTNPTerm___sem__FormalTypeOf_Term_c__)
-SEPT__REGISTER__INHABITS__GIVE_ID__NONDATA(std::string,   syn::SymbolId_c, __std_string___syn__SymbolId_c__)
-SEPT__REGISTER__INHABITS__GIVE_ID__NONDATA(char const *,  syn::SymbolId_c, __char_const_ptr___syn__SymbolId_c__)
+SEPT__REGISTER__INHABITS__GIVE_ID__NONDATA(std::string,   SymbolId_c, __std_string___SymbolId_c__)
+SEPT__REGISTER__INHABITS__GIVE_ID__NONDATA(char const *,  SymbolId_c, __char_const_ptr___SymbolId_c__)
 // TODO there are probably some missing
 
-SEPT__REGISTER__COMPARE__GIVE_ID__SINGLETON(syn::BinOp_c, __syn_BinOp_c__)
-SEPT__REGISTER__COMPARE__GIVE_ID__SINGLETON(syn::UnOp_c, __syn_UnOp_c__)
+SEPT__REGISTER__COMPARE__SINGLETON(BinOp_c)
+SEPT__REGISTER__COMPARE__SINGLETON(UnOp_c)
 SEPT__REGISTER__COMPARE(ASTNPTerm, ASTNPTerm)
 
-SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__GIVE_ID__ABSTRACT_TYPE(syn::BinOp_c,      ASTNPTerm, __syn__BinOp_c___ASTNPTerm__)
-SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__GIVE_ID__ABSTRACT_TYPE(syn::UnOp_c,       ASTNPTerm, __syn__UnOp_c___ASTNPTerm__)
+SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(BinOp_c, ASTNPTerm)
+SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(UnOp_c, ASTNPTerm)
 SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(FormalTypeOf_Term_c, ASTNPTerm)
-SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__GIVE_ID__ABSTRACT_TYPE(syn::SymbolId_c, std::string, __syn__SymbolId_c___std_string__)
-SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__GIVE_ID__ABSTRACT_TYPE(syn::SymbolId_c, char const *, __syn__SymbolId_c___char_const_ptr__)
+SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__GIVE_ID__ABSTRACT_TYPE(SymbolId_c, std::string, __SymbolId_c___std_string__)
+SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__GIVE_ID__ABSTRACT_TYPE(SymbolId_c, char const *, __SymbolId_c___char_const_ptr__)
 
 // TEMP HACK
 SEPT__REGISTER__INHABITS__NONDATA(ASTNPTerm, UnionTerm_c)
@@ -150,53 +149,53 @@ int main (int argc, char **argv) {
     lvd::g_log.out().setf(std::ios_base::boolalpha, std::ios_base::boolalpha);
 
     lvd::g_log << lvd::Log::dbg()
-               << LVD_REFLECT(syn::BinOp) << '\n'
+               << LVD_REFLECT(BinOp) << '\n'
                << LVD_REFLECT(syn::BinOpExpr) << '\n'
                << LVD_REFLECT(syn::CondExpr) << '\n'
                << LVD_REFLECT(syn::Expr) << '\n'
-               << LVD_REFLECT(syn::UnOp) << '\n'
+               << LVD_REFLECT(UnOp) << '\n'
                << LVD_REFLECT(syn::UnOpExpr) << '\n'
                << '\n';
     lvd::g_log << lvd::Log::dbg()
-               << LVD_REFLECT(inhabits(Add, syn::BinOp)) << '\n'
-               << LVD_REFLECT(inhabits(Sub, syn::BinOp)) << '\n'
-               << LVD_REFLECT(inhabits(Mul, syn::BinOp)) << '\n'
-               << LVD_REFLECT(inhabits(Div, syn::BinOp)) << '\n'
-               << LVD_REFLECT(inhabits(Pow, syn::BinOp)) << '\n'
-               << LVD_REFLECT(inhabits(Neg, syn::BinOp)) << '\n'
-               << LVD_REFLECT(inhabits(And, syn::BinOp)) << '\n'
-               << LVD_REFLECT(inhabits(Or,  syn::BinOp)) << '\n'
-               << LVD_REFLECT(inhabits(Xor, syn::BinOp)) << '\n'
-               << LVD_REFLECT(inhabits(Not, syn::BinOp)) << '\n'
+               << LVD_REFLECT(inhabits(Add, BinOp)) << '\n'
+               << LVD_REFLECT(inhabits(Sub, BinOp)) << '\n'
+               << LVD_REFLECT(inhabits(Mul, BinOp)) << '\n'
+               << LVD_REFLECT(inhabits(Div, BinOp)) << '\n'
+               << LVD_REFLECT(inhabits(Pow, BinOp)) << '\n'
+               << LVD_REFLECT(inhabits(Neg, BinOp)) << '\n'
+               << LVD_REFLECT(inhabits(And, BinOp)) << '\n'
+               << LVD_REFLECT(inhabits(Or,  BinOp)) << '\n'
+               << LVD_REFLECT(inhabits(Xor, BinOp)) << '\n'
+               << LVD_REFLECT(inhabits(Not, BinOp)) << '\n'
                << '\n'
-               << LVD_REFLECT(inhabits(Add, syn::UnOp)) << '\n'
-               << LVD_REFLECT(inhabits(Sub, syn::UnOp)) << '\n'
-               << LVD_REFLECT(inhabits(Mul, syn::UnOp)) << '\n'
-               << LVD_REFLECT(inhabits(Div, syn::UnOp)) << '\n'
-               << LVD_REFLECT(inhabits(Pow, syn::UnOp)) << '\n'
-               << LVD_REFLECT(inhabits(Neg, syn::UnOp)) << '\n'
-               << LVD_REFLECT(inhabits(And, syn::UnOp)) << '\n'
-               << LVD_REFLECT(inhabits(Or,  syn::UnOp)) << '\n'
-               << LVD_REFLECT(inhabits(Xor, syn::UnOp)) << '\n'
-               << LVD_REFLECT(inhabits(Not, syn::UnOp)) << '\n'
+               << LVD_REFLECT(inhabits(Add, UnOp)) << '\n'
+               << LVD_REFLECT(inhabits(Sub, UnOp)) << '\n'
+               << LVD_REFLECT(inhabits(Mul, UnOp)) << '\n'
+               << LVD_REFLECT(inhabits(Div, UnOp)) << '\n'
+               << LVD_REFLECT(inhabits(Pow, UnOp)) << '\n'
+               << LVD_REFLECT(inhabits(Neg, UnOp)) << '\n'
+               << LVD_REFLECT(inhabits(And, UnOp)) << '\n'
+               << LVD_REFLECT(inhabits(Or,  UnOp)) << '\n'
+               << LVD_REFLECT(inhabits(Xor, UnOp)) << '\n'
+               << LVD_REFLECT(inhabits(Not, UnOp)) << '\n'
                << '\n'
                << LVD_REFLECT(inhabits(MapsTo, sept::FormalTypeOf(MapsTo))) << '\n'
-               << LVD_REFLECT(inhabits(MapsTo, syn::UnOp)) << '\n'
+               << LVD_REFLECT(inhabits(MapsTo, UnOp)) << '\n'
                << LVD_REFLECT(inhabits(Xor, sept::FormalTypeOf(MapsTo))) << '\n'
                << '\n'
                << LVD_REFLECT(inhabits(sept::TupleTerm_c(123.4, Pow, 2.0), syn::Expr)) << '\n'
                << '\n'
                << LVD_REFLECT(inhabits(sept::Float64, syn::TypeExpr)) << '\n'
-               << LVD_REFLECT(inhabits("hippo1", syn::SymbolId)) << '\n'
-               << LVD_REFLECT(inhabits(std::string("hippo2"), syn::SymbolId)) << '\n'
-               << LVD_REFLECT(inhabits(syn::SymbolId("hippo3"), syn::SymbolId)) << '\n'
-               << LVD_REFLECT(inhabits(syn::SymbolId(std::string("hippo4")), syn::SymbolId)) << '\n'
+               << LVD_REFLECT(inhabits("hippo1", SymbolId)) << '\n'
+               << LVD_REFLECT(inhabits(std::string("hippo2"), SymbolId)) << '\n'
+               << LVD_REFLECT(inhabits(SymbolId("hippo3"), SymbolId)) << '\n'
+               << LVD_REFLECT(inhabits(SymbolId(std::string("hippo4")), SymbolId)) << '\n'
                << LVD_REFLECT(inhabits(syn::SymbolTypeDecl(sept::TupleTerm_c(std::string("hippo5"), DeclaredAs, sept::Float64)), syn::SymbolTypeDecl)) << '\n'
-               << LVD_REFLECT(inhabits(syn::SymbolTypeDecl(sept::TupleTerm_c(syn::SymbolId(std::string("hippo6")), DeclaredAs, sept::Float64)), syn::SymbolTypeDecl)) << '\n'
+               << LVD_REFLECT(inhabits(syn::SymbolTypeDecl(sept::TupleTerm_c(SymbolId(std::string("hippo6")), DeclaredAs, sept::Float64)), syn::SymbolTypeDecl)) << '\n'
                << LVD_REFLECT(inhabits(syn::SymbolTypeDecl(sept::TupleTerm_c("hippo7", DeclaredAs, sept::Float64)), syn::SymbolTypeDecl)) << '\n'
-               << LVD_REFLECT(inhabits(syn::SymbolTypeDecl(sept::TupleTerm_c(syn::SymbolId("hippo8"), DeclaredAs, sept::Float64)), syn::SymbolTypeDecl)) << '\n'
+               << LVD_REFLECT(inhabits(syn::SymbolTypeDecl(sept::TupleTerm_c(SymbolId("hippo8"), DeclaredAs, sept::Float64)), syn::SymbolTypeDecl)) << '\n'
                << LVD_REFLECT(inhabits(sept::TupleTerm_c("hippo9", DeclaredAs, sept::Float64), syn::SymbolTypeDecl)) << '\n'
-               << LVD_REFLECT(inhabits(sept::TupleTerm_c(syn::SymbolId("hippo9"), DeclaredAs, sept::Float64), syn::SymbolTypeDecl)) << '\n'
+               << LVD_REFLECT(inhabits(sept::TupleTerm_c(SymbolId("hippo9"), DeclaredAs, sept::Float64), syn::SymbolTypeDecl)) << '\n'
                << LVD_REFLECT(inhabits(sept::TupleTerm_c(std::string("hippo10"), DeclaredAs, sept::Float64), syn::SymbolTypeDecl)) << '\n'
                << LVD_REFLECT(inhabits(sept::TupleTerm_c(sept::Float64, MapsTo, sept::Bool), syn::FuncType)) << '\n'
                << LVD_REFLECT(inhabits(sept::TupleTerm_c(sept::Float64, MapsTo, sept::TupleTerm_c(sept::Bool, MapsTo, sept::Uint32)), syn::FuncType)) << '\n'
@@ -256,11 +255,11 @@ int main (int argc, char **argv) {
                << LVD_REFLECT(evaluate_expr(syn::BinOpExpr(x, Pow, 9.0), ctx)) << '\n'
                << LVD_REFLECT(evaluate_expr(nine_factorial, ctx)) << '\n'
                << LVD_REFLECT(inhabits(syn::BinOpExpr(x, Pow, 9.0), syn::Expr)) << '\n'
-               << LVD_REFLECT(inhabits(Div, syn::BinOp)) << '\n'
+               << LVD_REFLECT(inhabits(Div, BinOp)) << '\n'
                << LVD_REFLECT(inhabits(nine_factorial, syn::Expr)) << '\n'
                << LVD_REFLECT(sept::inhabits_data(syn::BinOpExpr(x, Pow, 9.0), syn::Expr)) << '\n'
                << LVD_REFLECT(sept::inhabits_data(syn::BinOpExpr(x, Pow, 9.0), syn::Expr)) << '\n'
-               << LVD_REFLECT(sept::inhabits_data(Div, syn::BinOp)) << '\n'
+               << LVD_REFLECT(sept::inhabits_data(Div, BinOp)) << '\n'
                << LVD_REFLECT(sept::inhabits_data(nine_factorial, syn::Expr)) << '\n'
                << LVD_REFLECT(inhabits(syn::BinOpExpr(x, Pow, 9.0), syn::BinOpExpr)) << '\n'
                << LVD_REFLECT(inhabits(syn::BinOpExpr(x, Pow, 9.0), syn::CondExpr)) << '\n'
@@ -333,24 +332,24 @@ int main (int argc, char **argv) {
 
     // Define a global function.
     ctx.current_scope()->define_symbol(
-        syn::SymbolId("square"),
+        SymbolId("square"),
         syn::FuncLiteral(
             syn::FuncPrototype(
                 syn::SymbolTypeDeclArray(
-                    syn::SymbolTypeDecl(syn::SymbolId("x"), DeclaredAs, sept::Float64)
+                    syn::SymbolTypeDecl(SymbolId("x"), DeclaredAs, sept::Float64)
                 ),
                 MapsTo,
                 sept::Float64
             ),
-            syn::BinOpExpr(syn::SymbolId("x"), Mul, syn::SymbolId("x"))
+            syn::BinOpExpr(SymbolId("x"), Mul, SymbolId("x"))
         )
     );
     lvd::g_log << lvd::Log::dbg()
                << LVD_REFLECT(syn::ExprArray(sept::Float64(100.1))) << '\n'
                << LVD_REFLECT(syn::ExprArray(sept::Float64(100.1), sept::Uint32(1234))) << '\n'
                << LVD_REFLECT(syn::RoundExpr(RoundOpen, syn::ExprArray(sept::Float64(100.1)), RoundClose)) << '\n'
-               << LVD_REFLECT(syn::FuncEval(syn::SymbolId("square"), syn::RoundExpr(RoundOpen, syn::ExprArray(sept::Float64(100.1)), RoundClose))) << '\n'
-               << LVD_REFLECT(syn::evaluate_expr__as_FuncEval(syn::FuncEval(syn::SymbolId("square"), syn::RoundExpr(RoundOpen, syn::ExprArray(sept::Float64(100.1)), RoundClose)), ctx)) << '\n'
+               << LVD_REFLECT(syn::FuncEval(SymbolId("square"), syn::RoundExpr(RoundOpen, syn::ExprArray(sept::Float64(100.1)), RoundClose))) << '\n'
+               << LVD_REFLECT(syn::evaluate_expr__as_FuncEval(syn::FuncEval(SymbolId("square"), syn::RoundExpr(RoundOpen, syn::ExprArray(sept::Float64(100.1)), RoundClose)), ctx)) << '\n'
                << LVD_REFLECT(syn::Stmt) << '\n'
                << LVD_REFLECT(syn::StmtArray) << '\n'
                << LVD_REFLECT(syn::ExprArray) << '\n'
@@ -358,13 +357,13 @@ int main (int argc, char **argv) {
                << '\n';
 
     auto stmt_array = syn::StmtArray(
-        syn::SymbolDefn(syn::SymbolId("fwee"), DefinedAs, sept::True),
-        syn::SymbolDefn(syn::SymbolId("gwaa"), DefinedAs, sept::Float64(40302.01))
+        syn::SymbolDefn(SymbolId("fwee"), DefinedAs, sept::True),
+        syn::SymbolDefn(SymbolId("gwaa"), DefinedAs, sept::Float64(40302.01))
     );
     lvd::g_log << lvd::Log::dbg() << LVD_CALL_SITE() << '\n';
     auto blah = sept::ArrayE(sept::Union(syn::SymbolDefn))(
-        syn::SymbolDefn(syn::SymbolId("fwee"), DefinedAs, sept::True),
-        syn::SymbolDefn(syn::SymbolId("gwaa"), DefinedAs, sept::Float64(40302.01))
+        syn::SymbolDefn(SymbolId("fwee"), DefinedAs, sept::True),
+        syn::SymbolDefn(SymbolId("gwaa"), DefinedAs, sept::Float64(40302.01))
     );
     lvd::g_log << lvd::Log::dbg() << LVD_CALL_SITE() << '\n';
     lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(inhabits_data(stmt_array, syn::StmtArray)) << '\n';
@@ -381,7 +380,7 @@ int main (int argc, char **argv) {
 
 
     lvd::g_log << lvd::Log::dbg() << "stmt_array == blah" << " = " << eq_val << '\n';
-    auto block_expr = syn::BlockExpr(stmt_array, syn::SymbolId("fwee"));
+    auto block_expr = syn::BlockExpr(stmt_array, SymbolId("fwee"));
     lvd::g_log << lvd::Log::dbg() << LVD_CALL_SITE() << '\n'
                << LVD_REFLECT(block_expr) << '\n'
                << LVD_REFLECT(inhabits(block_expr, syn::BlockExpr)) << '\n'
@@ -390,29 +389,29 @@ int main (int argc, char **argv) {
     lvd::g_log << lvd::Log::dbg()
                << LVD_REFLECT(
                     syn::StmtArray(
-                        syn::SymbolDefn(syn::SymbolId("fwee"), DefinedAs, sept::True),
-                        syn::SymbolDefn(syn::SymbolId("gwaa"), DefinedAs, sept::Float64(40302.01))
+                        syn::SymbolDefn(SymbolId("fwee"), DefinedAs, sept::True),
+                        syn::SymbolDefn(SymbolId("gwaa"), DefinedAs, sept::Float64(40302.01))
                     )
                   ) << '\n'
                << LVD_REFLECT(
                     syn::BlockExpr(
                         syn::StmtArray(
-                            syn::SymbolDefn(syn::SymbolId("fwee"), DefinedAs, sept::True),
-                            syn::SymbolDefn(syn::SymbolId("gwaa"), DefinedAs, sept::Float64(40302.01)),
-                            syn::Assignment(syn::SymbolId("fwee"), AssignFrom, sept::Float64(8888.55))
+                            syn::SymbolDefn(SymbolId("fwee"), DefinedAs, sept::True),
+                            syn::SymbolDefn(SymbolId("gwaa"), DefinedAs, sept::Float64(40302.01)),
+                            syn::Assignment(SymbolId("fwee"), AssignFrom, sept::Float64(8888.55))
                         ),
-                        syn::SymbolId("fwee")
+                        SymbolId("fwee")
                     )
                   ) << '\n'
                << LVD_REFLECT(
                     syn::evaluate_expr__as_BlockExpr(
                         syn::BlockExpr(
                             syn::StmtArray(
-                                syn::SymbolDefn(syn::SymbolId("fwee"), DefinedAs, sept::True),
-                                syn::SymbolDefn(syn::SymbolId("gwaa"), DefinedAs, sept::Float64(40302.01)),
-                                syn::Assignment(syn::SymbolId("fwee"), AssignFrom, sept::Float64(8888.55))
+                                syn::SymbolDefn(SymbolId("fwee"), DefinedAs, sept::True),
+                                syn::SymbolDefn(SymbolId("gwaa"), DefinedAs, sept::Float64(40302.01)),
+                                syn::Assignment(SymbolId("fwee"), AssignFrom, sept::Float64(8888.55))
                             ),
-                            syn::SymbolId("fwee")
+                            SymbolId("fwee")
                         ),
                         ctx
                     ).deref()
@@ -421,57 +420,57 @@ int main (int argc, char **argv) {
 
     // Define another global function.
     ctx.current_scope()->define_symbol(
-        syn::SymbolId("exp"),
+        SymbolId("exp"),
         syn::FuncLiteral(
             syn::FuncPrototype(
                 syn::SymbolTypeDeclArray(
-                    syn::SymbolTypeDecl(syn::SymbolId("x"), DeclaredAs, sept::Float64)
+                    syn::SymbolTypeDecl(SymbolId("x"), DeclaredAs, sept::Float64)
                 ),
                 MapsTo,
                 sept::Float64
             ),
             syn::BlockExpr(
                 syn::StmtArray(
-                    syn::SymbolDefn(syn::SymbolId("retval"), DefinedAs, 0.0),
-                    syn::SymbolDefn(syn::SymbolId("i"), DefinedAs, 0.0),
-                    syn::SymbolDefn(syn::SymbolId("accumulator"), DefinedAs, 1.0),
+                    syn::SymbolDefn(SymbolId("retval"), DefinedAs, 0.0),
+                    syn::SymbolDefn(SymbolId("i"), DefinedAs, 0.0),
+                    syn::SymbolDefn(SymbolId("accumulator"), DefinedAs, 1.0),
 
                     // Just do an unrolled loop for now.
 
-                    syn::Assignment(syn::SymbolId("retval"), AssignFrom, syn::BinOpExpr(syn::SymbolId("retval"), Add, syn::SymbolId("accumulator"))),
-                    syn::Assignment(syn::SymbolId("i"), AssignFrom, syn::BinOpExpr(syn::SymbolId("i"), Add, 1.0)),
-                    syn::Assignment(syn::SymbolId("accumulator"), AssignFrom, syn::BinOpExpr(syn::BinOpExpr(syn::SymbolId("accumulator"), Mul, syn::SymbolId("x")), Div, syn::SymbolId("i"))),
+                    syn::Assignment(SymbolId("retval"), AssignFrom, syn::BinOpExpr(SymbolId("retval"), Add, SymbolId("accumulator"))),
+                    syn::Assignment(SymbolId("i"), AssignFrom, syn::BinOpExpr(SymbolId("i"), Add, 1.0)),
+                    syn::Assignment(SymbolId("accumulator"), AssignFrom, syn::BinOpExpr(syn::BinOpExpr(SymbolId("accumulator"), Mul, SymbolId("x")), Div, SymbolId("i"))),
 
-                    syn::Assignment(syn::SymbolId("retval"), AssignFrom, syn::BinOpExpr(syn::SymbolId("retval"), Add, syn::SymbolId("accumulator"))),
-                    syn::Assignment(syn::SymbolId("i"), AssignFrom, syn::BinOpExpr(syn::SymbolId("i"), Add, 1.0)),
-                    syn::Assignment(syn::SymbolId("accumulator"), AssignFrom, syn::BinOpExpr(syn::BinOpExpr(syn::SymbolId("accumulator"), Mul, syn::SymbolId("x")), Div, syn::SymbolId("i"))),
+                    syn::Assignment(SymbolId("retval"), AssignFrom, syn::BinOpExpr(SymbolId("retval"), Add, SymbolId("accumulator"))),
+                    syn::Assignment(SymbolId("i"), AssignFrom, syn::BinOpExpr(SymbolId("i"), Add, 1.0)),
+                    syn::Assignment(SymbolId("accumulator"), AssignFrom, syn::BinOpExpr(syn::BinOpExpr(SymbolId("accumulator"), Mul, SymbolId("x")), Div, SymbolId("i"))),
 
-                    syn::Assignment(syn::SymbolId("retval"), AssignFrom, syn::BinOpExpr(syn::SymbolId("retval"), Add, syn::SymbolId("accumulator"))),
-                    syn::Assignment(syn::SymbolId("i"), AssignFrom, syn::BinOpExpr(syn::SymbolId("i"), Add, 1.0)),
-                    syn::Assignment(syn::SymbolId("accumulator"), AssignFrom, syn::BinOpExpr(syn::BinOpExpr(syn::SymbolId("accumulator"), Mul, syn::SymbolId("x")), Div, syn::SymbolId("i"))),
+                    syn::Assignment(SymbolId("retval"), AssignFrom, syn::BinOpExpr(SymbolId("retval"), Add, SymbolId("accumulator"))),
+                    syn::Assignment(SymbolId("i"), AssignFrom, syn::BinOpExpr(SymbolId("i"), Add, 1.0)),
+                    syn::Assignment(SymbolId("accumulator"), AssignFrom, syn::BinOpExpr(syn::BinOpExpr(SymbolId("accumulator"), Mul, SymbolId("x")), Div, SymbolId("i"))),
 
-                    syn::Assignment(syn::SymbolId("retval"), AssignFrom, syn::BinOpExpr(syn::SymbolId("retval"), Add, syn::SymbolId("accumulator"))),
-                    syn::Assignment(syn::SymbolId("i"), AssignFrom, syn::BinOpExpr(syn::SymbolId("i"), Add, 1.0)),
-                    syn::Assignment(syn::SymbolId("accumulator"), AssignFrom, syn::BinOpExpr(syn::BinOpExpr(syn::SymbolId("accumulator"), Mul, syn::SymbolId("x")), Div, syn::SymbolId("i"))),
+                    syn::Assignment(SymbolId("retval"), AssignFrom, syn::BinOpExpr(SymbolId("retval"), Add, SymbolId("accumulator"))),
+                    syn::Assignment(SymbolId("i"), AssignFrom, syn::BinOpExpr(SymbolId("i"), Add, 1.0)),
+                    syn::Assignment(SymbolId("accumulator"), AssignFrom, syn::BinOpExpr(syn::BinOpExpr(SymbolId("accumulator"), Mul, SymbolId("x")), Div, SymbolId("i"))),
 
-                    syn::Assignment(syn::SymbolId("retval"), AssignFrom, syn::BinOpExpr(syn::SymbolId("retval"), Add, syn::SymbolId("accumulator"))),
-                    syn::Assignment(syn::SymbolId("i"), AssignFrom, syn::BinOpExpr(syn::SymbolId("i"), Add, 1.0)),
-                    syn::Assignment(syn::SymbolId("accumulator"), AssignFrom, syn::BinOpExpr(syn::BinOpExpr(syn::SymbolId("accumulator"), Mul, syn::SymbolId("x")), Div, syn::SymbolId("i"))),
+                    syn::Assignment(SymbolId("retval"), AssignFrom, syn::BinOpExpr(SymbolId("retval"), Add, SymbolId("accumulator"))),
+                    syn::Assignment(SymbolId("i"), AssignFrom, syn::BinOpExpr(SymbolId("i"), Add, 1.0)),
+                    syn::Assignment(SymbolId("accumulator"), AssignFrom, syn::BinOpExpr(syn::BinOpExpr(SymbolId("accumulator"), Mul, SymbolId("x")), Div, SymbolId("i"))),
 
-                    syn::Assignment(syn::SymbolId("retval"), AssignFrom, syn::BinOpExpr(syn::SymbolId("retval"), Add, syn::SymbolId("accumulator"))),
-                    syn::Assignment(syn::SymbolId("i"), AssignFrom, syn::BinOpExpr(syn::SymbolId("i"), Add, 1.0)),
-                    syn::Assignment(syn::SymbolId("accumulator"), AssignFrom, syn::BinOpExpr(syn::BinOpExpr(syn::SymbolId("accumulator"), Mul, syn::SymbolId("x")), Div, syn::SymbolId("i"))),
+                    syn::Assignment(SymbolId("retval"), AssignFrom, syn::BinOpExpr(SymbolId("retval"), Add, SymbolId("accumulator"))),
+                    syn::Assignment(SymbolId("i"), AssignFrom, syn::BinOpExpr(SymbolId("i"), Add, 1.0)),
+                    syn::Assignment(SymbolId("accumulator"), AssignFrom, syn::BinOpExpr(syn::BinOpExpr(SymbolId("accumulator"), Mul, SymbolId("x")), Div, SymbolId("i"))),
 
-                    syn::Assignment(syn::SymbolId("retval"), AssignFrom, syn::BinOpExpr(syn::SymbolId("retval"), Add, syn::SymbolId("accumulator"))),
-                    syn::Assignment(syn::SymbolId("i"), AssignFrom, syn::BinOpExpr(syn::SymbolId("i"), Add, 1.0)),
-                    syn::Assignment(syn::SymbolId("accumulator"), AssignFrom, syn::BinOpExpr(syn::BinOpExpr(syn::SymbolId("accumulator"), Mul, syn::SymbolId("x")), Div, syn::SymbolId("i")))
+                    syn::Assignment(SymbolId("retval"), AssignFrom, syn::BinOpExpr(SymbolId("retval"), Add, SymbolId("accumulator"))),
+                    syn::Assignment(SymbolId("i"), AssignFrom, syn::BinOpExpr(SymbolId("i"), Add, 1.0)),
+                    syn::Assignment(SymbolId("accumulator"), AssignFrom, syn::BinOpExpr(syn::BinOpExpr(SymbolId("accumulator"), Mul, SymbolId("x")), Div, SymbolId("i")))
                 ),
-                syn::SymbolId("retval")
+                SymbolId("retval")
             )
         )
     );
     lvd::g_log << lvd::Log::dbg()
-               << LVD_REFLECT(evaluate_expr_data(syn::FuncEval(syn::SymbolId("exp"), syn::RoundExpr(RoundOpen, syn::ExprArray(0.1), RoundClose)), ctx)) << '\n'
+               << LVD_REFLECT(evaluate_expr_data(syn::FuncEval(SymbolId("exp"), syn::RoundExpr(RoundOpen, syn::ExprArray(0.1), RoundClose)), ctx)) << '\n'
                << LVD_REFLECT(std::exp(0.1)) << '\n';
 
     // Testing ElementEval
@@ -484,21 +483,21 @@ int main (int argc, char **argv) {
 
 
     // Attempt to use a typedef
-    ctx.current_scope()->define_symbol(syn::SymbolId("Complex"), sept::ArrayES(sept::Float64, sept::Uint32(2)));
+    ctx.current_scope()->define_symbol(SymbolId("Complex"), sept::ArrayES(sept::Float64, sept::Uint32(2)));
     lvd::g_log << lvd::Log::dbg()
-               << LVD_REFLECT(evaluate_expr_data(syn::SymbolId("Complex"), ctx).deref()) << '\n'
-               << LVD_REFLECT(evaluate_expr_data(syn::SymbolId("Complex"), ctx).deref()) << '\n'
-               << LVD_REFLECT(evaluate_expr_data(syn::Construction(syn::SymbolId("Complex"), syn::CurlyExpr(CurlyOpen, syn::ExprArray(sept::Array(8.1, 9.2)), CurlyClose)), ctx)) << '\n'
+               << LVD_REFLECT(evaluate_expr_data(SymbolId("Complex"), ctx).deref()) << '\n'
+               << LVD_REFLECT(evaluate_expr_data(SymbolId("Complex"), ctx).deref()) << '\n'
+               << LVD_REFLECT(evaluate_expr_data(syn::Construction(SymbolId("Complex"), syn::CurlyExpr(CurlyOpen, syn::ExprArray(sept::Array(8.1, 9.2)), CurlyClose)), ctx)) << '\n'
                << LVD_REFLECT(
                     inhabits_data(
-                        evaluate_expr_data(syn::Construction(syn::SymbolId("Complex"), syn::CurlyExpr(CurlyOpen, syn::ExprArray(sept::Array(8.1, 9.2)), CurlyClose)), ctx),
-                        syn::SymbolId("Complex")
+                        evaluate_expr_data(syn::Construction(SymbolId("Complex"), syn::CurlyExpr(CurlyOpen, syn::ExprArray(sept::Array(8.1, 9.2)), CurlyClose)), ctx),
+                        SymbolId("Complex")
                     )
                 ) << '\n'
                << LVD_REFLECT(
                     inhabits_data(
                         sept::Array(8.1, 9.2),
-                        evaluate_expr_data(syn::SymbolId("Complex"), ctx)
+                        evaluate_expr_data(SymbolId("Complex"), ctx)
                     )
                 ) << '\n'
                << LVD_REFLECT(sept::Array(8.1, 9.2)) << '\n'
@@ -530,13 +529,13 @@ int main (int argc, char **argv) {
                << LVD_REFLECT(
                     inhabits_data(
                         sept::Array(8.1, 9.2),
-                        evaluate_expr_data(syn::SymbolId("Complex"), ctx)
+                        evaluate_expr_data(SymbolId("Complex"), ctx)
                     )
                 ) << '\n'
                << LVD_REFLECT(
                     inhabits_data(
                         sept::ArrayES(sept::Float64, sept::Uint32(2))(8.1, 9.2),
-                        evaluate_expr_data(syn::SymbolId("Complex"), ctx)
+                        evaluate_expr_data(SymbolId("Complex"), ctx)
                     )
                 ) << '\n'
                << LVD_REFLECT(
@@ -545,28 +544,28 @@ int main (int argc, char **argv) {
                << '\n';
 
     ctx.current_scope()->define_symbol(
-        syn::SymbolId("Complex_square"),
+        SymbolId("Complex_square"),
         syn::FuncLiteral(
             syn::FuncPrototype(
                 syn::SymbolTypeDeclArray(
-                    syn::SymbolTypeDecl(syn::SymbolId("z"), DeclaredAs, syn::SymbolId("Complex"))
+                    syn::SymbolTypeDecl(SymbolId("z"), DeclaredAs, SymbolId("Complex"))
                 ),
                 MapsTo,
-                syn::SymbolId("Complex")
+                SymbolId("Complex")
             ),
             syn::BlockExpr(
                 syn::StmtArray(
-                    syn::SymbolDefn(syn::SymbolId("re"), DefinedAs, syn::ElementEval(syn::SymbolId("z"), syn::SquareExpr(SquareOpen, syn::ExprArray(sept::Uint32(0)), SquareClose))),
-                    syn::SymbolDefn(syn::SymbolId("im"), DefinedAs, syn::ElementEval(syn::SymbolId("z"), syn::SquareExpr(SquareOpen, syn::ExprArray(sept::Uint32(1)), SquareClose)))
+                    syn::SymbolDefn(SymbolId("re"), DefinedAs, syn::ElementEval(SymbolId("z"), syn::SquareExpr(SquareOpen, syn::ExprArray(sept::Uint32(0)), SquareClose))),
+                    syn::SymbolDefn(SymbolId("im"), DefinedAs, syn::ElementEval(SymbolId("z"), syn::SquareExpr(SquareOpen, syn::ExprArray(sept::Uint32(1)), SquareClose)))
                 ),
                 syn::Construction(
-                    syn::SymbolId("Complex"),
+                    SymbolId("Complex"),
                     syn::CurlyExpr(
                         CurlyOpen,
                         syn::ExprArray(
                             sept::Array(
-                                syn::BinOpExpr(syn::BinOpExpr(syn::SymbolId("re"), Mul, syn::SymbolId("re")), Sub, syn::BinOpExpr(syn::SymbolId("im"), Mul, syn::SymbolId("im"))),
-                                syn::BinOpExpr(2.0, Mul, syn::BinOpExpr(syn::SymbolId("re"), Mul, syn::SymbolId("im")))
+                                syn::BinOpExpr(syn::BinOpExpr(SymbolId("re"), Mul, SymbolId("re")), Sub, syn::BinOpExpr(SymbolId("im"), Mul, SymbolId("im"))),
+                                syn::BinOpExpr(2.0, Mul, syn::BinOpExpr(SymbolId("re"), Mul, SymbolId("im")))
                             )
                         ),
                         CurlyClose
@@ -579,12 +578,12 @@ int main (int argc, char **argv) {
                << LVD_REFLECT(
                     evaluate_expr_data(
                         syn::FuncEval(
-                            syn::SymbolId("Complex_square"),
+                            SymbolId("Complex_square"),
                             syn::RoundExpr(
                                 RoundOpen,
                                 syn::ExprArray(
                                     syn::Construction(
-                                        syn::SymbolId("Complex"),
+                                        SymbolId("Complex"),
                                         syn::CurlyExpr(
                                             CurlyOpen,
                                             syn::ExprArray(
@@ -602,31 +601,31 @@ int main (int argc, char **argv) {
                 ) << '\n';
 
     ctx.current_scope()->define_symbol(
-        syn::SymbolId("Complex_mul"),
+        SymbolId("Complex_mul"),
         syn::FuncLiteral(
             syn::FuncPrototype(
                 syn::SymbolTypeDeclArray(
-                    syn::SymbolTypeDecl(syn::SymbolId("w"), DeclaredAs, syn::SymbolId("Complex")),
-                    syn::SymbolTypeDecl(syn::SymbolId("z"), DeclaredAs, syn::SymbolId("Complex"))
+                    syn::SymbolTypeDecl(SymbolId("w"), DeclaredAs, SymbolId("Complex")),
+                    syn::SymbolTypeDecl(SymbolId("z"), DeclaredAs, SymbolId("Complex"))
                 ),
                 MapsTo,
-                syn::SymbolId("Complex")
+                SymbolId("Complex")
             ),
             syn::BlockExpr(
                 syn::StmtArray(
-                    syn::SymbolDefn(syn::SymbolId("w_re"), DefinedAs, syn::ElementEval(syn::SymbolId("w"), syn::SquareExpr(SquareOpen, syn::ExprArray(sept::Uint32(0)), SquareClose))),
-                    syn::SymbolDefn(syn::SymbolId("w_im"), DefinedAs, syn::ElementEval(syn::SymbolId("w"), syn::SquareExpr(SquareOpen, syn::ExprArray(sept::Uint32(1)), SquareClose))),
-                    syn::SymbolDefn(syn::SymbolId("z_re"), DefinedAs, syn::ElementEval(syn::SymbolId("z"), syn::SquareExpr(SquareOpen, syn::ExprArray(sept::Uint32(0)), SquareClose))),
-                    syn::SymbolDefn(syn::SymbolId("z_im"), DefinedAs, syn::ElementEval(syn::SymbolId("z"), syn::SquareExpr(SquareOpen, syn::ExprArray(sept::Uint32(1)), SquareClose)))
+                    syn::SymbolDefn(SymbolId("w_re"), DefinedAs, syn::ElementEval(SymbolId("w"), syn::SquareExpr(SquareOpen, syn::ExprArray(sept::Uint32(0)), SquareClose))),
+                    syn::SymbolDefn(SymbolId("w_im"), DefinedAs, syn::ElementEval(SymbolId("w"), syn::SquareExpr(SquareOpen, syn::ExprArray(sept::Uint32(1)), SquareClose))),
+                    syn::SymbolDefn(SymbolId("z_re"), DefinedAs, syn::ElementEval(SymbolId("z"), syn::SquareExpr(SquareOpen, syn::ExprArray(sept::Uint32(0)), SquareClose))),
+                    syn::SymbolDefn(SymbolId("z_im"), DefinedAs, syn::ElementEval(SymbolId("z"), syn::SquareExpr(SquareOpen, syn::ExprArray(sept::Uint32(1)), SquareClose)))
                 ),
                 syn::Construction(
-                    syn::SymbolId("Complex"),
+                    SymbolId("Complex"),
                     syn::CurlyExpr(
                         CurlyOpen,
                         syn::ExprArray(
                             sept::Array(
-                                syn::BinOpExpr(syn::BinOpExpr(syn::SymbolId("w_re"), Mul, syn::SymbolId("z_re")), Sub, syn::BinOpExpr(syn::SymbolId("w_im"), Mul, syn::SymbolId("z_im"))),
-                                syn::BinOpExpr(syn::BinOpExpr(syn::SymbolId("w_re"), Mul, syn::SymbolId("z_im")), Add, syn::BinOpExpr(syn::SymbolId("w_im"), Mul, syn::SymbolId("z_re")))
+                                syn::BinOpExpr(syn::BinOpExpr(SymbolId("w_re"), Mul, SymbolId("z_re")), Sub, syn::BinOpExpr(SymbolId("w_im"), Mul, SymbolId("z_im"))),
+                                syn::BinOpExpr(syn::BinOpExpr(SymbolId("w_re"), Mul, SymbolId("z_im")), Add, syn::BinOpExpr(SymbolId("w_im"), Mul, SymbolId("z_re")))
                             )
                         ),
                         CurlyClose
@@ -639,12 +638,12 @@ int main (int argc, char **argv) {
                << LVD_REFLECT(
                     evaluate_expr_data(
                         syn::FuncEval(
-                            syn::SymbolId("Complex_mul"),
+                            SymbolId("Complex_mul"),
                             syn::RoundExpr(
                                 RoundOpen,
                                 syn::ExprArray(
                                     syn::Construction(
-                                        syn::SymbolId("Complex"),
+                                        SymbolId("Complex"),
                                         syn::CurlyExpr(
                                             CurlyOpen,
                                             syn::ExprArray(
@@ -654,7 +653,7 @@ int main (int argc, char **argv) {
                                         )
                                     ),
                                     syn::Construction(
-                                        syn::SymbolId("Complex"),
+                                        SymbolId("Complex"),
                                         syn::CurlyExpr(
                                             CurlyOpen,
                                             syn::ExprArray(
@@ -675,12 +674,12 @@ int main (int argc, char **argv) {
                << LVD_REFLECT(
                     sem::parse_Expr_Term(
                         syn::FuncEval(
-                            syn::SymbolId("Complex_mul"),
+                            SymbolId("Complex_mul"),
                             syn::RoundExpr(
                                 RoundOpen,
                                 syn::ExprArray(
                                     syn::Construction(
-                                        syn::SymbolId("Complex"),
+                                        SymbolId("Complex"),
                                         syn::CurlyExpr(
                                             CurlyOpen,
                                             syn::ExprArray(
@@ -690,7 +689,7 @@ int main (int argc, char **argv) {
                                         )
                                     ),
                                     syn::Construction(
-                                        syn::SymbolId("Complex"),
+                                        SymbolId("Complex"),
                                         syn::CurlyExpr(
                                             CurlyOpen,
                                             syn::ExprArray(

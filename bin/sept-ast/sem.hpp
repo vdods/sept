@@ -1,7 +1,6 @@
 // 2021.04.19 - Victor Dods
 
 // Includes from this program's source
-#include "core.hpp"
 #include "syn.hpp"
 
 #include <functional>
