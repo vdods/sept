@@ -348,6 +348,10 @@ Data element_of_data (Data const &container_data, Data const &param_data) {
 }
 
 Data construct_inhabitant_of_data (Data const &type_data, Data const &argument_data) {
+    // Handle Term, since everything is already an inhabitant of Term.
+    if (eq_data(type_data, Term))
+        return argument_data;
+
     // Look up the type pair in the evaluator map.
     auto const &evaluator_map = lvd::static_association_singleton<sept::_Data_ConstructInhabitantOf>();
     auto it = evaluator_map.find(TypeIndexPair{std::type_index(type_data.type()), std::type_index(argument_data.type())});
