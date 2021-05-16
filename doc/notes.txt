@@ -4990,8 +4990,9 @@ Structured Expression Project Toolkit Design Document
             x   Would this require defining a tuple type first?  Since right now there's
                 only Array, which can't force different elements to have distinct types.
             -   A Struct term can be projected to the underlying Tuple type.
+            -   Should a Struct term be considered an abstract subtype of its underlying Tuple type?
             -   A Struct term has a sequence of names for its elements.  The names are unique.
-            -   A Struct term has a map from names to element indexes.
+            -   A Struct term has a bijective map from names to element indexes.
         -   POC: Make a simple AST hierarchy (ideally without introducing any new types)
             and a simple interpreter for a simple language.
             -   TODO
@@ -5011,7 +5012,10 @@ Structured Expression Project Toolkit Design Document
     -   Create vector_any so that ArrayE can be correctly implemented.  Similarly, implement map_any,
         unordered_map_any, set_any, and unordered_set_any.
     -   Think about how references and URIs can work (especially within serialization and
-        in the context of fast in-memory implementation -- via a reference cache or something)
+        in the context of fast in-memory implementation -- via a reference cache or something).
+        Maybe SymbolTable can be used within files as well.  This would be where symbols could
+        be defined in a serialized file and then referred to efficiently.  The symbolic references
+        would behind-the-scenes resolve to MemRefs.
     -   Terms use std::any (via sept::Data), which is not ideal.  Is there a better
         way to do this?  For terms that have constraints on their component values,
         more-specific types could be used, but in general, it would be std::any.
@@ -5491,3 +5495,7 @@ Structured Expression Project Toolkit Design Document
     on localhost), which itself would resolve to MemRef.  Could add something like DiskFileRef or DBEntryRef
     which would refer to some persistent storage, and allow in-memory caching.  Then all the caching (at every
     layer) is automatically handled.
+
+    Doing this for sept-ast's syn types would be a good POC.  So instead of having to set up MemRefs, simply
+    a GlobalSymRef would suffice, and it would lazily create a MemRef appropriately.  This would also make it
+    straightforward to put all the sept types in there for use in sept-ast.
