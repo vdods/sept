@@ -131,6 +131,7 @@ set(libsept_SOURCES
     lib/sept/proj/ElementExtraction.cpp
     lib/sept/proj/TypeFunctor.cpp
     lib/sept/RefTerm.cpp
+    lib/sept/SymbolTable.cpp
     lib/sept/Tuple.cpp
     lib/sept/TupleTerm.cpp
     lib/sept/type/Conversion.cpp
