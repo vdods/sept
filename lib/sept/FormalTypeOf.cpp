@@ -19,6 +19,8 @@ FormalTypeOf_Term_c::operator lvd::OstreamDelegate () const {
 
 SEPT__REGISTER__PRINT(FormalTypeOf_Term_c)
 
+SEPT__REGISTER__HASH(FormalTypeOf_Term_c)
+
 SEPT__REGISTER__EQ(FormalTypeOf_Term_c)
 
 

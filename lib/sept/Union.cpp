@@ -14,6 +14,9 @@ UnionType_c UnionType;
 SEPT__REGISTER__PRINT(Union_c)
 SEPT__REGISTER__PRINT(UnionType_c)
 
+SEPT__REGISTER__HASH(Union_c)
+SEPT__REGISTER__HASH(UnionType_c)
+
 SEPT__REGISTER__EQ(Union_c)
 SEPT__REGISTER__EQ(UnionType_c)
 

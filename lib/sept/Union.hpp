@@ -31,7 +31,7 @@ namespace std {
 template <>
 struct hash<sept::Union_c> {
     size_t operator () (sept::Union_c const &t) const {
-        return sept::hash(typeid(sept::Union_c));
+        return lvd::hash(typeid(sept::Union_c));
     }
 };
 

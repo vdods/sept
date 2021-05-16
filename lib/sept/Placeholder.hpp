@@ -52,3 +52,28 @@ inline bool inhabits (Data_t<PlaceholderTerm_c> const &m, Placeholder_c const &t
 inline bool inhabits (Data const &value, Placeholder_c const &t) { return value.type() == typeid(PlaceholderTerm_c); }
 
 } // end namespace sept
+
+namespace std {
+
+template <>
+struct hash<sept::PlaceholderType_c> {
+    size_t operator () (sept::PlaceholderType_c const &t) const {
+        return lvd::hash(typeid(sept::PlaceholderType_c));
+    }
+};
+
+template <>
+struct hash<sept::Placeholder_c> {
+    size_t operator () (sept::Placeholder_c const &t) const {
+        return lvd::hash(typeid(sept::Placeholder_c));
+    }
+};
+
+template <>
+struct hash<sept::PlaceholderTerm_c> {
+    size_t operator () (sept::PlaceholderTerm_c const &t) const {
+        return lvd::hash(typeid(sept::PlaceholderTerm_c), t.index());
+    }
+};
+
+} // end namespace std

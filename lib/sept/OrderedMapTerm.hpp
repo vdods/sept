@@ -4,10 +4,10 @@
 
 #include <cassert>
 #include <initializer_list>
+#include <lvd/hash.hpp>
 #include <lvd/OstreamDelegate.hpp>
 #include "sept/core.hpp"
 #include "sept/Data.hpp"
-#include "sept/hash.hpp"
 #include "sept/OrderedMapType.hpp"
 #include <sstream>
 #include <vector>
@@ -272,17 +272,17 @@ namespace std {
 template <>
 struct hash<sept::OrderedMapConstraint> {
     size_t operator () (sept::OrderedMapConstraint const &c) const {
-        return sept::hash(typeid(sept::OrderedMapConstraint), c.ordered_map_type());
+        return lvd::hash(typeid(sept::OrderedMapConstraint), c.ordered_map_type());
     }
 };
 
 template <>
 struct hash<sept::DataOrderedMap> {
     size_t operator () (sept::DataOrderedMap const &m) const {
-        size_t seed = sept::hash(typeid(sept::DataOrderedMap));
+        size_t seed = lvd::hash(typeid(sept::DataOrderedMap));
         for (auto const &pair : m) {
-            sept::hash_combine(seed, sept::hash(pair.first));
-            sept::hash_combine(seed, sept::hash(pair.second));
+            lvd::hash_combine(seed, lvd::hash(pair.first));
+            lvd::hash_combine(seed, lvd::hash(pair.second));
         }
         return seed;
     }
@@ -291,7 +291,7 @@ struct hash<sept::DataOrderedMap> {
 template <>
 struct hash<sept::OrderedMapTerm_c> {
     size_t operator () (sept::OrderedMapTerm_c const &a) const {
-        return sept::hash(typeid(sept::OrderedMapTerm_c), a.constraint(), a.pairs());
+        return lvd::hash(typeid(sept::OrderedMapTerm_c), a.constraint(), a.pairs());
     }
 };
 

@@ -7,11 +7,11 @@
 #include <exception>
 #include <functional>
 #include <iostream>
+#include <lvd/hash.hpp>
 #include <lvd/OstreamDelegate.hpp>
 #include <lvd/StaticAssociation_t.hpp>
 #include "sept/core.hpp"
 #include "sept/DataPrintCtx.hpp"
-#include "sept/hash.hpp"
 #include "sept/RefTerm.hpp"
 #include <typeindex>
 #include <type_traits>
@@ -373,6 +373,29 @@ void print (std::ostream &out, DataPrintCtx &ctx, T_ const &value) {
 }
 
 //
+// StaticAssociation_t for Data::operator lvd::OstreamDelegate
+//
+
+using DataHashFunction = std::function<size_t(Data const &)>;
+using DataHashFunctionMap = std::unordered_map<std::type_index,DataHashFunction>;
+LVD_STATIC_ASSOCIATION_DEFINE(_Data_Hash, DataHashFunctionMap)
+
+#define SEPT__REGISTER__HASH__GIVE_ID(Type, unique_id) \
+    LVD_STATIC_ASSOCIATION_REGISTER( \
+        _Data_Hash, \
+        unique_id, \
+        std::type_index(typeid(Type)), \
+        [](Data const &value_data) -> size_t { \
+            auto const &value = value_data.cast<Type const &>(); \
+            return std::hash<Type>()(value); \
+        } \
+    )
+#define SEPT__REGISTER__HASH(Type) \
+    SEPT__REGISTER__HASH__GIVE_ID(Type, Type)
+
+size_t hash_data (Data const &data);
+
+//
 // StaticAssociation_t for eq_data
 //
 
@@ -469,7 +492,7 @@ namespace std {
 template <>
 struct hash<sept::TypeIndexPair> {
     size_t operator () (sept::TypeIndexPair const &k) const {
-        return sept::hash(k.m_value_ti, k.m_type_ti);
+        return lvd::hash(k.m_value_ti, k.m_type_ti);
     }
 };
 

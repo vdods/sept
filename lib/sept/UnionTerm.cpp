@@ -60,6 +60,8 @@ Data element_of (UnionTerm_c const &t, uint64_t index) { return t[index]; }
 
 SEPT__REGISTER__PRINT(UnionTerm_c)
 
+SEPT__REGISTER__HASH(UnionTerm_c)
+
 SEPT__REGISTER__EQ(UnionTerm_c)
 
 SEPT__REGISTER__INHABITS__DATA(Data, UnionTerm_c)

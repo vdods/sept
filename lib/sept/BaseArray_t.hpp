@@ -3,11 +3,11 @@
 #pragma once
 
 #include <cassert>
+#include <lvd/hash.hpp>
 #include <lvd/OstreamDelegate.hpp>
 #include <lvd/static_if.hpp>
 #include "sept/core.hpp"
 #include "sept/DataVector.hpp"
-#include "sept/hash.hpp"
 #include <vector>
 
 namespace sept {
@@ -116,7 +116,7 @@ namespace std {
 template <typename Derived_>
 struct hash<sept::BaseArray_t<Derived_>> {
     size_t operator () (sept::BaseArray_t<Derived_> const &s) const {
-        return sept::hash(typeid(typename sept::BaseArray_t<Derived_>::Derived), s.elements());
+        return lvd::hash(typeid(typename sept::BaseArray_t<Derived_>::Derived), s.elements());
     }
 };
 

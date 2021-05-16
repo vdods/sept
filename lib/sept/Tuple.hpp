@@ -30,7 +30,7 @@ namespace std {
 template <>
 struct hash<sept::Tuple_c> {
     size_t operator () (sept::Tuple_c const &t) const {
-        return sept::hash(typeid(sept::Tuple_c));
+        return lvd::hash(typeid(sept::Tuple_c));
     }
 };
 

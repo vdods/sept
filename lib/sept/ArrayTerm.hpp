@@ -2,13 +2,13 @@
 
 #pragma once
 
+#include <lvd/hash.hpp>
 #include <lvd/OstreamDelegate.hpp>
 #include "sept/ArrayType.hpp"
 #include "sept/core.hpp"
 #include "sept/BaseArrayT_t.hpp"
 #include "sept/Data.hpp"
 #include "sept/DataVector.hpp"
-#include "sept/hash.hpp"
 #include <vector>
 
 namespace sept {

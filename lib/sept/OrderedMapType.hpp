@@ -3,12 +3,12 @@
 #pragma once
 
 #include <cassert>
+#include <lvd/hash.hpp>
 #include <lvd/OstreamDelegate.hpp>
 #include <map>
 #include "sept/core.hpp"
 #include "sept/Data.hpp"
 #include "sept/Data_t.hpp"
-#include "sept/hash.hpp"
 #include "sept/NPType.hpp"
 
 namespace sept {
@@ -281,28 +281,28 @@ namespace std {
 template <>
 struct hash<sept::OrderedMapDCTerm_c> {
     size_t operator () (sept::OrderedMapDCTerm_c const &t) const {
-        return sept::hash(typeid(sept::OrderedMapDCTerm_c), t.domain(), t.codomain());
+        return lvd::hash(typeid(sept::OrderedMapDCTerm_c), t.domain(), t.codomain());
     }
 };
 
 template <>
 struct hash<sept::OrderedMapDTerm_c> {
     size_t operator () (sept::OrderedMapDTerm_c const &t) const {
-        return sept::hash(typeid(sept::OrderedMapDTerm_c), t.domain());
+        return lvd::hash(typeid(sept::OrderedMapDTerm_c), t.domain());
     }
 };
 
 template <>
 struct hash<sept::OrderedMapCTerm_c> {
     size_t operator () (sept::OrderedMapCTerm_c const &t) const {
-        return sept::hash(typeid(sept::OrderedMapCTerm_c), t.codomain());
+        return lvd::hash(typeid(sept::OrderedMapCTerm_c), t.codomain());
     }
 };
 
 template <>
 struct hash<sept::OrderedMap_c> {
     size_t operator () (sept::OrderedMap_c const &t) const {
-        return sept::hash(typeid(sept::OrderedMap_c));
+        return lvd::hash(typeid(sept::OrderedMap_c));
     }
 };
 

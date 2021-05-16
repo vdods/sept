@@ -12,7 +12,6 @@
 #include "sept/ctl/EndOfFile.hpp"
 #include "sept/ctl/Output.hpp"
 #include "sept/ctl/RequestSyncInput.hpp"
-#include "sept/hash.hpp"
 #include "sept/NPTerm.hpp"
 #include "sept/NPType.hpp"
 #include "sept/OrderedMapTerm.hpp"
@@ -73,6 +72,16 @@ void print_data (std::ostream &out, DataPrintCtx &ctx, Data const &data) {
 
         it->second(out, ctx, data);
     }
+}
+
+size_t hash_data (Data const &data) {
+    // Look up the type in the predicate map.
+    auto const &data_hash_function_map = lvd::static_association_singleton<sept::_Data_Hash>();
+    auto it = data_hash_function_map.find(std::type_index(data.type()));
+    if (it == data_hash_function_map.end())
+        throw std::runtime_error(LVD_FMT("Data type " << data.type().name() << " not registered in _Data_Hash for use in hash_data"));
+
+    return it->second(data);
 }
 
 bool eq_data (Data const &lhs, Data const &rhs) {
@@ -523,6 +532,20 @@ SEPT__REGISTER__PRINT(float)
 SEPT__REGISTER__PRINT(double)
 SEPT__REGISTER__PRINT__GIVE_ID(std::string, std__string)
 
+SEPT__REGISTER__HASH(bool)
+SEPT__REGISTER__HASH(char)
+SEPT__REGISTER__HASH(int8_t)
+SEPT__REGISTER__HASH(int16_t)
+SEPT__REGISTER__HASH(int32_t)
+SEPT__REGISTER__HASH(int64_t)
+SEPT__REGISTER__HASH(uint8_t)
+SEPT__REGISTER__HASH(uint16_t)
+SEPT__REGISTER__HASH(uint32_t)
+SEPT__REGISTER__HASH(uint64_t)
+SEPT__REGISTER__HASH(float)
+SEPT__REGISTER__HASH(double)
+SEPT__REGISTER__HASH__GIVE_ID(std::string, std__string)
+
 SEPT__REGISTER__EQ(bool)
 SEPT__REGISTER__EQ(char)
 SEPT__REGISTER__EQ(int8_t)
@@ -542,102 +565,7 @@ SEPT__REGISTER__EQ__GIVE_ID(std::string, std__string)
 namespace std {
 
 size_t std::hash<sept::Data>::operator () (sept::Data const &data) const {
-    assert(data.has_value());
-
-//     #define SEPT_HANDLE_TYPE_BY_VALUE(T) else if (data.type() == typeid(T)) return sept::hash(data.cast<T>());
-    #define SEPT_HANDLE_TYPE_BY_VALUE(T) else if (data.type() == typeid(T)) return sept::hash(data.cast<T const &>());
-    #define SEPT_HANDLE_TYPE_BY_CREF(T) else if (data.type() == typeid(T)) return sept::hash(data.cast<T const &>());
-
-    if (false) { }
-    SEPT_HANDLE_TYPE_BY_VALUE(int8_t)
-    SEPT_HANDLE_TYPE_BY_VALUE(int16_t)
-    SEPT_HANDLE_TYPE_BY_VALUE(int32_t)
-    SEPT_HANDLE_TYPE_BY_VALUE(int64_t)
-    SEPT_HANDLE_TYPE_BY_VALUE(uint8_t)
-    SEPT_HANDLE_TYPE_BY_VALUE(uint16_t)
-    SEPT_HANDLE_TYPE_BY_VALUE(uint32_t)
-    SEPT_HANDLE_TYPE_BY_VALUE(uint64_t)
-    SEPT_HANDLE_TYPE_BY_VALUE(float)
-    SEPT_HANDLE_TYPE_BY_VALUE(double)
-    SEPT_HANDLE_TYPE_BY_VALUE(char)
-    SEPT_HANDLE_TYPE_BY_VALUE(bool)
-    // TODO: Some of these correspond to non-parametric terms (i.e. singletons), which
-    // could be handled by value.
-    SEPT_HANDLE_TYPE_BY_CREF(sept::Term_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::NonParametricTerm_c)
-//     SEPT_HANDLE_TYPE_BY_CREF(sept::ParametricTerm_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::Type_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::NonType_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::NonParametricType_c)
-//     SEPT_HANDLE_TYPE_BY_CREF(sept::ParametricType_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::EmptyType_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::VoidType_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::Void_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::TrueType_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::True_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::FalseType_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::False_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::BoolType_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::Bool_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::Sint8Type_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::Sint8_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::Sint16Type_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::Sint16_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::Sint32Type_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::Sint32_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::Sint64Type_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::Sint64_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::Uint8Type_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::Uint8_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::Uint16Type_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::Uint16_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::Uint32Type_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::Uint32_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::Uint64Type_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::Uint64_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::Float32Type_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::Float32_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::Float64Type_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::Float64_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::ArrayESTerm_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::ArrayETerm_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::ArraySTerm_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::ArrayTerm_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::ArrayES_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::ArrayE_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::ArrayS_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::Array_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::ArrayType_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::OrderedMapDCTerm_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::OrderedMapDTerm_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::OrderedMapCTerm_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::OrderedMapTerm_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::OrderedMapType_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::OrderedMapDC_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::OrderedMapD_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::OrderedMapC_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::OrderedMap_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::OrderedMapType_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::PlaceholderType_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::Placeholder_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::ctl::OutputType_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::ctl::Output_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::ctl::OutputTerm_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::ctl::ClearOutputType_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::ctl::ClearOutput_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::ctl::EndOfFileType_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::ctl::EndOfFile_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::ctl::RequestSyncInputType_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::ctl::RequestSyncInput_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::ctl::RequestSyncInputTerm_c)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::BaseArray_t<>)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::BaseArrayT_t<>)
-    SEPT_HANDLE_TYPE_BY_CREF(sept::BaseArray_S_t<1>)
-
-    throw std::runtime_error(LVD_FMT("Data type " << data.type().name() << " not (yet?) supported in std::hash"));
-
-    #undef SEPT_HANDLE_TYPE_BY_VALUE
-    #undef SEPT_HANDLE_TYPE_BY_CREF
+    return sept::hash_data(data);
 }
 
 } // end namespace std

@@ -64,6 +64,8 @@ Data element_of (ArrayTerm_c const &a, uint64_t index) { return a[index]; }
 
 SEPT__REGISTER__PRINT(ArrayTerm_c)
 
+SEPT__REGISTER__HASH(ArrayTerm_c)
+
 SEPT__REGISTER__EQ(ArrayTerm_c)
 
 SEPT__REGISTER__COMPARE(ArrayTerm_c, ArrayTerm_c)

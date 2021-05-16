@@ -2,8 +2,8 @@
 
 #pragma once
 
+#include <lvd/hash.hpp>
 #include "sept/core.hpp"
-#include "sept/hash.hpp"
 #include "sept/BaseArray_t.hpp"
 
 namespace sept {
@@ -107,7 +107,7 @@ namespace std {
 template <typename Derived_>
 struct hash<sept::BaseArrayT_t<Derived_>> {
     size_t operator () (sept::BaseArrayT_t<Derived_> const &s) const {
-        return sept::hash(typeid(typename sept::BaseArrayT_t<Derived_>::Derived), s.abstract_type(), s.elements());
+        return lvd::hash(typeid(typename sept::BaseArrayT_t<Derived_>::Derived), s.abstract_type(), s.elements());
     }
 };
 

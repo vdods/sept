@@ -5,9 +5,9 @@
 #include <array>
 #include <experimental/array> // for std::make_array
 #include <lvd/comma.hpp>
+#include <lvd/hash.hpp>
 #include "sept/core.hpp"
 #include "sept/Data.hpp"
-#include "sept/hash.hpp"
 
 namespace sept {
 
@@ -69,9 +69,9 @@ namespace std {
 template <size_t ELEMENT_COUNT_>
 struct hash<sept::DataArray_t<ELEMENT_COUNT_>> {
     size_t operator () (sept::DataArray_t<ELEMENT_COUNT_> const &a) const {
-        size_t seed = sept::hash(typeid(sept::DataArray_t<ELEMENT_COUNT_>));
+        size_t seed = lvd::hash(typeid(sept::DataArray_t<ELEMENT_COUNT_>));
         for (auto const &element : a)
-            sept::hash_combine(seed, sept::hash(element));
+            lvd::hash_combine(seed, lvd::hash(element));
         return seed;
     }
 };

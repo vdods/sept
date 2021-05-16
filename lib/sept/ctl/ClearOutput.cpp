@@ -15,6 +15,9 @@ ClearOutput_c ClearOutput;
 SEPT__REGISTER__PRINT(ClearOutputType_c)
 SEPT__REGISTER__PRINT(ClearOutput_c)
 
+SEPT__REGISTER__HASH(ClearOutputType_c)
+SEPT__REGISTER__HASH(ClearOutput_c)
+
 SEPT__REGISTER__EQ(ClearOutputType_c)
 SEPT__REGISTER__EQ(ClearOutput_c)
 

@@ -3,9 +3,9 @@
 #pragma once
 
 #include <functional>
+#include <lvd/hash.hpp>
 #include "sept/core.hpp"
 #include "sept/Data.hpp"
-#include "sept/hash.hpp"
 #include <sstream>
 #include <typeindex>
 
@@ -162,6 +162,6 @@ inline Conversion make_identity_conversion (Data const &type) {
 template <>
 struct std::hash<sept::type::Conversion> {
     size_t operator () (sept::type::Conversion const &c) const {
-        return sept::hash(c.source_type(), c.target_type());
+        return lvd::hash(c.source_type(), c.target_type());
     }
 };

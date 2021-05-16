@@ -101,6 +101,8 @@ Data element_of (OrderedMapTerm_c const &m, Data const &key) { return m[key]; }
 
 SEPT__REGISTER__PRINT(OrderedMapTerm_c)
 
+SEPT__REGISTER__HASH(OrderedMapTerm_c)
+
 SEPT__REGISTER__EQ(OrderedMapTerm_c)
 
 SEPT__REGISTER__COMPARE(OrderedMapTerm_c, OrderedMapTerm_c)

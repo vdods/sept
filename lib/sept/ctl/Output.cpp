@@ -39,6 +39,10 @@ SEPT__REGISTER__PRINT(OutputType_c)
 SEPT__REGISTER__PRINT(Output_c)
 SEPT__REGISTER__PRINT(OutputTerm_c)
 
+SEPT__REGISTER__HASH(OutputType_c)
+SEPT__REGISTER__HASH(Output_c)
+SEPT__REGISTER__HASH(OutputTerm_c)
+
 SEPT__REGISTER__EQ(OutputType_c)
 SEPT__REGISTER__EQ(Output_c)
 SEPT__REGISTER__EQ(OutputTerm_c)

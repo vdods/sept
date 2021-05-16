@@ -3,12 +3,12 @@
 #pragma once
 
 #include <cassert>
+#include <lvd/hash.hpp>
 #include <lvd/OstreamDelegate.hpp>
 #include "sept/core.hpp"
 #include "sept/Data.hpp"
 #include "sept/Data_t.hpp"
 #include "sept/DataVector.hpp"
-#include "sept/hash.hpp"
 #include "sept/NPType.hpp"
 #include <vector>
 
@@ -258,28 +258,28 @@ namespace std {
 template <>
 struct hash<sept::ArrayESTerm_c> {
     size_t operator () (sept::ArrayESTerm_c const &t) const {
-        return sept::hash(typeid(sept::ArrayESTerm_c), t.element_type(), t.size());
+        return lvd::hash(typeid(sept::ArrayESTerm_c), t.element_type(), t.size());
     }
 };
 
 template <>
 struct hash<sept::ArrayETerm_c> {
     size_t operator () (sept::ArrayETerm_c const &t) const {
-        return sept::hash(typeid(sept::ArrayETerm_c), t.element_type());
+        return lvd::hash(typeid(sept::ArrayETerm_c), t.element_type());
     }
 };
 
 template <>
 struct hash<sept::ArraySTerm_c> {
     size_t operator () (sept::ArraySTerm_c const &t) const {
-        return sept::hash(typeid(sept::ArraySTerm_c), t.size());
+        return lvd::hash(typeid(sept::ArraySTerm_c), t.size());
     }
 };
 
 template <>
 struct hash<sept::Array_c> {
     size_t operator () (sept::Array_c const &t) const {
-        return sept::hash(typeid(sept::Array_c));
+        return lvd::hash(typeid(sept::Array_c));
     }
 };
 

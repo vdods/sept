@@ -86,7 +86,6 @@ set(libsept_HEADERS
     lib/sept/DataVector.hpp
     lib/sept/FormalTypeOf.hpp
     lib/sept/GlobalSymRef.hpp
-    lib/sept/hash.hpp
     lib/sept/LocalSymRef.hpp
     lib/sept/MemRef.hpp
     lib/sept/NPTerm.hpp

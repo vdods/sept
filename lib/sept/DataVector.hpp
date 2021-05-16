@@ -2,9 +2,9 @@
 
 #pragma once
 
+#include <lvd/hash.hpp>
 #include "sept/core.hpp"
 #include "sept/Data.hpp"
-#include "sept/hash.hpp"
 #include <vector>
 
 namespace sept {
@@ -50,9 +50,9 @@ namespace std {
 template <>
 struct hash<sept::DataVector> {
     size_t operator () (sept::DataVector const &v) const {
-        size_t seed = sept::hash(typeid(sept::DataVector));
+        size_t seed = lvd::hash(typeid(sept::DataVector));
         for (auto const &element : v)
-            sept::hash_combine(seed, sept::hash(element));
+            lvd::hash_combine(seed, lvd::hash(element));
         return seed;
     }
 };

@@ -2,8 +2,8 @@
 
 #pragma once
 
+#include <lvd/hash.hpp>
 #include "sept/core.hpp"
-#include "sept/hash.hpp"
 #include "sept/NPTerm.hpp"
 
 namespace sept {
@@ -303,7 +303,7 @@ namespace std {
 template <sept::NPTerm ENUM_VALUE_, typename Term_, typename Derived_>
 struct hash<sept::NonParametricType_t<ENUM_VALUE_,Term_,Derived_>> {
     size_t operator () (sept::NonParametricType_t<ENUM_VALUE_,Term_,Derived_> const &) const {
-        return sept::hash(typeid(Derived_), ENUM_VALUE_, typeid(Term_));
+        return lvd::hash(typeid(Derived_), ENUM_VALUE_, typeid(Term_));
     }
 };
 

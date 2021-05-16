@@ -76,6 +76,8 @@ bool inhabits (RefTerm_c const &value, RefTerm_c const &type) {
 //
 // SEPT__REGISTER__PRINT(RefTerm_c)
 //
+// SEPT__REGISTER__HASH(RefTerm_c)
+//
 // SEPT__REGISTER__EQ(RefTerm_c)
 //
 // // TODO

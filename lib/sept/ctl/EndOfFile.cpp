@@ -15,6 +15,9 @@ EndOfFile_c EndOfFile;
 SEPT__REGISTER__PRINT(EndOfFileType_c)
 SEPT__REGISTER__PRINT(EndOfFile_c)
 
+SEPT__REGISTER__HASH(EndOfFileType_c)
+SEPT__REGISTER__HASH(EndOfFile_c)
+
 SEPT__REGISTER__EQ(EndOfFileType_c)
 SEPT__REGISTER__EQ(EndOfFile_c)
 

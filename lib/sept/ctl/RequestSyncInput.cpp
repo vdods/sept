@@ -39,6 +39,10 @@ SEPT__REGISTER__PRINT(RequestSyncInputType_c)
 SEPT__REGISTER__PRINT(RequestSyncInput_c)
 SEPT__REGISTER__PRINT(RequestSyncInputTerm_c)
 
+SEPT__REGISTER__HASH(RequestSyncInputType_c)
+SEPT__REGISTER__HASH(RequestSyncInput_c)
+SEPT__REGISTER__HASH(RequestSyncInputTerm_c)
+
 SEPT__REGISTER__EQ(RequestSyncInputType_c)
 SEPT__REGISTER__EQ(RequestSyncInput_c)
 SEPT__REGISTER__EQ(RequestSyncInputTerm_c)

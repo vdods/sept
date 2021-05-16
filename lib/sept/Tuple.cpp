@@ -14,6 +14,9 @@ TupleType_c TupleType;
 SEPT__REGISTER__PRINT(Tuple_c)
 SEPT__REGISTER__PRINT(TupleType_c)
 
+SEPT__REGISTER__HASH(Tuple_c)
+SEPT__REGISTER__HASH(TupleType_c)
+
 SEPT__REGISTER__EQ(Tuple_c)
 SEPT__REGISTER__EQ(TupleType_c)
 

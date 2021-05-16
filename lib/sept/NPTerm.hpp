@@ -2,10 +2,10 @@
 
 #pragma once
 
+#include <lvd/hash.hpp>
 #include <lvd/static_if.hpp>
 #include "sept/core.hpp"
 #include "sept/Data.hpp"
-#include "sept/hash.hpp"
 #include <type_traits>
 
 namespace sept {
@@ -415,7 +415,7 @@ namespace std {
 template <typename Derived_>
 struct hash<sept::SingletonBase_t<Derived_>> {
     size_t operator () (sept::SingletonBase_t<Derived_> const &) const {
-        return sept::hash(typeid(Derived_));
+        return lvd::hash(typeid(Derived_));
     }
 };
 
@@ -423,7 +423,15 @@ struct hash<sept::SingletonBase_t<Derived_>> {
 template <sept::NPTerm ENUM_VALUE_, typename Derived_>
 struct hash<sept::NonParametricTerm_t<ENUM_VALUE_,Derived_>> {
     size_t operator () (sept::NonParametricTerm_t<ENUM_VALUE_,Derived_> const &) const {
-        return sept::hash(typeid(Derived_), ENUM_VALUE_);
+        return lvd::hash(typeid(Derived_), ENUM_VALUE_);
+    }
+};
+
+// Template specialization to define std::hash<sept::True_c>.
+template <>
+struct hash<sept::BoolTerm_c> {
+    size_t operator () (sept::BoolTerm_c const &t) const {
+        return lvd::hash(typeid(sept::BoolTerm_c), t.as_bool());
     }
 };
 
@@ -431,7 +439,7 @@ struct hash<sept::NonParametricTerm_t<ENUM_VALUE_,Derived_>> {
 template <>
 struct hash<sept::True_c> {
     size_t operator () (sept::True_c const &) const {
-        return sept::hash(typeid(sept::True_c));
+        return lvd::hash(typeid(sept::True_c));
     }
 };
 
@@ -439,7 +447,7 @@ struct hash<sept::True_c> {
 template <>
 struct hash<sept::False_c> {
     size_t operator () (sept::False_c const &) const {
-        return sept::hash(typeid(sept::False_c));
+        return lvd::hash(typeid(sept::False_c));
     }
 };
 

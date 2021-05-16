@@ -74,7 +74,14 @@ namespace std {
 template <>
 struct hash<sept::FormalTypeOf_c> {
     size_t operator () (sept::FormalTypeOf_c const &t) const {
-        return sept::hash(typeid(sept::FormalTypeOf_c));
+        return lvd::hash(typeid(sept::FormalTypeOf_c));
+    }
+};
+
+template <>
+struct hash<sept::FormalTypeOf_Term_c> {
+    size_t operator () (sept::FormalTypeOf_Term_c const &t) const {
+        return lvd::hash(typeid(sept::FormalTypeOf_Term_c), t.term());
     }
 };
 

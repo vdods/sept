@@ -47,6 +47,8 @@ TupleTerm_c deserialize_value_TupleTerm (Data &&abstract_type, std::istream &in)
 
 SEPT__REGISTER__PRINT(TupleTerm_c)
 
+SEPT__REGISTER__HASH(TupleTerm_c)
+
 SEPT__REGISTER__EQ(TupleTerm_c)
 
 SEPT__REGISTER__COMPARE(TupleTerm_c, TupleTerm_c)
