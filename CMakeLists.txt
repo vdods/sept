@@ -85,6 +85,7 @@ set(libsept_HEADERS
     lib/sept/DataArray_t.hpp
     lib/sept/DataVector.hpp
     lib/sept/FormalTypeOf.hpp
+    lib/sept/FreeVar.hpp
     lib/sept/GlobalSymRef.hpp
     lib/sept/LocalSymRef.hpp
     lib/sept/MemRef.hpp
@@ -120,6 +121,7 @@ set(libsept_SOURCES
     lib/sept/Data.cpp
     lib/sept/DataVector.cpp
     lib/sept/FormalTypeOf.cpp
+    lib/sept/FreeVar.cpp
     lib/sept/GlobalSymRef.cpp
     lib/sept/LocalSymRef.cpp
     lib/sept/MemRef.cpp

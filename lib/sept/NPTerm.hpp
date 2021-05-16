@@ -111,6 +111,9 @@ enum class NPTerm : NPTermRepr {
     PLACEHOLDER_TYPE,
     PLACEHOLDER,
 
+    FREEVAR_TYPE,
+    FREEVAR,
+
     //
     // Control terms
     //
