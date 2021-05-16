@@ -137,7 +137,7 @@ LVD_TEST_BEGIN(300__NPTerm__printing)
 LVD_TEST_END
 
 LVD_TEST_BEGIN(300__NPTerm__hash)
-    #define TEST_CASE_NPTerm_hash(T) LVD_TEST_REQ_EQ(sept::hash(sept::T), sept::hash(sept::T))
+    #define TEST_CASE_NPTerm_hash(T) LVD_TEST_REQ_EQ(lvd::hash(sept::T), lvd::hash(sept::T))
 
     TEST_CASE_NPTerm_hash(Term);
     TEST_CASE_NPTerm_hash(NonParametricTerm);
