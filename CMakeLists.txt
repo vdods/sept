@@ -7,6 +7,7 @@ set(sept_VERSION 0.0.1-DEV)
 option(BUILD_septast "Build sept-ast binary" ON)
 option(BUILD_septcat "Build sept-cat binary" ON)
 option(BUILD_testlibsept "Build test-libsept binary" ON)
+option(BUILD_thinky "Build thinky binary" ON)
 option(BUILD_sept "Build sept binary (requires Qt5)" ON)
 option(BUILD_interop "Build interop binaries: front and back (requires Boost)" ON)
 option(BUILD_SHARED_LIBS "Build shared libraries (instead of static libraries)" ON)
@@ -238,6 +239,24 @@ if(BUILD_septast)
     add_executable(sept-ast ${septast_SOURCES})
     target_include_directories(sept-ast PUBLIC ${sept_SOURCE_DIR}/bin/sept-ast)
     target_link_libraries(sept-ast PUBLIC Strict CppStdFilesystem libsept)
+endif()
+
+# thinky -- "you're not thinking, you're being thinky" -- an experiment in linguistic AI
+# done as a hackathon project.
+
+if(BUILD_thinky)
+    set(thinky_SOURCES
+        bin/thinky/ast.cpp
+        bin/thinky/ast.hpp
+        bin/thinky/belief.cpp
+        bin/thinky/belief.hpp
+        bin/thinky/common.cpp
+        bin/thinky/common.hpp
+        bin/thinky/main.cpp
+    )
+    add_executable(thinky ${thinky_SOURCES})
+    target_include_directories(thinky PUBLIC ${sept_SOURCE_DIR}/bin/thinky)
+    target_link_libraries(thinky PUBLIC Strict CppStdFilesystem libsept)
 endif()
 
 # sept
