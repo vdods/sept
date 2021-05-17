@@ -5499,3 +5499,42 @@ Structured Expression Project Toolkit Design Document
     Doing this for sept-ast's syn types would be a good POC.  So instead of having to set up MemRefs, simply
     a GlobalSymRef would suffice, and it would lazily create a MemRef appropriately.  This would also make it
     straightforward to put all the sept types in there for use in sept-ast.
+
+2021.05.16
+
+-   Notes on pattern matching
+    -   Pattern matching on ArrayTerm_c currently only works in a rigid way, where Array(X,Y,Z) matches
+        an ArrayTerm_c having exactly 3 elements.  Similar for Tuple and Union, and this would be true of
+        any other types whose terms can have an arbitrary number of elements.
+    -   What's eventually needed is some sort of way to specify a more useful breadth of matches on
+        sequences/sets having arbitrary numbers of elements.  Random made-up examples:
+        -   Array(X,Y,...) -- should match ArrayTerm_c having at least 2 elements and the first two
+            elements should be matched to X and Y respectively.  Maybe this should be something like
+            Array(X,Y,VariadicIgnore)
+        -   Array(X,...,Y) -- same, but with the first and last elements matching to X and Y.  Should be
+            Array(X,VariadicIgnore,Y)
+        -   Array(VariadicFreeVar(X)) -- this would match all elements in the array to X (VariadicFreeVar
+            is a made-up type).
+        -   Array(VariadicFreeVar(X),Y,Z) -- this would match all elements in the array to X (VariadicFreeVar
+        -   Union(X,Y,...) -- this would depend on the elements of Union being ordered, which is
+            really not compatible with the concept of Union (union of types considered as sets of terms).
+        -   OrderedMap(P,...) -- match the first (ordered) key/value pair of the map.
+        -   OrderedMap((X,Y),...) -- match the first (ordered) key/value pair of the map while destructuring
+            it into X and Y.  This should be done via the actual element type of OrderedMap (something like
+            Pair or MapElement or whatever).
+        -   Array(VariadicFreeVarS(X,3)) -- would match exactly 3 elements to X
+        -   Array(VariadicFreeVarS(X,RangeC(3,8))) -- would match n elements to X, where n in {3,...,8}
+            This is tricky because:
+            -   3 and RangeC(3,8) are different kinds of things.  This could be resolved by using the rather
+                awkward VariadicFreeVarS(X,FormalTypeOf(3)), making FormalTypeOf(3) and RangeC(3,8) the same
+                kind of thing (types).
+            -   The programming language convention would be to have Range(3,8) exclude 8.  But there should
+                be range types of all kinds, such as closed, open, and half-open going both ways.
+                -   RangeO(a,b) -- open range; a and b not included.
+                -   RangeC(a,b) -- closed range; a and b included.
+                -   RangeOC(a,b) -- open-closed range; a not included, b included.
+                -   RangeCO(a,b) -- closed-open range; a included, b not included.
+        -   Actually, having a specific VariadicFreeVarS is dumb, use VariadicFreeVar(X,Array) to match
+            any number elements and VariadicFreeVar(X,ArrayS(R)) to match R elements (where R could eventually
+            be a range).  Maybe a type `Variadic` could be factored out and made generally useful?
+

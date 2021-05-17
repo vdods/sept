@@ -123,6 +123,9 @@ inline void print (std::ostream &out, DataPrintCtx &ctx, ArrayTerm_c const &valu
 //     print(out, ctx, value.elements());
 }
 
+// This one is necessary because if Xi : Ti for i in {1, ..., n}, then Array(X1, ..., Xn) : Array(T1, ..., Tn)
+bool inhabits (ArrayTerm_c const &a, ArrayTerm_c const &t);
+
 void serialize (ArrayTerm_c const &v, std::ostream &out);
 
 // This assumes that the abstract_type portion following the SerializedTopLevelCode::PARAMETRIC_TERM

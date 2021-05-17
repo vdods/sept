@@ -225,6 +225,11 @@ bool inhabits (Data const &value, OrderedMapDTerm_c const &t);
 bool inhabits (Data const &value, OrderedMapCTerm_c const &t);
 bool inhabits (Data const &value, OrderedMap_c const &t);
 
+// These are necessary because e.g. if XD : TD and XC : TC, then OrderedMapDC(XD,XC) : OrderedMapDC(TD,TC)
+bool inhabits (OrderedMapDCTerm_c const &m, OrderedMapDCTerm_c const &t);
+bool inhabits (OrderedMapDTerm_c const &m, OrderedMapDTerm_c const &t);
+bool inhabits (OrderedMapCTerm_c const &m, OrderedMapCTerm_c const &t);
+
 void serialize (OrderedMapDCTerm_c const &v, std::ostream &out);
 void serialize (OrderedMapDTerm_c const &v, std::ostream &out);
 void serialize (OrderedMapCTerm_c const &v, std::ostream &out);

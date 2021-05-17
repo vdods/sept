@@ -200,6 +200,10 @@ bool inhabits (ArrayTerm_c const &a, ArrayETerm_c const &t);
 bool inhabits (ArrayTerm_c const &a, ArraySTerm_c const &t);
 bool inhabits (ArrayTerm_c const &a, Array_c const &t);
 
+// This one is necessary because if X : T, then ArrayE(X) : ArrayE(T)
+bool inhabits (ArrayETerm_c const &a, ArrayETerm_c const &t);
+// TODO: Do ArrayES and ArrayS, once it's changed from using size_t to Data.
+
 template <typename ArrayType_, typename = std::enable_if_t<is_an_array_type_v<ArrayType_>>>
 bool inhabits (Data_t<ArrayTerm_c> const &a, ArrayType_ const &t) {
     return inhabits(a.value(), t);

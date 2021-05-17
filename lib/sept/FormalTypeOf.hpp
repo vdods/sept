@@ -63,6 +63,11 @@ inline bool inhabits (Data const &value, FormalTypeOf_c const &t) {
     return value.can_cast<FormalTypeOf_Term_c>() && inhabits(value.cast<FormalTypeOf_Term_c const &>(), t);
 }
 
+// This one is necessary because if X : T, then FormalTypeOf(X) : FormalTypeOf(T)
+inline bool inhabits (FormalTypeOf_Term_c const &f, FormalTypeOf_Term_c const &t) {
+    return inhabits_data(f.term(), t.term());
+}
+
 inline bool inhabits (Data const &value, FormalTypeOf_Term_c const &t) {
     return eq_data(value, t.term());
 }

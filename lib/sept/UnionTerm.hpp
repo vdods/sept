@@ -71,6 +71,9 @@ inline void print (std::ostream &out, DataPrintCtx &ctx, UnionTerm_c const &valu
     print(out, ctx, value.elements());
 }
 
+// This one is necessary because if Xi : Ti for i in {1, ..., n}, then Union(X1, ..., Xn) : Union(T1, ..., Tn)
+bool inhabits (UnionTerm_c const &u, UnionTerm_c const &t);
+
 // // This is used to construct UnionTerm_c more efficiently (std::initializer_list lacks move semantics for some dumb
 // // reason), as well as to avoid a potential infinite loop in constructors between UnionTerm_c, Data, and std::any.
 // template <typename... Args_>

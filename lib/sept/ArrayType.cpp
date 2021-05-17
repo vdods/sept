@@ -124,6 +124,10 @@ bool inhabits (ArrayTerm_c const &a, Array_c const &t) {
     return true;
 }
 
+bool inhabits (ArrayETerm_c const &a, ArrayETerm_c const &t) {
+    return inhabits_data(a.element_type(), t.element_type());
+}
+
 bool inhabits (Data const &value, ArrayESTerm_c const &t) {
     return value.can_cast<ArrayTerm_c>() && inhabits(value.cast<ArrayTerm_c const &>(), t);
 }
@@ -250,6 +254,8 @@ SEPT__REGISTER__INHABITS__NONDATA(ArrayTerm_c, ArrayETerm_c)
 SEPT__REGISTER__INHABITS__NONDATA(ArrayTerm_c, ArraySTerm_c)
 // This one isn't type-widening.
 SEPT__REGISTER__INHABITS__NONDATA(ArrayTerm_c, Array_c)
+
+SEPT__REGISTER__INHABITS__NONDATA(ArrayETerm_c, ArrayETerm_c)
 
 
 SEPT__REGISTER__COMPARE__SINGLETON(ArrayType_c)

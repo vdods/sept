@@ -14,6 +14,16 @@ UnionTerm_c::operator lvd::OstreamDelegate () const {
     });
 }
 
+bool inhabits (UnionTerm_c const &u, UnionTerm_c const &t) {
+    if (u.size() != t.size())
+        return false;
+
+    for (size_t i = 0; i < u.size(); ++i)
+        if (!inhabits_data(u[i], t[i]))
+            return false;
+    return true;
+}
+
 void serialize (UnionTerm_c const &t, std::ostream &out) {
     serialize(SerializedTopLevelCode::PARAMETRIC_TERM, out);
     serialize(UnionType, out);
@@ -65,6 +75,7 @@ SEPT__REGISTER__HASH(UnionTerm_c)
 SEPT__REGISTER__EQ(UnionTerm_c)
 
 SEPT__REGISTER__INHABITS__DATA(Data, UnionTerm_c)
+SEPT__REGISTER__INHABITS__NONDATA(UnionTerm_c, UnionTerm_c)
 
 SEPT__REGISTER__COMPARE(UnionTerm_c, UnionTerm_c)
 

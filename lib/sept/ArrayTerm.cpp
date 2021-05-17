@@ -11,6 +11,16 @@ ArrayTerm_c::operator lvd::OstreamDelegate () const {
     });
 }
 
+bool inhabits (ArrayTerm_c const &a, ArrayTerm_c const &t) {
+    if (a.size() != t.size())
+        return false;
+
+    for (size_t i = 0; i < a.size(); ++i)
+        if (!inhabits_data(a[i], t[i]))
+            return false;
+    return true;
+}
+
 void serialize (ArrayTerm_c const &v, std::ostream &out) {
     serialize(SerializedTopLevelCode::PARAMETRIC_TERM, out);
     serialize_data(v.abstract_type(), out);
@@ -67,6 +77,8 @@ SEPT__REGISTER__PRINT(ArrayTerm_c)
 SEPT__REGISTER__HASH(ArrayTerm_c)
 
 SEPT__REGISTER__EQ(ArrayTerm_c)
+
+SEPT__REGISTER__INHABITS__NONDATA(ArrayTerm_c, ArrayTerm_c)
 
 SEPT__REGISTER__COMPARE(ArrayTerm_c, ArrayTerm_c)
 

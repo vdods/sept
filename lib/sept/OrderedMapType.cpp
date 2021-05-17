@@ -127,6 +127,18 @@ bool inhabits (Data const &value, OrderedMap_c const &t) {
     return value.can_cast<OrderedMapTerm_c>() && inhabits(value.cast<OrderedMapTerm_c const &>(), t);
 }
 
+bool inhabits (OrderedMapDCTerm_c const &m, OrderedMapDCTerm_c const &t) {
+    return inhabits_data(m.domain(), t.domain()) && inhabits_data(m.codomain(), t.codomain());
+}
+
+bool inhabits (OrderedMapDTerm_c const &m, OrderedMapDTerm_c const &t) {
+    return inhabits_data(m.domain(), t.domain());
+}
+
+bool inhabits (OrderedMapCTerm_c const &m, OrderedMapCTerm_c const &t) {
+    return inhabits_data(m.codomain(), t.codomain());
+}
+
 void serialize (OrderedMapDCTerm_c const &v, std::ostream &out) {
     serialize(SerializedTopLevelCode::PARAMETRIC_TERM, out);
     serialize(OrderedMapDC, out);
@@ -229,6 +241,10 @@ SEPT__REGISTER__INHABITS__NONDATA(OrderedMapTerm_c, OrderedMapDTerm_c)
 SEPT__REGISTER__INHABITS__NONDATA(OrderedMapTerm_c, OrderedMapCTerm_c)
 // This one isn't type-widening.
 SEPT__REGISTER__INHABITS__NONDATA(OrderedMapTerm_c, OrderedMap_c)
+
+SEPT__REGISTER__INHABITS__NONDATA(OrderedMapDCTerm_c, OrderedMapDCTerm_c)
+SEPT__REGISTER__INHABITS__NONDATA(OrderedMapDTerm_c, OrderedMapDTerm_c)
+SEPT__REGISTER__INHABITS__NONDATA(OrderedMapCTerm_c, OrderedMapCTerm_c)
 
 
 SEPT__REGISTER__COMPARE__SINGLETON(OrderedMapType_c)
