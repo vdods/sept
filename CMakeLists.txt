@@ -253,6 +253,8 @@ if(BUILD_thinky)
         bin/thinky/common.cpp
         bin/thinky/common.hpp
         bin/thinky/main.cpp
+        bin/thinky/pattern.cpp
+        bin/thinky/pattern.hpp
     )
     add_executable(thinky ${thinky_SOURCES})
     target_include_directories(thinky PUBLIC ${sept_SOURCE_DIR}/bin/thinky)
