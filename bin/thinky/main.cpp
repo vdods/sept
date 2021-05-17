@@ -180,6 +180,10 @@ int main (int argc, char **argv) {
 
     auto rule0 = Implication(SubjVerbObj(Charlie, HasProperty, Smart), Implies, SubjVerbObj(Charlie, LikesA, Cat));
     auto rule1 = Implication(SubjVerbObj(Dave, HasProperty, Smart), Implies, SubjVerbObj(Dave, LikesA, Cat));
+    auto X = sept::FreeVar("X");
+    auto Y = sept::FreeVar("Y");
+    auto Z = sept::FreeVar("Z");
+
 
     lvd::g_log << lvd::Log::dbg() << "testing non-actionable implication " << rule0 << " ...\n";
     bs.derive_beliefs(rule0);
@@ -203,35 +207,61 @@ int main (int argc, char **argv) {
 
     // Testing
 
-    auto X = sept::FreeVar("X");
-    auto Y = sept::FreeVar("Y");
     auto rule2 = Implication(SubjVerbObj(X, LikesEntity, Y), Implies, SubjVerbObj(X, IsA, Person));
     lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(rule2) << '\n';
 
-    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(attempt_pattern_match(X, sept::Uint32(123))) << '\n';
+    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(matched_pattern__data(X, sept::Uint32(123))) << '\n';
 
-    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(attempt_pattern_match(sept::Tuple(X), sept::Tuple(sept::Uint32(123)))) << '\n';
-    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(attempt_pattern_match(sept::Tuple(X, Y), sept::Tuple(sept::Uint32(123), sept::Float64(456.75)))) << '\n';
-    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(attempt_pattern_match(sept::Tuple(X, X), sept::Tuple(sept::Uint32(123), sept::Float64(456.75)))) << '\n';
-    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(attempt_pattern_match(sept::Tuple(X, X), sept::Tuple(sept::Uint32(123), sept::Uint32(123)))) << '\n';
+    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(matched_pattern__data(sept::Tuple(X), sept::Tuple(sept::Uint32(123)))) << '\n';
+    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(matched_pattern__data(sept::Tuple(X, Y), sept::Tuple(sept::Uint32(123), sept::Float64(456.75)))) << '\n';
+    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(matched_pattern__data(sept::Tuple(X, X), sept::Tuple(sept::Uint32(123), sept::Float64(456.75)))) << '\n';
+    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(matched_pattern__data(sept::Tuple(X, X), sept::Tuple(sept::Uint32(123), sept::Uint32(123)))) << '\n';
 
-    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(attempt_pattern_match(sept::ArrayE(X), sept::ArrayE(sept::Uint32))) << '\n';
-    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(attempt_pattern_match(sept::Array(X,Y), sept::Array(sept::Uint32(123), sept::Float64(456.75)))) << '\n';
+    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(matched_pattern__data(sept::ArrayE(X), sept::ArrayE(sept::Uint32))) << '\n';
+    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(matched_pattern__data(sept::Array(X,Y), sept::Array(sept::Uint32(123), sept::Float64(456.75)))) << '\n';
 
-    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(attempt_pattern_match(sept::OrderedMapDC(X,Y), sept::OrderedMapDC(sept::Uint32, sept::Float64(456.75)))) << '\n';
-    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(attempt_pattern_match(sept::OrderedMapD(X), sept::OrderedMapD(sept::Uint32))) << '\n';
-    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(attempt_pattern_match(sept::OrderedMapC(Y), sept::OrderedMapC(sept::Uint32))) << '\n';
+    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(matched_pattern__data(sept::OrderedMapDC(X,Y), sept::OrderedMapDC(sept::Uint32, sept::Float64(456.75)))) << '\n';
+    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(matched_pattern__data(sept::OrderedMapD(X), sept::OrderedMapD(sept::Uint32))) << '\n';
+    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(matched_pattern__data(sept::OrderedMapC(Y), sept::OrderedMapC(sept::Uint32))) << '\n';
 
-    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(attempt_pattern_match(sept::Union(X), sept::Union(sept::Uint32))) << '\n';
-    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(attempt_pattern_match(sept::Union(X,Y), sept::Union(sept::Uint32, sept::Float64))) << '\n';
-    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(attempt_pattern_match(sept::Union(X,X), sept::Union(sept::Uint32, sept::Uint32))) << '\n';
+    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(matched_pattern__data(sept::Union(X), sept::Union(sept::Uint32))) << '\n';
+    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(matched_pattern__data(sept::Union(X,Y), sept::Union(sept::Uint32, sept::Float64))) << '\n';
+    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(matched_pattern__data(sept::Union(X,X), sept::Union(sept::Uint32, sept::Uint32))) << '\n';
 
-    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(attempt_pattern_match(sept::FormalTypeOf(X), sept::FormalTypeOf(sept::Uint32(3)))) << '\n';
-    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(attempt_pattern_match(sept::FormalTypeOf(X), sept::FormalTypeOf(sept::Void))) << '\n';
+    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(matched_pattern__data(sept::FormalTypeOf(X), sept::FormalTypeOf(sept::Uint32(3)))) << '\n';
+    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(matched_pattern__data(sept::FormalTypeOf(X), sept::FormalTypeOf(sept::Void))) << '\n';
 
     // Now test some nested ones.
-    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(attempt_pattern_match(sept::Tuple(sept::ArrayE(X), sept::OrderedMapDC(X,Y)), sept::Tuple(sept::ArrayE(sept::Uint32), sept::OrderedMapDC(sept::Uint32,sept::Float64)))) << '\n';
-    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(attempt_pattern_match(sept::OrderedMapDC(sept::ArrayE(X),sept::ArrayE(X)), sept::OrderedMapDC(sept::ArrayE(sept::Uint32),sept::ArrayE(sept::Uint32)))) << '\n';
+    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(matched_pattern__data(sept::Tuple(sept::ArrayE(X), sept::OrderedMapDC(X,Y)), sept::Tuple(sept::ArrayE(sept::Uint32), sept::OrderedMapDC(sept::Uint32,sept::Float64)))) << '\n';
+    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(matched_pattern__data(sept::OrderedMapDC(sept::ArrayE(X),sept::ArrayE(X)), sept::OrderedMapDC(sept::ArrayE(sept::Uint32),sept::ArrayE(sept::Uint32)))) << '\n';
+
+    //
+    // free_var_substitution
+    //
+
+    {
+        sept::SymbolTable symbol_assignment;
+        symbol_assignment.define_symbol("X", sept::Uint32);
+        symbol_assignment.define_symbol("Y", sept::Bool);
+        symbol_assignment.define_symbol("Z", sept::Float64(456.75));
+
+        lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(free_var_substitution__data(sept::Uint32(3), symbol_assignment)) << '\n';
+        lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(free_var_substitution__data(X, symbol_assignment)) << '\n';
+        lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(free_var_substitution__data(Y, symbol_assignment)) << '\n';
+        lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(free_var_substitution__data(Z, symbol_assignment)) << '\n';
+        lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(free_var_substitution__data(sept::Tuple(X,X,Y,Z,X), symbol_assignment)) << '\n';
+        lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(free_var_substitution__data(sept::ArrayE(X), symbol_assignment)) << '\n';
+        lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(free_var_substitution__data(sept::Array(X,Y,Z,Z), symbol_assignment)) << '\n';
+        lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(free_var_substitution__data(sept::OrderedMapDC(X,Y), symbol_assignment)) << '\n';
+        lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(free_var_substitution__data(sept::OrderedMapD(X), symbol_assignment)) << '\n';
+        lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(free_var_substitution__data(sept::OrderedMapC(Y), symbol_assignment)) << '\n';
+        lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(free_var_substitution__data(sept::Union(X), symbol_assignment)) << '\n';
+        lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(free_var_substitution__data(sept::Union(X,Y), symbol_assignment)) << '\n';
+        lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(free_var_substitution__data(sept::Union(X,X), symbol_assignment)) << '\n';
+        lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(free_var_substitution__data(sept::FormalTypeOf(X), symbol_assignment)) << '\n';
+        lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(free_var_substitution__data(sept::Tuple(sept::ArrayE(X), sept::OrderedMapDC(X,Y)), symbol_assignment)) << '\n';
+        lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(free_var_substitution__data(sept::OrderedMapDC(sept::ArrayE(X),sept::ArrayE(X)), symbol_assignment)) << '\n';
+    }
 
     return 0;
 }

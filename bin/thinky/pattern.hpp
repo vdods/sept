@@ -24,4 +24,7 @@ private:
 std::ostream &operator<< (std::ostream &out, Match const &match);
 
 // This will return std::nullopt if there is no match, otherwise a populated Match struct.
-std::optional<Match> attempt_pattern_match (sept::Data const &pattern, sept::Data &&term);
+std::optional<Match> matched_pattern__data (sept::Data const &pattern, sept::Data &&term);
+
+// Substitute FreeVars with their SymbolTable-defined values in a term.
+sept::Data free_var_substitution__data (sept::Data const &term, sept::SymbolTable const &symbol_assignment) noexcept;
