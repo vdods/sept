@@ -220,6 +220,19 @@ public:
         return std::move(*this).move_deref().raw__move_cast<T_>();
     }
 
+    // Essentially performs std::any_cast<T_ const *> on this object, except with nicer syntax.
+    // It automatically handles dereferencing if this data is RefTerm_c.
+    template <typename T_>
+    T_ const *ptr_cast () const {
+        return deref().raw__ptr_cast<T_>();
+    }
+    // Essentially performs std::any_cast<T_ *> on this object, except with nicer syntax.
+    // It automatically handles dereferencing if this data is RefTerm_c.
+    template <typename T_>
+    T_ *ptr_cast () {
+        return deref().raw__ptr_cast<T_>();
+    }
+
     // This is a run-time type assertion that this Data actually holds T_.  This call then just type-casts this
     // to the more-specific type Data_t<T_> const &.
     template <typename T_>
@@ -274,6 +287,19 @@ public:
     template <typename T_>
     T_ raw__move_cast () && {
         return std::move(std::any_cast<T_ &>(static_cast<std::any &>(*this)));
+    }
+
+    // Performs std::any_cast<T_ const> (using the pointer-semantic version) on this
+    // object, except with nicer syntax.
+    template <typename T_>
+    T_ const *raw__ptr_cast () const {
+        return std::any_cast<T_ const>(static_cast<std::any const *>(this));
+    }
+    // Performs std::any_cast<T_ const> (using the pointer-semantic version) on this
+    // object, except with nicer syntax.
+    template <typename T_>
+    T_ *raw__ptr_cast () {
+        return std::any_cast<T_>(static_cast<std::any *>(this));
     }
 
     // This is a run-time type assertion that this Data actually holds T_.  This call then just type-casts this
