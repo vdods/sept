@@ -74,8 +74,6 @@ inline constexpr FreeVar_c const &abstract_type_of (FreeVarTerm_c const &) { ret
 inline bool inhabits (FreeVarTerm_c const &a, FreeVar_c const &t) { return true; }
 inline bool inhabits (Data_t<FreeVarTerm_c> const &m, FreeVar_c const &t) { return true; }
 inline bool inhabits (Data const &value, FreeVar_c const &t) { return value.type() == typeid(FreeVarTerm_c); }
-// Everything inhabits FreeVar("X") (i.e. FreeVarTerm_c("X")) for any string "X".
-inline bool constexpr inhabits (Data const &value, FreeVarTerm_c const &t) { return true; }
 
 // TODO: Serialization (NonParametricType_t should take care of this)
 
