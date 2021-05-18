@@ -22,19 +22,21 @@ std::ostream &operator<< (std::ostream &out, Match const &match) {
     return out;
 }
 
-bool matched_pattern__data (sept::Data const &pattern, sept::Data const &term, sept::SymbolTable &symbol_assignment, lvd::Log &match_failure_log);
+bool matched_pattern__data (sept::Data const &pattern, sept::Data const &term, sept::SymbolTable &symbol_assignment, lvd::Log *match_failure_log = nullptr);
 
 // This assumes that the gross pattern matches, but must still verify that duplicated symbols must match.
 // It will return false only if the match failed because of mismatching symbols.
-bool matched_pattern__FreeVarTerm_c (sept::FreeVarTerm_c const &pattern, sept::Data const &term, sept::SymbolTable &symbol_assignment, lvd::Log &match_failure_log) {
-//     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(pattern) << ", " << LVD_REFLECT(term) << '\n';
-    assert(sept::inhabits_data(term, pattern)); // Should always be true since FreeVar matches anything.
+bool matched_pattern__FreeVarTerm_c (sept::FreeVarTerm_c const &pattern, sept::Data const &term, sept::SymbolTable &symbol_assignment, lvd::Log *match_failure_log = nullptr) {
+    lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(pattern) << ", " << LVD_REFLECT(term) << '\n';
+    auto ig = lvd::IndentGuard(lvd::g_log);
+
     if (symbol_assignment.symbol_is_defined(pattern.free_var_id__as_string())) {
         sept::Data const &sa = symbol_assignment.resolve_symbol_const(pattern.free_var_id__as_string());
         if (sa != term) {
             // This represents a repeated pattern-match symbol (e.g. Tuple(FreeVar("X"), FreeVar("X"))) where
             // the second match of FreeVar("X") doesn't have the same value as the first.
-            match_failure_log << "pattern " << pattern << " had [at least] two distinct matches -- the first was " << sa << " and the second was " << term << '\n';
+            if (match_failure_log != nullptr)
+                *match_failure_log << "pattern " << pattern << " had [at least] two distinct matches -- the first was " << sa << " and the second was " << term << '\n';
             return false;
         }
     } else {
@@ -45,12 +47,14 @@ bool matched_pattern__FreeVarTerm_c (sept::FreeVarTerm_c const &pattern, sept::D
 
 // This assumes that the gross pattern matches, but must still verify that duplicated symbols must match.
 // It will return false only if the match failed because of mismatching symbols.
-bool matched_pattern__TupleTerm_c (sept::TupleTerm_c const &pattern, sept::Data const &term, sept::SymbolTable &symbol_assignment, lvd::Log &match_failure_log) {
-//     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(pattern) << ", " << LVD_REFLECT(term) << '\n';
-    assert(sept::inhabits_data(pattern, sept::Tuple));
-    assert(sept::inhabits_data(term, pattern));
+bool matched_pattern__TupleTerm_c (sept::TupleTerm_c const &pattern, sept::Data const &term, sept::SymbolTable &symbol_assignment, lvd::Log *match_failure_log = nullptr) {
+    lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(pattern) << ", " << LVD_REFLECT(term) << '\n';
+    auto ig = lvd::IndentGuard(lvd::g_log);
+
     auto const &tuple_term = term.cast<sept::TupleTerm_c const &>();
-    assert(pattern.size() == tuple_term.size());
+    // A Tuple pattern can only match if there are an equal number of elements (for now).
+    if (pattern.size() != tuple_term.size())
+        return false;
     // Match on the components of each -- don't early out via logic short-circuit..
     bool retval = true;
     for (size_t i = 0; i < pattern.size(); ++i)
@@ -60,20 +64,20 @@ bool matched_pattern__TupleTerm_c (sept::TupleTerm_c const &pattern, sept::Data 
 
 // This assumes that the gross pattern matches, but must still verify that duplicated symbols must match.
 // It will return false only if the match failed because of mismatching symbols.
-bool matched_pattern__ArrayETerm_c (sept::ArrayETerm_c const &pattern, sept::Data const &term, sept::SymbolTable &symbol_assignment, lvd::Log &match_failure_log) {
-//     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(pattern) << ", " << LVD_REFLECT(term) << '\n';
-    assert(sept::inhabits_data(pattern, sept::ArrayE));
-    assert(sept::inhabits_data(term, pattern));
+bool matched_pattern__ArrayETerm_c (sept::ArrayETerm_c const &pattern, sept::Data const &term, sept::SymbolTable &symbol_assignment, lvd::Log *match_failure_log = nullptr) {
+    lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(pattern) << ", " << LVD_REFLECT(term) << '\n';
+    auto ig = lvd::IndentGuard(lvd::g_log);
+
     auto const &array_e_term = term.cast<sept::ArrayETerm_c const &>();
     return matched_pattern__data(pattern.element_type(), array_e_term.element_type(), symbol_assignment, match_failure_log);
 }
 
 // This assumes that the gross pattern matches, but must still verify that duplicated symbols must match.
 // It will return false only if the match failed because of mismatching symbols.
-bool matched_pattern__ArrayTerm_c (sept::ArrayTerm_c const &pattern, sept::Data const &term, sept::SymbolTable &symbol_assignment, lvd::Log &match_failure_log) {
-//     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(pattern) << ", " << LVD_REFLECT(term) << '\n';
-    assert(sept::inhabits_data(pattern, sept::Array));
-    assert(sept::inhabits_data(term, pattern));
+bool matched_pattern__ArrayTerm_c (sept::ArrayTerm_c const &pattern, sept::Data const &term, sept::SymbolTable &symbol_assignment, lvd::Log *match_failure_log = nullptr) {
+    lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(pattern) << ", " << LVD_REFLECT(term) << '\n';
+    auto ig = lvd::IndentGuard(lvd::g_log);
+
     auto const &array_term = term.cast<sept::ArrayTerm_c const &>();
     bool retval = true;
     // Don't short-circuit.
@@ -85,10 +89,10 @@ bool matched_pattern__ArrayTerm_c (sept::ArrayTerm_c const &pattern, sept::Data 
 
 // This assumes that the gross pattern matches, but must still verify that duplicated symbols must match.
 // It will return false only if the match failed because of mismatching symbols.
-bool matched_pattern__OrderedMapDCTerm_c (sept::OrderedMapDCTerm_c const &pattern, sept::Data const &term, sept::SymbolTable &symbol_assignment, lvd::Log &match_failure_log) {
-//     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(pattern) << ", " << LVD_REFLECT(term) << '\n';
-    assert(sept::inhabits_data(pattern, sept::OrderedMapDC));
-    assert(sept::inhabits_data(term, pattern));
+bool matched_pattern__OrderedMapDCTerm_c (sept::OrderedMapDCTerm_c const &pattern, sept::Data const &term, sept::SymbolTable &symbol_assignment, lvd::Log *match_failure_log = nullptr) {
+    lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(pattern) << ", " << LVD_REFLECT(term) << '\n';
+    auto ig = lvd::IndentGuard(lvd::g_log);
+
     auto const &ordered_map_dc_term = term.cast<sept::OrderedMapDCTerm_c const &>();
     bool retval = true;
     // Don't short-circuit.
@@ -99,10 +103,10 @@ bool matched_pattern__OrderedMapDCTerm_c (sept::OrderedMapDCTerm_c const &patter
 
 // This assumes that the gross pattern matches, but must still verify that duplicated symbols must match.
 // It will return false only if the match failed because of mismatching symbols.
-bool matched_pattern__OrderedMapDTerm_c (sept::OrderedMapDTerm_c const &pattern, sept::Data const &term, sept::SymbolTable &symbol_assignment, lvd::Log &match_failure_log) {
-//     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(pattern) << ", " << LVD_REFLECT(term) << '\n';
-    assert(sept::inhabits_data(pattern, sept::OrderedMapD));
-    assert(sept::inhabits_data(term, pattern));
+bool matched_pattern__OrderedMapDTerm_c (sept::OrderedMapDTerm_c const &pattern, sept::Data const &term, sept::SymbolTable &symbol_assignment, lvd::Log *match_failure_log = nullptr) {
+    lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(pattern) << ", " << LVD_REFLECT(term) << '\n';
+    auto ig = lvd::IndentGuard(lvd::g_log);
+
     auto const &ordered_map_d_term = term.cast<sept::OrderedMapDTerm_c const &>();
     bool retval = true;
     // Don't short-circuit.
@@ -112,10 +116,10 @@ bool matched_pattern__OrderedMapDTerm_c (sept::OrderedMapDTerm_c const &pattern,
 
 // This assumes that the gross pattern matches, but must still verify that duplicated symbols must match.
 // It will return false only if the match failed because of mismatching symbols.
-bool matched_pattern__OrderedMapCTerm_c (sept::OrderedMapCTerm_c const &pattern, sept::Data const &term, sept::SymbolTable &symbol_assignment, lvd::Log &match_failure_log) {
-//     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(pattern) << ", " << LVD_REFLECT(term) << '\n';
-    assert(sept::inhabits_data(pattern, sept::OrderedMapC));
-    assert(sept::inhabits_data(term, pattern));
+bool matched_pattern__OrderedMapCTerm_c (sept::OrderedMapCTerm_c const &pattern, sept::Data const &term, sept::SymbolTable &symbol_assignment, lvd::Log *match_failure_log = nullptr) {
+    lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(pattern) << ", " << LVD_REFLECT(term) << '\n';
+    auto ig = lvd::IndentGuard(lvd::g_log);
+
     auto const &ordered_map_c_term = term.cast<sept::OrderedMapCTerm_c const &>();
     bool retval = true;
     // Don't short-circuit.
@@ -125,10 +129,10 @@ bool matched_pattern__OrderedMapCTerm_c (sept::OrderedMapCTerm_c const &pattern,
 
 // This assumes that the gross pattern matches, but must still verify that duplicated symbols must match.
 // It will return false only if the match failed because of mismatching symbols.
-bool matched_pattern__UnionTerm_c (sept::UnionTerm_c const &pattern, sept::Data const &term, sept::SymbolTable &symbol_assignment, lvd::Log &match_failure_log) {
-//     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(pattern) << ", " << LVD_REFLECT(term) << '\n';
-    assert(sept::inhabits_data(pattern, sept::Union));
-    assert(sept::inhabits_data(term, pattern));
+bool matched_pattern__UnionTerm_c (sept::UnionTerm_c const &pattern, sept::Data const &term, sept::SymbolTable &symbol_assignment, lvd::Log *match_failure_log = nullptr) {
+    lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(pattern) << ", " << LVD_REFLECT(term) << '\n';
+    auto ig = lvd::IndentGuard(lvd::g_log);
+
     auto const &union_term = term.cast<sept::UnionTerm_c const &>();
     bool retval = true;
     // Don't short-circuit.
@@ -138,71 +142,72 @@ bool matched_pattern__UnionTerm_c (sept::UnionTerm_c const &pattern, sept::Data 
     return retval;
 }
 
+// Pattern FormalTypeOf(P) will match FormalTypeOf(T) iff T matches pattern P.
 // This assumes that the gross pattern matches, but must still verify that duplicated symbols must match.
 // It will return false only if the match failed because of mismatching symbols.
-bool matched_pattern__FormalTypeOf_Term_c (sept::FormalTypeOf_Term_c const &pattern, sept::Data const &term, sept::SymbolTable &symbol_assignment, lvd::Log &match_failure_log) {
-//     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(pattern) << ", " << LVD_REFLECT(term) << '\n';
-    assert(sept::inhabits_data(pattern, sept::FormalTypeOf));
-    assert(sept::inhabits_data(term, pattern));
+bool matched_pattern__FormalTypeOf_Term_c (sept::FormalTypeOf_Term_c const &pattern, sept::Data const &term, sept::SymbolTable &symbol_assignment, lvd::Log *match_failure_log = nullptr) {
+    lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(pattern) << ", " << LVD_REFLECT(term) << '\n';
+    auto ig = lvd::IndentGuard(lvd::g_log);
+
     auto const &formal_type_of__term = term.cast<sept::FormalTypeOf_Term_c const &>();
     return matched_pattern__data(pattern.term(), formal_type_of__term.term(), symbol_assignment, match_failure_log);
 }
 
-bool matched_pattern__direct_equality (sept::Data const &pattern, sept::Data const &term, lvd::Log &match_failure_log) {
-//     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(pattern) << ", " << LVD_REFLECT(term) << '\n';
+bool matched_pattern__direct_equality (sept::Data const &pattern, sept::Data const &term, lvd::Log *match_failure_log = nullptr) {
+    lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(pattern) << ", " << LVD_REFLECT(term) << '\n';
+    auto ig = lvd::IndentGuard(lvd::g_log);
+
     if (!sept::eq_data(term, pattern)) {
-        match_failure_log << "pattern " << pattern << " failed direct equality match against term " << term << '\n';
+        if (match_failure_log != nullptr)
+            *match_failure_log << "pattern " << pattern << " failed direct equality match against term " << term << '\n';
         return false;
     }
     return true;
 }
 
-bool matched_pattern__data (sept::Data const &pattern, sept::Data const &term, sept::SymbolTable &symbol_assignment, lvd::Log &match_failure_log) {
-//     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(pattern) << ", " << LVD_REFLECT(term) << '\n';
+bool matched_pattern__data (sept::Data const &pattern, sept::Data const &term, sept::SymbolTable &symbol_assignment, lvd::Log *match_failure_log) {
+    lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(pattern) << ", " << LVD_REFLECT(term) << '\n';
+    auto ig = lvd::IndentGuard(lvd::g_log);
+
     // Dispatch based on type.
     // TODO: This should use StaticAssociation_t
     if (false) {
         // SPLUNGE
-    } else if (sept::inhabits_data(pattern, sept::FreeVar)) {
-        return matched_pattern__FreeVarTerm_c(pattern.cast<sept::FreeVarTerm_c const &>(), term, symbol_assignment, match_failure_log);
-    } else if (sept::inhabits_data(pattern, sept::Tuple)) {
-        return matched_pattern__TupleTerm_c(pattern.cast<sept::TupleTerm_c const &>(), term, symbol_assignment, match_failure_log);
-    } else if (sept::inhabits_data(pattern, sept::ArrayE)) {
-        return matched_pattern__ArrayETerm_c(pattern.cast<sept::ArrayETerm_c const &>(), term, symbol_assignment, match_failure_log);
-    } else if (sept::inhabits_data(pattern, sept::Array)) {
-        return matched_pattern__ArrayTerm_c(pattern.cast<sept::ArrayTerm_c const &>(), term, symbol_assignment, match_failure_log);
-    } else if (sept::inhabits_data(pattern, sept::OrderedMapDC)) {
-        return matched_pattern__OrderedMapDCTerm_c(pattern.cast<sept::OrderedMapDCTerm_c const &>(), term, symbol_assignment, match_failure_log);
-    } else if (sept::inhabits_data(pattern, sept::OrderedMapD)) {
-        return matched_pattern__OrderedMapDTerm_c(pattern.cast<sept::OrderedMapDTerm_c const &>(), term, symbol_assignment, match_failure_log);
-    } else if (sept::inhabits_data(pattern, sept::OrderedMapC)) {
-        return matched_pattern__OrderedMapCTerm_c(pattern.cast<sept::OrderedMapCTerm_c const &>(), term, symbol_assignment, match_failure_log);
-    } else if (sept::inhabits_data(pattern, sept::Union)) {
-        return matched_pattern__UnionTerm_c(pattern.cast<sept::UnionTerm_c const &>(), term, symbol_assignment, match_failure_log);
-    } else if (sept::inhabits_data(pattern, sept::FormalTypeOf)) {
-        return matched_pattern__FormalTypeOf_Term_c(pattern.cast<sept::FormalTypeOf_Term_c const &>(), term, symbol_assignment, match_failure_log);
+    } else if (auto *pattern__FreeVar_Term_c = pattern.ptr_cast<sept::FreeVarTerm_c>()) {
+        return matched_pattern__FreeVarTerm_c(*pattern__FreeVar_Term_c, term, symbol_assignment, match_failure_log);
+    } else if (auto *pattern__TupleTerm_c = pattern.ptr_cast<sept::TupleTerm_c>()) {
+        return matched_pattern__TupleTerm_c(*pattern__TupleTerm_c, term, symbol_assignment, match_failure_log);
+    } else if (auto *pattern__ArrayETerm_c = pattern.ptr_cast<sept::ArrayETerm_c>()) {
+        return matched_pattern__ArrayETerm_c(*pattern__ArrayETerm_c, term, symbol_assignment, match_failure_log);
+    } else if (auto *pattern__ArrayTerm_c = pattern.ptr_cast<sept::ArrayTerm_c>()) {
+        return matched_pattern__ArrayTerm_c(*pattern__ArrayTerm_c, term, symbol_assignment, match_failure_log);
+    } else if (auto *pattern__OrderedMapDCTerm_c = pattern.ptr_cast<sept::OrderedMapDCTerm_c>()) {
+        return matched_pattern__OrderedMapDCTerm_c(*pattern__OrderedMapDCTerm_c, term, symbol_assignment, match_failure_log);
+    } else if (auto *pattern__OrderedMapDTerm_c = pattern.ptr_cast<sept::OrderedMapDTerm_c>()) {
+        return matched_pattern__OrderedMapDTerm_c(*pattern__OrderedMapDTerm_c, term, symbol_assignment, match_failure_log);
+    } else if (auto *pattern__OrderedMapCTerm_c = pattern.ptr_cast<sept::OrderedMapCTerm_c>()) {
+        return matched_pattern__OrderedMapCTerm_c(*pattern__OrderedMapCTerm_c, term, symbol_assignment, match_failure_log);
+    } else if (auto *pattern__UnionTerm_c = pattern.ptr_cast<sept::UnionTerm_c>()) {
+        return matched_pattern__UnionTerm_c(*pattern__UnionTerm_c, term, symbol_assignment, match_failure_log);
+    } else if (auto *pattern__FormalTypeOf_Term_c = pattern.ptr_cast<sept::FormalTypeOf_Term_c>()) {
+        return matched_pattern__FormalTypeOf_Term_c(*pattern__FormalTypeOf_Term_c, term, symbol_assignment, match_failure_log);
     } else {
         // Anything else has to match with direct equality.
         return matched_pattern__direct_equality(pattern, term, match_failure_log);
     }
 }
 
-std::optional<Match> matched_pattern__data (sept::Data const &pattern, sept::Data &&term) {
-//     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(pattern) << ", " << LVD_REFLECT(term) << '\n';
-    if (!inhabits_data(term, pattern))
+// TODO: If no match is made, then the rvalue ref `term` is discarded, which is a waste.
+std::optional<Match> matched_pattern__data (sept::Data const &pattern, sept::Data &&term, lvd::Log *match_failure_log) {
+    lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(pattern) << ", " << LVD_REFLECT(term) << '\n';
+    auto ig = lvd::IndentGuard(lvd::g_log);
+
+    sept::SymbolTable symbol_assignment;
+    if (matched_pattern__data(pattern, term, symbol_assignment, match_failure_log))
+        return std::make_optional<Match>(std::move(term), std::move(symbol_assignment));
+    else
         return std::nullopt;
 
-    // If the term inhabits pattern, then we have a match (unless there are failed constraints on
-    // the free variables).  Now it's just a matter of determining the value of the variables in
-    // the pattern.
-    sept::SymbolTable symbol_assignment;
-    std::ostringstream match_failure_out;
-    lvd::Log match_failure_log(match_failure_out);
-    if (!matched_pattern__data(pattern, term, symbol_assignment, match_failure_log)) {
-        lvd::g_log << lvd::Log::dbg() << "matched_pattern__data failure:\n" << lvd::IndentGuard() << match_failure_out.str() << '\n';
-        return std::nullopt;
-    }
-    return std::make_optional<Match>(std::move(term), std::move(symbol_assignment));
 }
 
 //

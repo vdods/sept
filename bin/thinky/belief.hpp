@@ -71,6 +71,10 @@ public:
 
     // Attempts to derive new beliefs using a rule of inference.
     void derive_beliefs (sept::Data const &inference);
+    // Here's the "real" version of derive_beliefs, which uses pattern matching against a
+    // rule of inference "schema" (meaning a rule of inference with free variables which
+    // are to be replaced with matching values).
+    void derive_beliefs_2 (sept::Data const &inference, bool also_derive_using_contrapositive = true);
 
     BeliefSet const &belief_set () const { return m_belief_set; }
     bool contains_belief (sept::Data const &belief) const {

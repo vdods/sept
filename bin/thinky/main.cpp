@@ -125,7 +125,7 @@ inline ostream &operator << (ostream &out, optional<T_> const &x) {
 } // end namespace std
 
 int main (int argc, char **argv) {
-//     lvd::g_log.set_log_level_threshold(lvd::LogLevel::DBG);
+    lvd::g_log.set_log_level_threshold(lvd::LogLevel::DBG);
     lvd::g_log.out().precision(std::numeric_limits<double>::max_digits10+1);
     lvd::g_log.out().setf(std::ios_base::boolalpha, std::ios_base::boolalpha);
 
@@ -178,32 +178,12 @@ int main (int argc, char **argv) {
                << LVD_REFLECT(bs.evaluate_predicate(Predicate_And(And, sept::Tuple(SubjVerbObj(Box, HasProperty, Red), Predicate_Not(Not, SubjVerbObj(Box, HasProperty, Big)))))) << '\n'
                << '\n';
 
-    auto rule0 = Implication(SubjVerbObj(Charlie, HasProperty, Smart), Implies, SubjVerbObj(Charlie, LikesA, Cat));
-    auto rule1 = Implication(SubjVerbObj(Dave, HasProperty, Smart), Implies, SubjVerbObj(Dave, LikesA, Cat));
     auto X = sept::FreeVar("X");
     auto Y = sept::FreeVar("Y");
     auto Z = sept::FreeVar("Z");
 
-
-    lvd::g_log << lvd::Log::dbg() << "testing non-actionable implication " << rule0 << " ...\n";
-    bs.derive_beliefs(rule0);
-    lvd::g_log << lvd::Log::dbg() << "no action should have been taken.\n\n";
-
-    lvd::g_log << lvd::Log::dbg() << "adding belief...\n";
-    bs.add_belief(SubjVerbObj(Charlie, HasProperty, Smart));
-    lvd::g_log << lvd::Log::dbg() << "testing actionable (direct) implication...\n";
-    bs.derive_beliefs(rule0);
-    lvd::g_log << lvd::Log::dbg() << '\n';
-
-    lvd::g_log << lvd::Log::dbg() << "testing non-actionable implication " << rule1 << " ...\n";
-    bs.derive_beliefs(rule1);
-    lvd::g_log << lvd::Log::dbg() << "no action should have been taken.\n\n";
-
-    lvd::g_log << lvd::Log::dbg() << "adding belief...\n";
-    bs.add_belief(Predicate_Not(Not, SubjVerbObj(Dave, LikesA, Cat)));
-    lvd::g_log << lvd::Log::dbg() << "testing actionable (contrapositive) implication\n";
-    bs.derive_beliefs(rule1);
-    lvd::g_log << lvd::Log::dbg() << '\n';
+    assert(sept::inhabits_data(HasProperty, Verb));
+    assert(sept::inhabits_data(sept::FormalTypeOf(HasProperty), sept::FormalTypeOf(Verb)));
 
     // Testing
 
@@ -262,6 +242,48 @@ int main (int argc, char **argv) {
         lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(free_var_substitution__data(sept::Tuple(sept::ArrayE(X), sept::OrderedMapDC(X,Y)), symbol_assignment)) << '\n';
         lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(free_var_substitution__data(sept::OrderedMapDC(sept::ArrayE(X),sept::ArrayE(X)), symbol_assignment)) << '\n';
     }
+
+    //
+    // derive_beliefs_2
+    //
+
+    auto rule0 = Implication(SubjVerbObj(X, HasProperty, Smart), Implies, SubjVerbObj(X, LikesA, Cat));
+
+    lvd::g_log << lvd::Log::dbg() << "testing non-actionable implication " << rule0 << " ...\n";
+    bs.derive_beliefs_2(rule0);
+    lvd::g_log << lvd::Log::dbg() << "no action should have been taken.\n\n";
+
+    lvd::g_log << lvd::Log::dbg() << "adding belief...\n";
+    bs.add_belief(SubjVerbObj(Charlie, HasProperty, Smart));
+    lvd::g_log << lvd::Log::dbg() << "testing actionable (direct) implication...\n";
+    bs.derive_beliefs_2(rule0);
+    lvd::g_log << lvd::Log::dbg() << '\n';
+    assert(bs.evaluate_predicate(SubjVerbObj(Charlie, LikesA, Cat)));
+
+    lvd::g_log << lvd::Log::dbg() << "adding belief...\n";
+    bs.add_belief(Predicate_Not(Not, SubjVerbObj(Dave, LikesA, Cat)));
+    lvd::g_log << lvd::Log::dbg() << "testing actionable (contrapositive) implication\n";
+    bs.derive_beliefs_2(rule0);
+    lvd::g_log << lvd::Log::dbg() << '\n';
+    assert(bs.evaluate_predicate(Predicate_Not(Not, SubjVerbObj(Dave, HasProperty, Smart))));
+
+    auto inference = SubjVerbObj(Predicate_And(And, sept::Tuple(SubjVerbObj(X, HasProperty, Smart), SubjVerbObj(X, Says, Y))), Implies, Y);
+    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(inference) << '\n';
+
+    // TODO: Fun rules of inference to try:
+    // -    Antonyms, in the sense of being able to relate predicates containing those antonyms.
+    //      -   The [meta]rule of inference would be something like a derivation of a new rule of inference.
+    //
+    //              (X, IsOppositeVerbTo, Y) => ( (Not, (A, X, B)) => (A, Y, B) )
+    //
+    //          The [meta]rule could be made symmetric via
+    //
+    //              (X, IsOppositeVerbTo, Y) => (Y, IsOppositeVerbTo, X)
+    //
+    //      -   A declaration of antonyms would be something like (LikesA, IsOppositeVerbTo, HatesEvery),
+    //          and the above [meta]rule of inference would produce the rule of inference
+    //
+    //              (Not, (A, LikesA, B)) => (A, HatesEvery, B)
 
     return 0;
 }
