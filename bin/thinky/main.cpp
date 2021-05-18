@@ -156,6 +156,36 @@ int main (int argc, char **argv) {
                << '\n';
 //     demorganize_data(Predicate_Not(Not, Predicate_And(And, sept::Tuple(SubjVerbObj(Bob, LikesEntity, Box), SubjVerbObj(Bob, LikesEntity, Cup)))));
 
+    // Should match https://en.wikipedia.org/wiki/Three-valued_logic
+    // TODO: Implement as min/max via integers {-1, 0, 1} instead
+    assert(and__trit(Nope, Nope) == Nope);
+    assert(and__trit(Nope, Kwatz) == Nope);
+    assert(and__trit(Nope, Yep) == Nope);
+    assert(and__trit(Kwatz, Nope) == Nope);
+    assert(and__trit(Kwatz, Kwatz) == Kwatz);
+    assert(and__trit(Kwatz, Yep) == Kwatz);
+    assert(and__trit(Yep, Nope) == Nope);
+    assert(and__trit(Yep, Kwatz) == Kwatz);
+    assert(and__trit(Yep, Yep) == Yep);
+    assert(or__trit(Nope, Nope) == Nope);
+    assert(or__trit(Nope, Kwatz) == Kwatz);
+    assert(or__trit(Nope, Yep) == Yep);
+    assert(or__trit(Kwatz, Nope) == Kwatz);
+    assert(or__trit(Kwatz, Kwatz) == Kwatz);
+    assert(or__trit(Kwatz, Yep) == Yep);
+    assert(or__trit(Yep, Nope) == Yep);
+    assert(or__trit(Yep, Kwatz) == Yep);
+    assert(or__trit(Yep, Yep) == Yep);
+    assert(xor__trit(Nope, Nope) == Nope);
+    assert(xor__trit(Nope, Kwatz) == Kwatz);
+    assert(xor__trit(Nope, Yep) == Yep);
+    assert(xor__trit(Kwatz, Nope) == Kwatz);
+    assert(xor__trit(Kwatz, Kwatz) == Kwatz);
+    assert(xor__trit(Kwatz, Yep) == Kwatz);
+    assert(xor__trit(Yep, Nope) == Yep);
+    assert(xor__trit(Yep, Kwatz) == Kwatz);
+    assert(xor__trit(Yep, Yep) == Nope);
+
     BeliefSystem bs;
     bs.add_belief(SubjVerbObj(Alice, LikesEntity, Bob));
     bs.add_belief(Predicate_Not(Not, SubjVerbObj(Bob, LikesEntity, Alice)));
@@ -269,21 +299,6 @@ int main (int argc, char **argv) {
 
     auto inference = SubjVerbObj(Predicate_And(And, sept::Tuple(SubjVerbObj(X, HasProperty, Smart), SubjVerbObj(X, Says, Y))), Implies, Y);
     lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(inference) << '\n';
-
-    // TODO: Fun rules of inference to try:
-    // -    Antonyms, in the sense of being able to relate predicates containing those antonyms.
-    //      -   The [meta]rule of inference would be something like a derivation of a new rule of inference.
-    //
-    //              (X, IsOppositeVerbTo, Y) => ( (Not, (A, X, B)) => (A, Y, B) )
-    //
-    //          The [meta]rule could be made symmetric via
-    //
-    //              (X, IsOppositeVerbTo, Y) => (Y, IsOppositeVerbTo, X)
-    //
-    //      -   A declaration of antonyms would be something like (LikesA, IsOppositeVerbTo, HatesEvery),
-    //          and the above [meta]rule of inference would produce the rule of inference
-    //
-    //              (Not, (A, LikesA, B)) => (A, HatesEvery, B)
 
     return 0;
 }

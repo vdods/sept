@@ -3,55 +3,48 @@
 #include "sept/Data.hpp"
 #include <unordered_set>
 
-using BeliefStateRepr = uint8_t;
-enum class BeliefState : BeliefStateRepr {
-    DENY = 0,
-    UNKNOWN,
-    ACCEPT,
+// IMO "Trit" sounds dumb, but it is the most reasonable name (analogous to "bit").
+// Reference: https://en.wikipedia.org/wiki/Three-valued_logic
+using Trit_CType = int8_t;
+enum class Trit : Trit_CType {
+    NOPE = -1,
+    KWATZ = 0,
+    YEP = 1,
 
-    __LOWEST__ = DENY,
-    __HIGHEST__ = ACCEPT,
+    __LOWEST__ = NOPE,
+    __HIGHEST__ = YEP,
 };
 
-inline BeliefState constexpr Deny = BeliefState::DENY;
-inline BeliefState constexpr Unknown = BeliefState::UNKNOWN;
-inline BeliefState constexpr Accept = BeliefState::ACCEPT;
+inline Trit constexpr Nope = Trit::NOPE;
+inline Trit constexpr Kwatz = Trit::KWATZ;
+inline Trit constexpr Yep = Trit::YEP;
 
-size_t constexpr BELIEF_STATE_COUNT = size_t(BeliefState::__HIGHEST__)+1 - size_t(BeliefState::__LOWEST__);
+size_t constexpr BELIEF_STATE_COUNT = size_t(Trit::__HIGHEST__)+1 - size_t(Trit::__LOWEST__);
 
-std::string const &as_string (BeliefState t);
+std::string const &as_string (Trit t);
 
-inline BeliefState not__belief_state (BeliefState t) {
-    switch (t) {
-        case Deny: return Accept;
-        case Unknown: return Unknown;
-        case Accept: return Deny;
-        default: LVD_ABORT("Invalid BeliefState");
-    }
+//
+// The following logical operations are named instead of using operator overloads because it would be too
+// easy to read an expression like "a && (b || c)" as an ordinary boolean expression.
+//
+
+inline Trit not__trit (Trit t) {
+    return Trit(-Trit_CType(t));
 }
 
-inline BeliefState and__belief_state (BeliefState lhs, BeliefState rhs) {
-    if (lhs == Unknown || rhs == Unknown)
-        return Unknown;
-    else
-        return (lhs == Accept && rhs == Accept) ? Accept : Deny;
+inline Trit and__trit (Trit lhs, Trit rhs) {
+    return Trit(std::min(Trit_CType(lhs), Trit_CType(rhs)));
 }
 
-inline BeliefState or__belief_state (BeliefState lhs, BeliefState rhs) {
-    if (lhs == Unknown || rhs == Unknown)
-        return Unknown;
-    else
-        return (lhs == Accept || rhs == Accept) ? Accept : Deny;
+inline Trit or__trit (Trit lhs, Trit rhs) {
+    return Trit(std::max(Trit_CType(lhs), Trit_CType(rhs)));
 }
 
-inline BeliefState xor__belief_state (BeliefState lhs, BeliefState rhs) {
-    if (lhs == Unknown || rhs == Unknown)
-        return Unknown;
-    else
-        return ((lhs == Accept) != (rhs == Accept)) ? Accept : Deny;
+inline Trit xor__trit (Trit lhs, Trit rhs) {
+    return Trit(-(Trit_CType(lhs) * Trit_CType(rhs)));
 }
 
-inline std::ostream &operator<< (std::ostream &out, BeliefState const &t) {
+inline std::ostream &operator<< (std::ostream &out, Trit const &t) {
     return out << as_string(t);
 }
 
@@ -67,7 +60,7 @@ public:
 
     // Attempts to evaluate the given predicate as true or false against this BeliefSystem.
     // TODO: Implement some limit on the number of search steps.
-    BeliefState evaluate_predicate (sept::Data const &predicate) const;
+    Trit evaluate_predicate (sept::Data const &predicate) const;
 
     // Attempts to derive new beliefs using a rule of inference.
     void derive_beliefs (sept::Data const &inference);

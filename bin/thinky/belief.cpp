@@ -10,23 +10,23 @@
 #include <lvd/comma.hpp>
 #include <lvd/fmt.hpp>
 
-std::string const &as_string (BeliefState t) {
+std::string const &as_string (Trit t) {
     static std::array<std::string,BELIEF_STATE_COUNT> const TABLE{
-        "Deny",
-        "Unknown",
-        "Accept",
+        "Nope",
+        "Kwatz",
+        "Yep",
     };
-    return TABLE.at(size_t(t));
+    return TABLE.at(Trit_CType(t) - Trit_CType(Trit::__LOWEST__));
 }
 
-BeliefState BeliefSystem::evaluate_predicate (sept::Data const &predicate) const {
+Trit BeliefSystem::evaluate_predicate (sept::Data const &predicate) const {
     // Check if the predicate is a verbatim belief already.
     if (contains_belief(predicate))
-        return Accept;
+        return Yep;
     // Also check the negation.  Not very efficient.  Also this won't work in general because
     // stuff isn't put into a canonical form using deMorgan's laws.
     if (contains_belief(Predicate_Not(Not, predicate)))
-        return Deny;
+        return Nope;
 
     // TODO: Use StaticAssociation_t
     if (false) {
@@ -35,34 +35,34 @@ BeliefState BeliefSystem::evaluate_predicate (sept::Data const &predicate) const
         // TODO: Extract functions
         auto premise = predicate[0];
         auto conclusion = predicate[1];
-        return or__belief_state(not__belief_state(evaluate_predicate(premise)), evaluate_predicate(conclusion));
+        return or__trit(not__trit(evaluate_predicate(premise)), evaluate_predicate(conclusion));
     } else if (inhabits_data(predicate, Predicate_Not)) {
-        return not__belief_state(evaluate_predicate(predicate[1]));
+        return not__trit(evaluate_predicate(predicate[1]));
     } else if (inhabits_data(predicate, Predicate_And)) {
         auto operand_tuple = predicate[1].move_cast<sept::TupleTerm_c>();
-        BeliefState retval = Accept; // Identity element of `and` operation.
+        Trit retval = Yep; // Identity element of `and` operation.
         for (auto const &operand : operand_tuple.elements()) {
-            retval = and__belief_state(retval, evaluate_predicate(operand));
-            // If we break away from Accept, then it could be Deny or Unknown, either of which causes an early out.
-            if (retval != Accept)
+            retval = and__trit(retval, evaluate_predicate(operand));
+            // If we break away from Yep, then it could be Nope or Kwatz, either of which causes an early out.
+            if (retval != Yep)
                 return retval;
         }
         return retval;
     } else if (inhabits_data(predicate, Predicate_Or)) {
         auto operand_tuple = predicate[1].move_cast<sept::TupleTerm_c>();
-        BeliefState retval = Deny; // Identity element of `or` operation.
+        Trit retval = Nope; // Identity element of `or` operation.
         for (auto const &operand : operand_tuple.elements()) {
-            retval = or__belief_state(retval, evaluate_predicate(operand));
-            // If we break away from Deny, then it could be Accept or Unknown, either of which causes an early out.
-            if (retval != Deny)
+            retval = or__trit(retval, evaluate_predicate(operand));
+            // If we break away from Nope, then it could be Yep or Kwatz, either of which causes an early out.
+            if (retval != Nope)
                 return retval;
         }
         return retval;
     } else if (inhabits_data(predicate, Predicate_Xor)) {
         auto operand_tuple = predicate[1].move_cast<sept::TupleTerm_c>();
-        BeliefState retval = Deny; // Identity element of `or` operation.
+        Trit retval = Nope; // Identity element of `or` operation.
         for (auto const &operand : operand_tuple.elements()) {
-            retval = or__belief_state(retval, evaluate_predicate(operand));
+            retval = or__trit(retval, evaluate_predicate(operand));
             // There is no early out for xor.
         }
         return retval;
@@ -70,7 +70,7 @@ BeliefState BeliefSystem::evaluate_predicate (sept::Data const &predicate) const
         // Fallthrough -- no information in the belief system.
         // TODO: If predicate occurred somewhere as a subexpression of some belief, that would
         // be useful information for an associative search.
-        return Unknown;
+        return Kwatz;
     }
 }
 
@@ -86,27 +86,27 @@ void BeliefSystem::derive_beliefs (sept::Data const &inference) {
 
     // Direct implication.
     switch (evaluate_predicate(premise)) {
-        case Accept:
+        case Yep:
             add_belief(conclusion);
             break;
-        case Unknown:
+        case Kwatz:
             // TODO: If the premise is Predicate_Not/And/Or/Xor, then the unknown bit
             // could be added to some "wondering about" predicate set.
             break;
-        case Deny:
+        case Nope:
             // Nothing to be inferred.
             break;
     }
     // Evaluate the contrapositive.
     switch (evaluate_predicate(conclusion)) {
-        case Accept:
+        case Yep:
             // Nothing to be inferred.
             break;
-        case Unknown:
+        case Kwatz:
             // TODO: If the premise is Predicate_Not/And/Or/Xor, then the unknown bit
             // could be added to some "wondering about" predicate set.
             break;
-        case Deny:
+        case Nope:
             add_belief(Predicate_Not(Not, premise));
             break;
     }
