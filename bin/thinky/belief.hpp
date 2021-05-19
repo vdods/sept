@@ -19,8 +19,6 @@ inline Trit constexpr Nope = Trit::NOPE;
 inline Trit constexpr Kwatz = Trit::KWATZ;
 inline Trit constexpr Yep = Trit::YEP;
 
-size_t constexpr BELIEF_STATE_COUNT = size_t(Trit::__HIGHEST__)+1 - size_t(Trit::__LOWEST__);
-
 std::string const &as_string (Trit t);
 
 //
@@ -91,7 +89,13 @@ public:
 //         m_inference_set.erase(inference);
 //     }
 
+    static bool validate_inference (sept::Data &demorganized_premise, sept::Data const &conclusion, lvd::Log *validation_failure_log = nullptr);
+    static bool validate_inference (sept::Data const &inference, lvd::Log *validation_failure_log = nullptr);
+
 private:
+
+//     void derive_beliefs_2__impl (sept::Data const &demorganized_premise, sept::Data const &conclusion);
+//     void derive_beliefs_2__Predicate_And (sept::Data const &inference, bool also_derive_using_contrapositive = true);
 
     // For now, just a flat storage of beliefs.
     BeliefSet m_belief_set;

@@ -10,8 +10,126 @@
 #include <lvd/comma.hpp>
 #include <lvd/fmt.hpp>
 
+// TODO: Figure out if there's something in std for unordered_set -- it seems not
+template <typename T_>
+bool is_subset (std::unordered_set<T_> const &lhs, std::unordered_set<T_> const &rhs) {
+    for (auto const &lhs_element : lhs)
+        if (rhs.find(lhs_element) == rhs.end())
+            return false;
+    return true;
+}
+
+// This version consumes lhs, operates on it in-place, and then returns it.
+template <typename T_>
+std::unordered_set<T_> unordered_set_union (std::unordered_set<T_> &&lhs, std::unordered_set<T_> const &rhs) {
+    // Add all elements of rhs to lhs.
+    for (auto const &rhs_element : rhs)
+        lhs.emplace(rhs_element);
+    return std::move(lhs);
+}
+
+template <typename T_>
+std::unordered_set<T_> unordered_set_union (std::unordered_set<T_> const &lhs, std::unordered_set<T_> const &rhs) {
+    return unordered_set_union(lvd::cloned(lhs), rhs);
+}
+
+// This version consumes lhs, operates on it in-place, and then returns it.
+template <typename T_>
+std::unordered_set<T_> unordered_set_intersection (std::unordered_set<T_> &&lhs, std::unordered_set<T_> const &rhs) {
+    // For erasing while iterating, see
+    // https://stackoverflow.com/questions/15662412/how-to-remove-multiple-items-from-unordered-map-while-iterating-over-it
+    for (auto lhs_it = lhs.begin(); lhs_it != lhs.end(); ) {
+        auto const &lhs_element = *lhs_it;
+        // If lhs_element is found in rhs, do nothing.  Otherwise remove it from lhs.
+        if (rhs.find(lhs_element) != rhs.end())
+            ++lhs_it;
+        else
+            lhs_it = lhs.erase(lhs_it);
+    }
+    return std::move(lhs);
+}
+
+template <typename T_>
+std::unordered_set<T_> unordered_set_intersection (std::unordered_set<T_> const &lhs, std::unordered_set<T_> const &rhs) {
+    return unordered_set_intersection(lvd::cloned(lhs), rhs);
+}
+
+template <typename T_>
+std::unordered_set<T_> unordered_set_difference (std::unordered_set<T_> const &lhs, std::unordered_set<T_> const &rhs) {
+    std::unordered_set<T_> retval;
+    for (auto const &lhs_element : lhs)
+        if (rhs.find(lhs_element) == lhs.end())
+            retval.emplace(lhs_element);
+    return retval;
+}
+
+template <typename T_>
+std::unordered_set<T_> unordered_set_difference (std::unordered_set<T_> &&lhs, std::unordered_set<T_> const &rhs) {
+    for (auto const &rhs_element : rhs)
+        if (lhs.find(rhs_element) != lhs.end())
+            lhs.erase(rhs_element);
+    return std::move(lhs);
+}
+
+// template <typename T_>
+// void set_intersection__in_place (std::unordered_set<T_> &lhs, std::unordered_set<T_> const &rhs) {
+//     // For erasing while iterating, see
+//     // https://stackoverflow.com/questions/15662412/how-to-remove-multiple-items-from-unordered-map-while-iterating-over-it
+//     for (auto lhs_it = lhs.begin(); lhs_it != lhs.end(); ) {
+//         auto const &lhs_element = *lhs_it;
+//         if (rhs.find(lhs_element) != rhs.end())
+//             ++lhs_it;
+//         else
+//             lhs_it = lhs.erase(lhs_it);
+//     }
+// }
+
+//
+// Logical-predicate-specific FreeVar collection
+//
+
+std::unordered_set<sept::FreeVarTerm_c> concludable_free_var_set__data (sept::Data const &term) {
+    std::unordered_set<sept::FreeVarTerm_c> retval;
+    if (inhabits_data(term, Predicate_And) || inhabits_data(term, Predicate_Xor)) {
+        // Take the union; union of no sets is defined to be empty.
+        auto operand_tuple = term[1].cast<sept::TupleTerm_c>();
+        if (operand_tuple.size() == 0) {
+            // retval is already empty, so nothing to do.
+        } else {
+            retval = concludable_free_var_set__data(operand_tuple[0]);
+            for (size_t i = 0; i < operand_tuple.size(); ++i)
+                retval = unordered_set_union(std::move(retval), concludable_free_var_set__data(operand_tuple[i]));
+        }
+    } else if (inhabits_data(term, Predicate_Or)) {
+        // Take the intersection; intersection of no sets is defined to be empty here (this is
+        // different than the ordinary mathematical convention where an intersection of zero
+        // sets is the "universe" (i.e. biggest) set).
+        auto operand_tuple = term[1].cast<sept::TupleTerm_c>();
+        if (operand_tuple.size() == 0) {
+            // retval is already empty, so nothing to do.
+        } else {
+            retval = concludable_free_var_set__data(operand_tuple[0]);
+            for (size_t i = 0; i < operand_tuple.size(); ++i)
+                retval = unordered_set_intersection(std::move(retval), concludable_free_var_set__data(operand_tuple[i]));
+        }
+    } else if (inhabits_data(term, Predicate_Not)) {
+        // E.g. `(Not, (And, (X, Y))` is equivalent to `(Or, ((Not, X), (Not, Y)))`, so it should use intersection.
+        // E.g. `(Not, (Or, (X, Y))` is equivalent to `(And, ((Not, X), (Not, Y)))`, so it should use union.
+        // Similar with Xor.  Thus it should demorganize before computing concludable_free_var_set.
+        retval = concludable_free_var_set__data(demorganize_data(term[1]));
+    } else {
+        // term is logically opaque, no processing besides determining free var set.
+        retval = free_var_collection__data(term);
+    }
+    return retval;
+}
+
+//
+// Remaining stuff
+//
+
 std::string const &as_string (Trit t) {
-    static std::array<std::string,BELIEF_STATE_COUNT> const TABLE{
+    static std::array<std::string,3> const TABLE{
         "Nope",
         "Kwatz",
         "Yep",
@@ -25,7 +143,7 @@ Trit BeliefSystem::evaluate_predicate (sept::Data const &predicate) const {
         return Yep;
     // Also check the negation.  Not very efficient.  Also this won't work in general because
     // stuff isn't put into a canonical form using deMorgan's laws.
-    if (contains_belief(Predicate_Not(Not, predicate)))
+    if (contains_belief(Predicate(Not, predicate)))
         return Nope;
 
     // TODO: Use StaticAssociation_t
@@ -107,7 +225,7 @@ void BeliefSystem::derive_beliefs (sept::Data const &inference) {
             // could be added to some "wondering about" predicate set.
             break;
         case Nope:
-            add_belief(Predicate_Not(Not, premise));
+            add_belief(Predicate(Not, premise));
             break;
     }
 }
@@ -125,7 +243,9 @@ void BeliefSystem::derive_beliefs_2 (sept::Data const &inference, bool also_deri
     if (inhabits_data(demorganized_premise, Predicate_And)) {
         // TODO: Have to verify that if there are FreeVars in the conclusion, that they're all
         // present in the premise (otherwise the pattern matching and substitution will leave an
-        // unbound FreeVar in the conclusion)
+        // unbound FreeVar in the conclusion).
+
+
 //         // p => q
 //         // not(p) or q
 //         //
@@ -184,7 +304,7 @@ void BeliefSystem::derive_beliefs_2 (sept::Data const &inference, bool also_deri
     }
 
     if (also_derive_using_contrapositive) {
-        auto contrapositive = Implication(Predicate_Not(Not, conclusion), Implies, Predicate_Not(Not, premise));
+        auto contrapositive = Implication(Predicate(Not, conclusion), Implies, Predicate(Not, premise));
         // Don't derive using contrapositive again, or infinite loop.
         derive_beliefs_2(contrapositive, false);
     }
@@ -205,6 +325,46 @@ void BeliefSystem::add_belief (sept::Data const &belief) {
         m_belief_set.insert(belief);
     }
 }
+
+// TEMP HACK
+namespace std {
+
+template <typename K_, typename Hash_, typename KeyEqual_, typename Allocator_>
+inline ostream &operator << (ostream &out, unordered_set<K_,Hash_,KeyEqual_,Allocator_> const &s) {
+    auto d = lvd::make_comma_space_delimiter();
+    out << '{';
+    for (auto const &x : s)
+        out << d << x;
+    return out << '}';
+}
+
+} // end namespace std
+
+bool BeliefSystem::validate_inference (sept::Data &demorganized_premise, sept::Data const &conclusion, lvd::Log *validation_failure_log) {
+    // Compute the FreeVar set that can be part of the conclusion.
+    auto concludable_free_var_s = concludable_free_var_set__data(demorganized_premise);
+    // Compute the FreeVar set in conclusion
+    auto conclusion_free_var_s = free_var_collection__data(conclusion);
+    // Check the constraint.
+    if (!is_subset(conclusion_free_var_s, concludable_free_var_s)) {
+        if (validation_failure_log != nullptr)
+            *validation_failure_log << "conclusion has non-matched free vars: " << unordered_set_difference(conclusion_free_var_s, concludable_free_var_s) << "; " << LVD_REFLECT(concludable_free_var_s) << ", " << LVD_REFLECT(conclusion_free_var_s) << '\n';
+        return false;
+    }
+    // If it passed this far, it's good.
+    return true;
+}
+
+bool BeliefSystem::validate_inference (sept::Data const &inference, lvd::Log *validation_failure_log) {
+    assert(sept::inhabits_data(inference, Implication));
+    auto demorganized_premise = demorganize_data(inference[0]);
+    auto conclusion = inference[2];
+    return validate_inference(demorganized_premise, conclusion, validation_failure_log);
+}
+
+// void BeliefSystem::derive_beliefs_2__impl (sept::Data const &demorganized_premise, sept::Data const &conclusion) {
+//
+// }
 
 std::ostream &operator<< (std::ostream &out, BeliefSystem const &bs) {
     lvd::Log log(out);

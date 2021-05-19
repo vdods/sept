@@ -320,3 +320,86 @@ sept::Data free_var_substitution__data (sept::Data const &term, sept::SymbolTabl
         return free_var_substitution__no_op(term, symbol_assignment);
     }
 }
+
+//
+// FreeVar collection
+//
+
+void free_var_collection__FreeVarTerm_c (sept::FreeVarTerm_c const &term, std::unordered_set<sept::FreeVarTerm_c> &free_var_s) noexcept {
+//     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(term) << '\n';
+    free_var_s.insert(term);
+}
+
+void free_var_collection__TupleTerm_c (sept::TupleTerm_c const &term, std::unordered_set<sept::FreeVarTerm_c> &free_var_s) noexcept {
+//     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(term) << '\n';
+    for (auto const &term_element : term.elements())
+        free_var_collection__data(term_element, free_var_s);
+}
+
+void free_var_collection__ArrayETerm_c (sept::ArrayETerm_c const &term, std::unordered_set<sept::FreeVarTerm_c> &free_var_s) noexcept {
+//     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(term) << '\n';
+    free_var_collection__data(term.element_type());
+}
+
+void free_var_collection__ArrayTerm_c (sept::ArrayTerm_c const &term, std::unordered_set<sept::FreeVarTerm_c> &free_var_s) noexcept {
+//     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(term) << '\n';
+    for (auto const &term_element : term.elements())
+        free_var_collection__data(term_element, free_var_s);
+}
+
+void free_var_collection__OrderedMapDCTerm_c (sept::OrderedMapDCTerm_c const &term, std::unordered_set<sept::FreeVarTerm_c> &free_var_s) noexcept {
+//     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(term) << '\n';
+    free_var_collection__data(term.domain());
+    free_var_collection__data(term.codomain());
+}
+
+void free_var_collection__OrderedMapDTerm_c (sept::OrderedMapDTerm_c const &term, std::unordered_set<sept::FreeVarTerm_c> &free_var_s) noexcept {
+//     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(term) << '\n';
+    free_var_collection__data(term.domain());
+}
+
+void free_var_collection__OrderedMapCTerm_c (sept::OrderedMapCTerm_c const &term, std::unordered_set<sept::FreeVarTerm_c> &free_var_s) noexcept {
+//     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(term) << '\n';
+    free_var_collection__data(term.codomain());
+}
+
+void free_var_collection__UnionTerm_c (sept::UnionTerm_c const &term, std::unordered_set<sept::FreeVarTerm_c> &free_var_s) noexcept {
+//     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(term) << '\n';
+    for (auto const &term_element : term.elements())
+        free_var_collection__data(term_element, free_var_s);
+}
+
+void free_var_collection__FormalTypeOf_Term_c (sept::FormalTypeOf_Term_c const &term, std::unordered_set<sept::FreeVarTerm_c> &free_var_s) noexcept {
+//     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(term) << '\n';
+    free_var_collection__data(term.term());
+}
+
+void free_var_collection__data (sept::Data const &term, std::unordered_set<sept::FreeVarTerm_c> &free_var_s) noexcept {
+//     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(term) << '\n';
+    // Dispatch based on type.
+    // TODO: This should use StaticAssociation_t
+    if (false) {
+        // SPLUNGE
+    } else if (auto *term__FreeVarTerm_c = term.ptr_cast<sept::FreeVarTerm_c>()) {
+        free_var_collection__FreeVarTerm_c(*term__FreeVarTerm_c, free_var_s);
+    } else if (auto *term__TupleTerm_c = term.ptr_cast<sept::TupleTerm_c>()) {
+        free_var_collection__TupleTerm_c(*term__TupleTerm_c, free_var_s);
+    } else if (auto *term__ArrayETerm_c = term.ptr_cast<sept::ArrayETerm_c>()) {
+        free_var_collection__ArrayETerm_c(*term__ArrayETerm_c, free_var_s);
+    } else if (auto *term__ArrayTerm_c = term.ptr_cast<sept::ArrayTerm_c>()) {
+        free_var_collection__ArrayTerm_c(*term__ArrayTerm_c, free_var_s);
+    } else if (auto *term__OrderedMapDCTerm_c = term.ptr_cast<sept::OrderedMapDCTerm_c>()) {
+        free_var_collection__OrderedMapDCTerm_c(*term__OrderedMapDCTerm_c, free_var_s);
+    } else if (auto *term__OrderedMapDTerm_c = term.ptr_cast<sept::OrderedMapDTerm_c>()) {
+        free_var_collection__OrderedMapDTerm_c(*term__OrderedMapDTerm_c, free_var_s);
+    } else if (auto *term__OrderedMapCTerm_c = term.ptr_cast<sept::OrderedMapCTerm_c>()) {
+        free_var_collection__OrderedMapCTerm_c(*term__OrderedMapCTerm_c, free_var_s);
+    } else if (auto *term__UnionTerm_c = term.ptr_cast<sept::UnionTerm_c>()) {
+        free_var_collection__UnionTerm_c(*term__UnionTerm_c, free_var_s);
+    } else if (auto *term__FormalTypeOf_Term_c = term.ptr_cast<sept::FormalTypeOf_Term_c>()) {
+        free_var_collection__FormalTypeOf_Term_c(*term__FormalTypeOf_Term_c, free_var_s);
+    } else {
+        // Anything else is assumed to not be or contain FreeVar terms, so there's nothing to do.
+        // TODO: Implement handlers for rest of types.
+    }
+}

@@ -20,10 +20,12 @@ namespace sept {
 SEPT__REGISTER__PRINT(Adjective_c)
 SEPT__REGISTER__PRINT(Animal_c)
 SEPT__REGISTER__PRINT(BinOp_c)
-SEPT__REGISTER__PRINT(BoolBinOp_c)
 SEPT__REGISTER__PRINT(Color_c)
 SEPT__REGISTER__PRINT(Entity_c)
 // SEPT__REGISTER__PRINT__GIVE_ID(sem::Expr_Term_c, __sem__Expr_Term_c__)
+SEPT__REGISTER__PRINT(LogicalNaryOp_c)
+SEPT__REGISTER__PRINT(LogicalOp_c)
+SEPT__REGISTER__PRINT(LogicalUnOp_c)
 SEPT__REGISTER__PRINT(Object_c)
 SEPT__REGISTER__PRINT(Person_c)
 SEPT__REGISTER__PRINT(ThinkyNPTerm)
@@ -34,10 +36,12 @@ SEPT__REGISTER__PRINT__GIVE_ID(char const *, __char_const_ptr__)
 SEPT__REGISTER__HASH(Adjective_c)
 SEPT__REGISTER__HASH(Animal_c)
 SEPT__REGISTER__HASH(BinOp_c)
-SEPT__REGISTER__HASH(BoolBinOp_c)
 SEPT__REGISTER__HASH(Color_c)
 SEPT__REGISTER__HASH(Entity_c)
 // SEPT__REGISTER__HASH__GIVE_ID(sem::Expr_Term_c, __sem__Expr_Term_c__)
+SEPT__REGISTER__HASH(LogicalNaryOp_c)
+SEPT__REGISTER__HASH(LogicalOp_c)
+SEPT__REGISTER__HASH(LogicalUnOp_c)
 SEPT__REGISTER__HASH(Object_c)
 SEPT__REGISTER__HASH(Person_c)
 SEPT__REGISTER__HASH(ThinkyNPTerm)
@@ -47,9 +51,11 @@ SEPT__REGISTER__HASH(Verb_c)
 SEPT__REGISTER__EQ(Adjective_c)
 SEPT__REGISTER__EQ(Animal_c)
 SEPT__REGISTER__EQ(BinOp_c)
-SEPT__REGISTER__EQ(BoolBinOp_c)
 SEPT__REGISTER__EQ(Color_c)
 SEPT__REGISTER__EQ(Entity_c)
+SEPT__REGISTER__EQ(LogicalNaryOp_c)
+SEPT__REGISTER__EQ(LogicalOp_c)
+SEPT__REGISTER__EQ(LogicalUnOp_c)
 SEPT__REGISTER__EQ(Object_c)
 SEPT__REGISTER__EQ(Person_c)
 SEPT__REGISTER__EQ(ThinkyNPTerm)
@@ -59,9 +65,11 @@ SEPT__REGISTER__EQ(Verb_c)
 SEPT__REGISTER__ABSTRACT_TYPE_OF(Adjective_c)
 SEPT__REGISTER__ABSTRACT_TYPE_OF(Animal_c)
 SEPT__REGISTER__ABSTRACT_TYPE_OF(BinOp_c)
-SEPT__REGISTER__ABSTRACT_TYPE_OF(BoolBinOp_c)
 SEPT__REGISTER__ABSTRACT_TYPE_OF(Color_c)
 SEPT__REGISTER__ABSTRACT_TYPE_OF(Entity_c)
+SEPT__REGISTER__ABSTRACT_TYPE_OF(LogicalNaryOp_c)
+SEPT__REGISTER__ABSTRACT_TYPE_OF(LogicalOp_c)
+SEPT__REGISTER__ABSTRACT_TYPE_OF(LogicalUnOp_c)
 SEPT__REGISTER__ABSTRACT_TYPE_OF(Object_c)
 SEPT__REGISTER__ABSTRACT_TYPE_OF(Person_c)
 SEPT__REGISTER__ABSTRACT_TYPE_OF(UnOp_c)
@@ -70,9 +78,11 @@ SEPT__REGISTER__ABSTRACT_TYPE_OF(Verb_c)
 SEPT__REGISTER__INHABITS__NONDATA(ThinkyNPTerm, Adjective_c)
 SEPT__REGISTER__INHABITS__NONDATA(ThinkyNPTerm, Animal_c)
 SEPT__REGISTER__INHABITS__NONDATA(ThinkyNPTerm, BinOp_c)
-SEPT__REGISTER__INHABITS__NONDATA(ThinkyNPTerm, BoolBinOp_c)
 SEPT__REGISTER__INHABITS__NONDATA(ThinkyNPTerm, Color_c)
 SEPT__REGISTER__INHABITS__NONDATA(ThinkyNPTerm, Entity_c)
+SEPT__REGISTER__INHABITS__NONDATA(ThinkyNPTerm, LogicalNaryOp_c)
+SEPT__REGISTER__INHABITS__NONDATA(ThinkyNPTerm, LogicalOp_c)
+SEPT__REGISTER__INHABITS__NONDATA(ThinkyNPTerm, LogicalUnOp_c)
 SEPT__REGISTER__INHABITS__NONDATA(ThinkyNPTerm, Object_c)
 SEPT__REGISTER__INHABITS__NONDATA(ThinkyNPTerm, Person_c)
 SEPT__REGISTER__INHABITS__NONDATA(ThinkyNPTerm, UnOp_c)
@@ -83,9 +93,11 @@ SEPT__REGISTER__INHABITS__GIVE_ID__NONDATA(ThinkyNPTerm, FormalTypeOf_Term_c, __
 SEPT__REGISTER__COMPARE__SINGLETON(Adjective_c)
 SEPT__REGISTER__COMPARE__SINGLETON(Animal_c)
 SEPT__REGISTER__COMPARE__SINGLETON(BinOp_c)
-SEPT__REGISTER__COMPARE__SINGLETON(BoolBinOp_c)
 SEPT__REGISTER__COMPARE__SINGLETON(Color_c)
 SEPT__REGISTER__COMPARE__SINGLETON(Entity_c)
+SEPT__REGISTER__COMPARE__SINGLETON(LogicalNaryOp_c)
+SEPT__REGISTER__COMPARE__SINGLETON(LogicalOp_c)
+SEPT__REGISTER__COMPARE__SINGLETON(LogicalUnOp_c)
 SEPT__REGISTER__COMPARE__SINGLETON(Object_c)
 SEPT__REGISTER__COMPARE__SINGLETON(Person_c)
 SEPT__REGISTER__COMPARE__SINGLETON(UnOp_c)
@@ -95,9 +107,11 @@ SEPT__REGISTER__COMPARE(ThinkyNPTerm, ThinkyNPTerm)
 SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(Adjective_c, ThinkyNPTerm)
 SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(Animal_c, ThinkyNPTerm)
 SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(BinOp_c, ThinkyNPTerm)
-SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(BoolBinOp_c, ThinkyNPTerm)
 SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(Color_c, ThinkyNPTerm)
 SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(Entity_c, ThinkyNPTerm)
+SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(LogicalNaryOp_c, ThinkyNPTerm)
+SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(LogicalOp_c, ThinkyNPTerm)
+SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(LogicalUnOp_c, ThinkyNPTerm)
 SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(Object_c, ThinkyNPTerm)
 SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(Person_c, ThinkyNPTerm)
 SEPT__REGISTER__CONSTRUCT_INHABITANT_OF__ABSTRACT_TYPE(UnOp_c, ThinkyNPTerm)
@@ -125,7 +139,7 @@ inline ostream &operator << (ostream &out, optional<T_> const &x) {
 } // end namespace std
 
 int main (int argc, char **argv) {
-    lvd::g_log.set_log_level_threshold(lvd::LogLevel::DBG);
+//     lvd::g_log.set_log_level_threshold(lvd::LogLevel::DBG);
     lvd::g_log.out().precision(std::numeric_limits<double>::max_digits10+1);
     lvd::g_log.out().setf(std::ios_base::boolalpha, std::ios_base::boolalpha);
 
@@ -142,19 +156,19 @@ int main (int argc, char **argv) {
                << '\n';
 
     lvd::g_log << lvd::Log::dbg()
-               << LVD_REFLECT(sept::inhabits_data(Not, BoolBinOp)) << '\n'
-               << LVD_REFLECT(sept::inhabits_data(And, BoolBinOp)) << '\n'
-               << LVD_REFLECT(sept::inhabits_data(Or, BoolBinOp)) << '\n'
-               << LVD_REFLECT(sept::inhabits_data(Xor, BoolBinOp)) << '\n'
+               << LVD_REFLECT(sept::inhabits_data(Not, LogicalNaryOp)) << '\n'
+               << LVD_REFLECT(sept::inhabits_data(And, LogicalNaryOp)) << '\n'
+               << LVD_REFLECT(sept::inhabits_data(Or, LogicalNaryOp)) << '\n'
+               << LVD_REFLECT(sept::inhabits_data(Xor, LogicalNaryOp)) << '\n'
                << '\n';
 
     lvd::g_log << lvd::Log::dbg()
                << LVD_REFLECT(demorganize_data(Bob)) << '\n'
-               << LVD_REFLECT(demorganize_data(Predicate_Not(Not, SubjVerbObj(Bob, LikesEntity, Box)))) << '\n'
-               << LVD_REFLECT(demorganize_data(Predicate_And(And, sept::Tuple(SubjVerbObj(Bob, LikesEntity, Box), SubjVerbObj(Bob, LikesEntity, Cup))))) << '\n'
-               << LVD_REFLECT(demorganize_data(Predicate_Not(Not, Predicate_And(And, sept::Tuple(SubjVerbObj(Bob, LikesEntity, Box), SubjVerbObj(Bob, LikesEntity, Cup)))))) << '\n'
+               << LVD_REFLECT(demorganize_data(Predicate(Not, SubjVerbObj(Bob, LikesEntity, Box)))) << '\n'
+               << LVD_REFLECT(demorganize_data(Predicate(And, sept::Tuple(SubjVerbObj(Bob, LikesEntity, Box), SubjVerbObj(Bob, LikesEntity, Cup))))) << '\n'
+               << LVD_REFLECT(demorganize_data(Predicate(Not, Predicate(And, sept::Tuple(SubjVerbObj(Bob, LikesEntity, Box), SubjVerbObj(Bob, LikesEntity, Cup)))))) << '\n'
                << '\n';
-//     demorganize_data(Predicate_Not(Not, Predicate_And(And, sept::Tuple(SubjVerbObj(Bob, LikesEntity, Box), SubjVerbObj(Bob, LikesEntity, Cup)))));
+//     demorganize_data(Predicate(Not, Predicate(And, sept::Tuple(SubjVerbObj(Bob, LikesEntity, Box), SubjVerbObj(Bob, LikesEntity, Cup)))));
 
     // Should match https://en.wikipedia.org/wiki/Three-valued_logic
     // TODO: Implement as min/max via integers {-1, 0, 1} instead
@@ -188,11 +202,11 @@ int main (int argc, char **argv) {
 
     BeliefSystem bs;
     bs.add_belief(SubjVerbObj(Alice, LikesEntity, Bob));
-    bs.add_belief(Predicate_Not(Not, SubjVerbObj(Bob, LikesEntity, Alice)));
+    bs.add_belief(Predicate(Not, SubjVerbObj(Bob, LikesEntity, Alice)));
     bs.add_belief(SubjVerbObj(Box, HasProperty, Red));
     bs.add_belief(SubjVerbObj(Box, HasProperty, Big));
-    bs.add_belief(Predicate_And(And, sept::Tuple(SubjVerbObj(Cup, HasProperty, Blue), SubjVerbObj(Cup, HasProperty, Smart))));
-    bs.add_belief(Predicate_Or(Or, sept::Tuple(SubjVerbObj(Hat, HasProperty, Green), SubjVerbObj(Hat, HasProperty, Small))));
+    bs.add_belief(Predicate(And, sept::Tuple(SubjVerbObj(Cup, HasProperty, Blue), SubjVerbObj(Cup, HasProperty, Smart))));
+    bs.add_belief(Predicate(Or, sept::Tuple(SubjVerbObj(Hat, HasProperty, Green), SubjVerbObj(Hat, HasProperty, Small))));
     bs.add_belief(SubjVerbObj(Charlie, Says, SubjVerbObj(Dave, LikesA, Cat)));
     lvd::g_log << lvd::Log::dbg() << bs << '\n';
 
@@ -203,9 +217,9 @@ int main (int argc, char **argv) {
                << LVD_REFLECT(bs.evaluate_predicate(SubjVerbObj(Box, HasProperty, Red))) << '\n'
                << LVD_REFLECT(bs.evaluate_predicate(SubjVerbObj(Box, HasProperty, Big))) << '\n'
                << LVD_REFLECT(sept::Tuple(SubjVerbObj(Box, HasProperty, Red), SubjVerbObj(Box, HasProperty, Big))) << '\n'
-               << LVD_REFLECT(bs.evaluate_predicate(Predicate_And(And, sept::Tuple(SubjVerbObj(Box, HasProperty, Red), SubjVerbObj(Box, HasProperty, Big))))) << '\n'
-               << LVD_REFLECT(bs.evaluate_predicate(Predicate_And(And, sept::Tuple(SubjVerbObj(Box, HasProperty, Red), SubjVerbObj(Box, HasProperty, Stupid))))) << '\n'
-               << LVD_REFLECT(bs.evaluate_predicate(Predicate_And(And, sept::Tuple(SubjVerbObj(Box, HasProperty, Red), Predicate_Not(Not, SubjVerbObj(Box, HasProperty, Big)))))) << '\n'
+               << LVD_REFLECT(bs.evaluate_predicate(Predicate(And, sept::Tuple(SubjVerbObj(Box, HasProperty, Red), SubjVerbObj(Box, HasProperty, Big))))) << '\n'
+               << LVD_REFLECT(bs.evaluate_predicate(Predicate(And, sept::Tuple(SubjVerbObj(Box, HasProperty, Red), SubjVerbObj(Box, HasProperty, Stupid))))) << '\n'
+               << LVD_REFLECT(bs.evaluate_predicate(Predicate(And, sept::Tuple(SubjVerbObj(Box, HasProperty, Red), Predicate(Not, SubjVerbObj(Box, HasProperty, Big)))))) << '\n'
                << '\n';
 
     auto X = sept::FreeVar("X");
@@ -291,14 +305,288 @@ int main (int argc, char **argv) {
     assert(bs.evaluate_predicate(SubjVerbObj(Charlie, LikesA, Cat)));
 
     lvd::g_log << lvd::Log::dbg() << "adding belief...\n";
-    bs.add_belief(Predicate_Not(Not, SubjVerbObj(Dave, LikesA, Cat)));
+    bs.add_belief(Predicate(Not, SubjVerbObj(Dave, LikesA, Cat)));
     lvd::g_log << lvd::Log::dbg() << "testing actionable (contrapositive) implication\n";
     bs.derive_beliefs_2(rule0);
     lvd::g_log << lvd::Log::dbg() << '\n';
-    assert(bs.evaluate_predicate(Predicate_Not(Not, SubjVerbObj(Dave, HasProperty, Smart))));
+    assert(bs.evaluate_predicate(Predicate(Not, SubjVerbObj(Dave, HasProperty, Smart))));
 
-    auto inference = SubjVerbObj(Predicate_And(And, sept::Tuple(SubjVerbObj(X, HasProperty, Smart), SubjVerbObj(X, Says, Y))), Implies, Y);
-    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(inference) << '\n';
+    assert(
+        BeliefSystem::validate_inference(
+            Implication(
+                Predicate_And(
+                    And,
+                    sept::Tuple(
+                        SubjVerbObj(Cup, HasProperty, Smart),
+                        SubjVerbObj(Hat, Says, Red)
+                    )
+                ),
+                Implies,
+                Cat
+            )
+        )
+    );
+    assert(
+        BeliefSystem::validate_inference(
+            Implication(
+                Predicate_And(
+                    And,
+                    sept::Tuple(
+                        SubjVerbObj(X, HasProperty, Smart),
+                        SubjVerbObj(Hat, Says, Red)
+                    )
+                ),
+                Implies,
+                Cat
+            )
+        )
+    );
+    assert(
+        BeliefSystem::validate_inference(
+            Implication(
+                Predicate_And(
+                    And,
+                    sept::Tuple(
+                        SubjVerbObj(X, HasProperty, Smart),
+                        SubjVerbObj(Y, Says, Red)
+                    )
+                ),
+                Implies,
+                Cat
+            )
+        )
+    );
+    assert(
+        BeliefSystem::validate_inference(
+            Implication(
+                Predicate_And(
+                    And,
+                    sept::Tuple(
+                        SubjVerbObj(X, HasProperty, Smart),
+                        SubjVerbObj(Y, Says, Red)
+                    )
+                ),
+                Implies,
+                X
+            )
+        )
+    );
+    assert(
+        BeliefSystem::validate_inference(
+            Implication(
+                Predicate_And(
+                    And,
+                    sept::Tuple(
+                        SubjVerbObj(X, HasProperty, Smart),
+                        SubjVerbObj(Y, Says, Red)
+                    )
+                ),
+                Implies,
+                Y
+            )
+        )
+    );
+    assert(
+        BeliefSystem::validate_inference(
+            Implication(
+                Predicate_And(
+                    And,
+                    sept::Tuple(
+                        SubjVerbObj(X, HasProperty, Smart),
+                        SubjVerbObj(Y, Says, Red)
+                    )
+                ),
+                Implies,
+                Predicate(And, sept::Tuple(X, Y))
+            )
+        )
+    );
+    assert(
+        BeliefSystem::validate_inference(
+            Implication(
+                Predicate_And(
+                    And,
+                    sept::Tuple(
+                        SubjVerbObj(X, HasProperty, Smart),
+                        SubjVerbObj(X, Says, Y)
+                    )
+                ),
+                Implies,
+                Y
+            )
+        )
+    );
+
+    assert(
+        !BeliefSystem::validate_inference(
+            Implication(
+                Predicate_And(
+                    And,
+                    sept::Tuple(
+                        SubjVerbObj(Cup, HasProperty, Smart),
+                        SubjVerbObj(Hat, Says, Red)
+                    )
+                ),
+                Implies,
+                X
+            )
+        )
+    );
+    assert(
+        !BeliefSystem::validate_inference(
+            Implication(
+                Predicate_And(
+                    And,
+                    sept::Tuple(
+                        SubjVerbObj(Y, HasProperty, Smart),
+                        SubjVerbObj(Hat, Says, Red)
+                    )
+                ),
+                Implies,
+                X
+            )
+        )
+    );
+
+    assert(
+        BeliefSystem::validate_inference(
+            Implication(
+                Predicate_Or(
+                    Or,
+                    sept::Tuple(
+                        SubjVerbObj(Cup, HasProperty, Smart),
+                        SubjVerbObj(Hat, Says, Red)
+                    )
+                ),
+                Implies,
+                Cat
+            )
+        )
+    );
+    assert(
+        BeliefSystem::validate_inference(
+            Implication(
+                Predicate_Or(
+                    Or,
+                    sept::Tuple(
+                        SubjVerbObj(X, HasProperty, Smart),
+                        SubjVerbObj(Hat, Says, X)
+                    )
+                ),
+                Implies,
+                Cat
+            )
+        )
+    );
+    assert(
+        BeliefSystem::validate_inference(
+            Implication(
+                Predicate_Or(
+                    Or,
+                    sept::Tuple(
+                        SubjVerbObj(X, HasProperty, Smart),
+                        SubjVerbObj(Hat, Says, X)
+                    )
+                ),
+                Implies,
+                X
+            )
+        )
+    );
+    assert(
+        BeliefSystem::validate_inference(
+            Implication(
+                Predicate_Or(
+                    Or,
+                    sept::Tuple(
+                        SubjVerbObj(X, HasProperty, Y),
+                        SubjVerbObj(Hat, Says, X)
+                    )
+                ),
+                Implies,
+                X
+            )
+        )
+    );
+
+    assert(
+        !BeliefSystem::validate_inference(
+            Implication(
+                Predicate_Or(
+                    Or,
+                    sept::Tuple(
+                        SubjVerbObj(X, HasProperty, Y),
+                        SubjVerbObj(Hat, Says, X)
+                    )
+                ),
+                Implies,
+                Predicate(And, sept::Tuple(X, Y))
+            )
+        )
+    );
+    assert(
+        !BeliefSystem::validate_inference(
+            Implication(
+                Predicate_Or(
+                    Or,
+                    sept::Tuple(
+                        SubjVerbObj(X, HasProperty, Cat),
+                        SubjVerbObj(Hat, Says, X)
+                    )
+                ),
+                Implies,
+                Predicate(And, sept::Tuple(X, Y))
+            )
+        )
+    );
+
+    assert(
+        BeliefSystem::validate_inference(
+            Implication(
+                Predicate(Not, SubjVerbObj(X, HasProperty, Y)),
+                Implies,
+                Predicate(And, sept::Tuple(X, Y))
+            )
+        )
+    );
+    assert(
+        BeliefSystem::validate_inference(
+            Implication(
+                Predicate(Not, Predicate(Or, sept::Tuple(X, Y))),
+                Implies,
+                Predicate(And, sept::Tuple(X, Y))
+            )
+        )
+    );
+
+    assert(
+        !BeliefSystem::validate_inference(
+            Implication(
+                Predicate(Not, Predicate(And, sept::Tuple(X, Y))),
+                Implies,
+                Predicate(And, sept::Tuple(X, Y))
+            )
+        )
+    );
+    assert(
+        !BeliefSystem::validate_inference(
+            Implication(
+                Predicate(Not, Predicate(And, sept::Tuple(X, Y))),
+                Implies,
+                Predicate(And, sept::Tuple(X))
+            )
+        )
+    );
+
+    assert(
+        BeliefSystem::validate_inference(
+            Implication(
+                Predicate(Not, Predicate(And, sept::Tuple(X, Y))),
+                Implies,
+                Cat
+            )
+        )
+    );
 
     return 0;
 }

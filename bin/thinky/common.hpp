@@ -68,11 +68,17 @@ enum class ThinkyNPTerm : ThinkyNPTerm_CType {
 
     // Logical
     NOT,
+    __LogicalUnOp_LOWEST__ = NOT,
+    __LogicalUnOp_HIGHEST__ = NOT,
+
     AND, // Expects the argument to be an array/tuple; (And, ()) evaluates as True (i.e. identity value w.r.t. And)
     OR, // Expects the argument to be an array/tuple; (Or, ()) evaluates as False (i.e. identity value w.r.t. Or)
     XOR, // Expects the argument to be an array/tuple; (Xor, ()) evaluates as False (i.e. identity value w.r.t. Xor)
-    __BoolBinOp_LOWEST__ = AND,
-    __BoolBinOp_HIGHEST__ = XOR,
+    __LogicalNaryOp_LOWEST__ = AND,
+    __LogicalNaryOp_HIGHEST__ = XOR,
+
+    __LogicalOp_LOWEST__ = NOT,
+    __LogicalOp_HIGHEST__ = XOR,
 
     // There's probably some linguistic word for these.
     SHOULD,
@@ -223,7 +229,9 @@ inline ThinkyNPTerm constexpr Dog = ThinkyNPTerm::DOG;
 struct Adjective_c { ABSTRACT_TYPE_CONSTRUCTOR };
 struct Animal_c { ABSTRACT_TYPE_CONSTRUCTOR };
 struct BinOp_c { ABSTRACT_TYPE_CONSTRUCTOR };
-struct BoolBinOp_c { ABSTRACT_TYPE_CONSTRUCTOR };
+struct LogicalNaryOp_c { ABSTRACT_TYPE_CONSTRUCTOR };
+struct LogicalOp_c { ABSTRACT_TYPE_CONSTRUCTOR };
+struct LogicalUnOp_c { ABSTRACT_TYPE_CONSTRUCTOR };
 struct Color_c { ABSTRACT_TYPE_CONSTRUCTOR };
 struct Entity_c { ABSTRACT_TYPE_CONSTRUCTOR };
 struct Object_c { ABSTRACT_TYPE_CONSTRUCTOR };
@@ -235,7 +243,9 @@ struct Verb_c { ABSTRACT_TYPE_CONSTRUCTOR };
 inline bool constexpr operator== (Adjective_c const &, Adjective_c const &) { return true; }
 inline bool constexpr operator== (Animal_c const &, Animal_c const &) { return true; }
 inline bool constexpr operator== (BinOp_c const &, BinOp_c const &) { return true; }
-inline bool constexpr operator== (BoolBinOp_c const &, BoolBinOp_c const &) { return true; }
+inline bool constexpr operator== (LogicalNaryOp_c const &, LogicalNaryOp_c const &) { return true; }
+inline bool constexpr operator== (LogicalOp_c const &, LogicalOp_c const &) { return true; }
+inline bool constexpr operator== (LogicalUnOp_c const &, LogicalUnOp_c const &) { return true; }
 inline bool constexpr operator== (Color_c const &, Color_c const &) { return true; }
 inline bool constexpr operator== (Entity_c const &, Entity_c const &) { return true; }
 inline bool constexpr operator== (Object_c const &, Object_c const &) { return true; }
@@ -246,7 +256,9 @@ inline bool constexpr operator== (Verb_c const &, Verb_c const &) { return true;
 inline std::ostream &operator<< (std::ostream &out, Adjective_c const &) { return out << "Adjective"; }
 inline std::ostream &operator<< (std::ostream &out, Animal_c const &) { return out << "Animal"; }
 inline std::ostream &operator<< (std::ostream &out, BinOp_c const &) { return out << "BinOp"; }
-inline std::ostream &operator<< (std::ostream &out, BoolBinOp_c const &) { return out << "BoolBinOp"; }
+inline std::ostream &operator<< (std::ostream &out, LogicalNaryOp_c const &) { return out << "LogicalNaryOp"; }
+inline std::ostream &operator<< (std::ostream &out, LogicalOp_c const &) { return out << "LogicalOp"; }
+inline std::ostream &operator<< (std::ostream &out, LogicalUnOp_c const &) { return out << "LogicalUnOp"; }
 inline std::ostream &operator<< (std::ostream &out, Color_c const &) { return out << "Color"; }
 inline std::ostream &operator<< (std::ostream &out, Entity_c const &) { return out << "Entity"; }
 inline std::ostream &operator<< (std::ostream &out, Object_c const &) { return out << "Object"; }
@@ -257,7 +269,9 @@ inline std::ostream &operator<< (std::ostream &out, Verb_c const &) { return out
 inline sept::NonParametricType_c abstract_type_of (Adjective_c const &) { return sept::NonParametricType; }
 inline sept::NonParametricType_c abstract_type_of (Animal_c const &) { return sept::NonParametricType; }
 inline sept::NonParametricType_c abstract_type_of (BinOp_c const &) { return sept::NonParametricType; }
-inline sept::NonParametricType_c abstract_type_of (BoolBinOp_c const &) { return sept::NonParametricType; }
+inline sept::NonParametricType_c abstract_type_of (LogicalNaryOp_c const &) { return sept::NonParametricType; }
+inline sept::NonParametricType_c abstract_type_of (LogicalOp_c const &) { return sept::NonParametricType; }
+inline sept::NonParametricType_c abstract_type_of (LogicalUnOp_c const &) { return sept::NonParametricType; }
 inline sept::NonParametricType_c abstract_type_of (Color_c const &) { return sept::NonParametricType; }
 inline sept::NonParametricType_c abstract_type_of (Entity_c const &) { return sept::NonParametricType; }
 inline sept::NonParametricType_c abstract_type_of (Object_c const &) { return sept::NonParametricType; }
@@ -268,7 +282,9 @@ inline sept::NonParametricType_c abstract_type_of (Verb_c const &) { return sept
 inline auto constexpr Adjective = Adjective_c{};
 inline auto constexpr Animal = Adjective_c{};
 inline auto constexpr BinOp = BinOp_c{};
-inline auto constexpr BoolBinOp = BoolBinOp_c{};
+inline auto constexpr LogicalNaryOp = LogicalNaryOp_c{};
+inline auto constexpr LogicalOp = LogicalOp_c{}; // TODO: This could be sept::Union(LogicalNaryOp, LogicalUnOp)
+inline auto constexpr LogicalUnOp = LogicalUnOp_c{};
 inline auto constexpr Color = Color_c{};
 inline auto constexpr Entity = Entity_c{}; // TODO: Entity could be sept::Union(Object, Person)
 inline auto constexpr Object = Object_c{};
@@ -295,9 +311,19 @@ inline bool constexpr inhabits (ThinkyNPTerm t, BinOp_c const &) {
         && ThinkyNPTerm_CType(t) <= ThinkyNPTerm_CType(ThinkyNPTerm::__BinOp_HIGHEST__);
 }
 
-inline bool constexpr inhabits (ThinkyNPTerm t, BoolBinOp_c const &) {
-    return ThinkyNPTerm_CType(ThinkyNPTerm::__BoolBinOp_LOWEST__) <= ThinkyNPTerm_CType(t)
-        && ThinkyNPTerm_CType(t) <= ThinkyNPTerm_CType(ThinkyNPTerm::__BoolBinOp_HIGHEST__);
+inline bool constexpr inhabits (ThinkyNPTerm t, LogicalNaryOp_c const &) {
+    return ThinkyNPTerm_CType(ThinkyNPTerm::__LogicalNaryOp_LOWEST__) <= ThinkyNPTerm_CType(t)
+        && ThinkyNPTerm_CType(t) <= ThinkyNPTerm_CType(ThinkyNPTerm::__LogicalNaryOp_HIGHEST__);
+}
+
+inline bool constexpr inhabits (ThinkyNPTerm t, LogicalOp_c const &) {
+    return ThinkyNPTerm_CType(ThinkyNPTerm::__LogicalOp_LOWEST__) <= ThinkyNPTerm_CType(t)
+        && ThinkyNPTerm_CType(t) <= ThinkyNPTerm_CType(ThinkyNPTerm::__LogicalOp_HIGHEST__);
+}
+
+inline bool constexpr inhabits (ThinkyNPTerm t, LogicalUnOp_c const &) {
+    return ThinkyNPTerm_CType(ThinkyNPTerm::__LogicalUnOp_LOWEST__) <= ThinkyNPTerm_CType(t)
+        && ThinkyNPTerm_CType(t) <= ThinkyNPTerm_CType(ThinkyNPTerm::__LogicalUnOp_HIGHEST__);
 }
 
 inline bool constexpr inhabits (ThinkyNPTerm t, Color_c const &) {
@@ -365,9 +391,23 @@ struct hash<BinOp_c> {
 };
 
 template <>
-struct hash<BoolBinOp_c> {
-    size_t operator () (BoolBinOp_c const &t) const {
-        return lvd::hash(typeid(BoolBinOp_c));
+struct hash<LogicalNaryOp_c> {
+    size_t operator () (LogicalNaryOp_c const &t) const {
+        return lvd::hash(typeid(LogicalNaryOp_c));
+    }
+};
+
+template <>
+struct hash<LogicalOp_c> {
+    size_t operator () (LogicalOp_c const &t) const {
+        return lvd::hash(typeid(LogicalOp_c));
+    }
+};
+
+template <>
+struct hash<LogicalUnOp_c> {
+    size_t operator () (LogicalUnOp_c const &t) const {
+        return lvd::hash(typeid(LogicalUnOp_c));
     }
 };
 

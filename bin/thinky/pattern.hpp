@@ -2,7 +2,9 @@
 
 #include "common.hpp"
 #include "sept/Data.hpp"
+#include "sept/FreeVar.hpp"
 #include "sept/SymbolTable.hpp"
+#include <unordered_set>
 
 class Match {
 public:
@@ -28,3 +30,10 @@ std::optional<Match> matched_pattern__data (sept::Data const &pattern, sept::Dat
 
 // Substitute FreeVars with their SymbolTable-defined values in a term.
 sept::Data free_var_substitution__data (sept::Data const &term, sept::SymbolTable const &symbol_assignment) noexcept;
+
+void free_var_collection__data (sept::Data const &term, std::unordered_set<sept::FreeVarTerm_c> &free_var_s) noexcept;
+inline std::unordered_set<sept::FreeVarTerm_c> free_var_collection__data (sept::Data const &term) noexcept {
+    std::unordered_set<sept::FreeVarTerm_c> retval;
+    free_var_collection__data(term, retval);
+    return retval;
+}
