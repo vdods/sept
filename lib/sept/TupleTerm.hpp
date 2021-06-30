@@ -34,8 +34,9 @@ public:
 
     // Construct an element-wise inhabitant.
     TupleTerm_c operator() (TupleTerm_c const &arguments) const {
+        lvd::g_log << lvd::Log::dbg() << LVD_CALL_SITE() << " - " << LVD_REFLECT(arguments) << '\n';
         if (arguments.size() != this->size())
-            throw std::runtime_error(LVD_FMT("invalid number of elements to construct inhabitant of this tuple; expected " << this->size() << " but got " << arguments.size()));
+            throw std::runtime_error(LVD_FMT("invalid number of elements to construct inhabitant of this tuple (which is " << *this << "); expected " << this->size() << " but got " << arguments.size()));
 
         DataVector retval_elements;
         retval_elements.reserve(this->size());
@@ -48,16 +49,43 @@ public:
         }
         return TupleTerm_c(std::move(retval_elements));
     }
-    TupleTerm_c operator() () const {
-        if (0 != this->size())
-            throw std::runtime_error(LVD_FMT("invalid number of elements to construct inhabitant of this tuple; expected " << this->size() << " but got " << 0));
-
-        return this->operator()(TupleTerm_c());
+    // Construct an element-wise inhabitant.  This overload is necessary so that it doesn't
+    // get handled by the variadic version.
+    TupleTerm_c operator() (TupleTerm_c &arguments) const {
+        return this->operator()(static_cast<TupleTerm_c const &>(arguments));
     }
-    template <typename First_, typename... Rest_, typename = std::enable_if_t<!std::is_same_v<First_,TupleTerm_c> || sizeof...(Rest_) != 0>>
+    // This will consume the elements of arguments, replacing it with the constructed values, and return it.
+    TupleTerm_c operator() (TupleTerm_c &&arguments) const {
+        lvd::g_log << lvd::Log::dbg() << LVD_CALL_SITE() << " - " << LVD_REFLECT(arguments) << '\n';
+        if (arguments.size() != this->size())
+            throw std::runtime_error(LVD_FMT("invalid number of elements to construct inhabitant of this tuple (which is " << *this << "); expected " << this->size() << " but got " << arguments.size()));
+
+        for (size_t i = 0; i < this->size(); ++i) {
+            auto const &element = this->elements()[i];
+            auto &argument = arguments.elements()[i];
+            // In-place replacement.
+            argument = element(argument);
+            if (!inhabits_data(argument, element))
+                LVD_ABORT(LVD_FMT("Tuple element " << element << " constructed a non-inhabitant " << argument));
+        }
+        return std::move(arguments);
+    }
+    TupleTerm_c operator() () const {
+        lvd::g_log << lvd::Log::dbg() << LVD_CALL_SITE() << '\n';
+        if (0 != this->size())
+            throw std::runtime_error(LVD_FMT("invalid number of elements to construct inhabitant of this tuple (which is " << *this << "); expected " << this->size() << " but got " << 0));
+
+        return TupleTerm_c();
+    }
+    template <
+        typename First_,
+        typename... Rest_,
+        typename = std::enable_if_t<!std::is_same_v<First_,TupleTerm_c> || sizeof...(Rest_) != 0>
+    >
     TupleTerm_c operator() (First_ &&first, Rest_&&... rest) const {
+        lvd::g_log << lvd::Log::dbg() << LVD_CALL_SITE() << " - " << LVD_REFLECT(first) << '\n';
         if (1+sizeof...(Rest_) != this->size())
-            throw std::runtime_error(LVD_FMT("invalid number of elements to construct inhabitant of this tuple; expected " << this->size() << " but got " << 1+sizeof...(Rest_)));
+            throw std::runtime_error(LVD_FMT("invalid number of elements to construct inhabitant of this tuple (which is " << *this << "); expected " << this->size() << " but got " << 1+sizeof...(Rest_) << "; " << LVD_REFLECT(first)));
 
         return this->operator()(TupleTerm_c(std::forward<First_>(first), std::forward<Rest_>(rest)...));
     }

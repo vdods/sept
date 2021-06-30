@@ -4,138 +4,16 @@
 
 #include "ast.hpp"
 #include "common.hpp"
+#include "logic.hpp"
 #include "pattern.hpp"
 #include <lvd/abort.hpp>
 #include <lvd/cloned.hpp>
 #include <lvd/comma.hpp>
 #include <lvd/fmt.hpp>
 
-// TODO: Figure out if there's something in std for unordered_set -- it seems not
-template <typename T_>
-bool is_subset (std::unordered_set<T_> const &lhs, std::unordered_set<T_> const &rhs) {
-    for (auto const &lhs_element : lhs)
-        if (rhs.find(lhs_element) == rhs.end())
-            return false;
-    return true;
-}
-
-// This version consumes lhs, operates on it in-place, and then returns it.
-template <typename T_>
-std::unordered_set<T_> unordered_set_union (std::unordered_set<T_> &&lhs, std::unordered_set<T_> const &rhs) {
-    // Add all elements of rhs to lhs.
-    for (auto const &rhs_element : rhs)
-        lhs.emplace(rhs_element);
-    return std::move(lhs);
-}
-
-template <typename T_>
-std::unordered_set<T_> unordered_set_union (std::unordered_set<T_> const &lhs, std::unordered_set<T_> const &rhs) {
-    return unordered_set_union(lvd::cloned(lhs), rhs);
-}
-
-// This version consumes lhs, operates on it in-place, and then returns it.
-template <typename T_>
-std::unordered_set<T_> unordered_set_intersection (std::unordered_set<T_> &&lhs, std::unordered_set<T_> const &rhs) {
-    // For erasing while iterating, see
-    // https://stackoverflow.com/questions/15662412/how-to-remove-multiple-items-from-unordered-map-while-iterating-over-it
-    for (auto lhs_it = lhs.begin(); lhs_it != lhs.end(); ) {
-        auto const &lhs_element = *lhs_it;
-        // If lhs_element is found in rhs, do nothing.  Otherwise remove it from lhs.
-        if (rhs.find(lhs_element) != rhs.end())
-            ++lhs_it;
-        else
-            lhs_it = lhs.erase(lhs_it);
-    }
-    return std::move(lhs);
-}
-
-template <typename T_>
-std::unordered_set<T_> unordered_set_intersection (std::unordered_set<T_> const &lhs, std::unordered_set<T_> const &rhs) {
-    return unordered_set_intersection(lvd::cloned(lhs), rhs);
-}
-
-template <typename T_>
-std::unordered_set<T_> unordered_set_difference (std::unordered_set<T_> const &lhs, std::unordered_set<T_> const &rhs) {
-    std::unordered_set<T_> retval;
-    for (auto const &lhs_element : lhs)
-        if (rhs.find(lhs_element) == lhs.end())
-            retval.emplace(lhs_element);
-    return retval;
-}
-
-template <typename T_>
-std::unordered_set<T_> unordered_set_difference (std::unordered_set<T_> &&lhs, std::unordered_set<T_> const &rhs) {
-    for (auto const &rhs_element : rhs)
-        if (lhs.find(rhs_element) != lhs.end())
-            lhs.erase(rhs_element);
-    return std::move(lhs);
-}
-
-// template <typename T_>
-// void set_intersection__in_place (std::unordered_set<T_> &lhs, std::unordered_set<T_> const &rhs) {
-//     // For erasing while iterating, see
-//     // https://stackoverflow.com/questions/15662412/how-to-remove-multiple-items-from-unordered-map-while-iterating-over-it
-//     for (auto lhs_it = lhs.begin(); lhs_it != lhs.end(); ) {
-//         auto const &lhs_element = *lhs_it;
-//         if (rhs.find(lhs_element) != rhs.end())
-//             ++lhs_it;
-//         else
-//             lhs_it = lhs.erase(lhs_it);
-//     }
-// }
-
-//
-// Logical-predicate-specific FreeVar collection
-//
-
-std::unordered_set<sept::FreeVarTerm_c> concludable_free_var_set__data (sept::Data const &term) {
-    std::unordered_set<sept::FreeVarTerm_c> retval;
-    if (inhabits_data(term, Predicate_And) || inhabits_data(term, Predicate_Xor)) {
-        // Take the union; union of no sets is defined to be empty.
-        auto operand_tuple = term[1].cast<sept::TupleTerm_c>();
-        if (operand_tuple.size() == 0) {
-            // retval is already empty, so nothing to do.
-        } else {
-            retval = concludable_free_var_set__data(operand_tuple[0]);
-            for (size_t i = 0; i < operand_tuple.size(); ++i)
-                retval = unordered_set_union(std::move(retval), concludable_free_var_set__data(operand_tuple[i]));
-        }
-    } else if (inhabits_data(term, Predicate_Or)) {
-        // Take the intersection; intersection of no sets is defined to be empty here (this is
-        // different than the ordinary mathematical convention where an intersection of zero
-        // sets is the "universe" (i.e. biggest) set).
-        auto operand_tuple = term[1].cast<sept::TupleTerm_c>();
-        if (operand_tuple.size() == 0) {
-            // retval is already empty, so nothing to do.
-        } else {
-            retval = concludable_free_var_set__data(operand_tuple[0]);
-            for (size_t i = 0; i < operand_tuple.size(); ++i)
-                retval = unordered_set_intersection(std::move(retval), concludable_free_var_set__data(operand_tuple[i]));
-        }
-    } else if (inhabits_data(term, Predicate_Not)) {
-        // E.g. `(Not, (And, (X, Y))` is equivalent to `(Or, ((Not, X), (Not, Y)))`, so it should use intersection.
-        // E.g. `(Not, (Or, (X, Y))` is equivalent to `(And, ((Not, X), (Not, Y)))`, so it should use union.
-        // Similar with Xor.  Thus it should demorganize before computing concludable_free_var_set.
-        retval = concludable_free_var_set__data(demorganize_data(term[1]));
-    } else {
-        // term is logically opaque, no processing besides determining free var set.
-        retval = free_var_collection__data(term);
-    }
-    return retval;
-}
-
 //
 // Remaining stuff
 //
-
-std::string const &as_string (Trit t) {
-    static std::array<std::string,3> const TABLE{
-        "Nope",
-        "Kwatz",
-        "Yep",
-    };
-    return TABLE.at(Trit_CType(t) - Trit_CType(Trit::__LOWEST__));
-}
 
 Trit BeliefSystem::evaluate_predicate (sept::Data const &predicate) const {
     // Check if the predicate is a verbatim belief already.

@@ -252,9 +252,13 @@ if(BUILD_thinky)
         bin/thinky/belief.hpp
         bin/thinky/common.cpp
         bin/thinky/common.hpp
+        bin/thinky/logic.cpp
+        bin/thinky/logic.hpp
         bin/thinky/main.cpp
         bin/thinky/pattern.cpp
         bin/thinky/pattern.hpp
+        bin/thinky/trit.cpp
+        bin/thinky/trit.hpp
     )
     add_executable(thinky ${thinky_SOURCES})
     target_include_directories(thinky PUBLIC ${sept_SOURCE_DIR}/bin/thinky)

@@ -588,5 +588,23 @@ int main (int argc, char **argv) {
         )
     );
 
+    auto svo0 = SubjVerbObj(Cat, LikesA, Hat);
+    auto svo1 = SubjVerbObj(Alice, HasProperty, Smart);
+    auto svo2 = SubjVerbObj(Bob, HatesEvery, Box);
+
+    auto test0 = LogicalLiteral_Positive(SubjVerbObj(Cat, LikesA, Hat));
+    auto test1 = LogicalLiteral_Positive(svo0);
+    auto test2 = LogicalLiteral_Negative(Not, svo0);
+
+    lvd::g_log << lvd::Log::trc()
+               << LVD_REFLECT(LogicalPredicate) << '\n'
+               << LVD_REFLECT(LogicalLiteral_Positive) << '\n'
+               << LVD_REFLECT(LogicalLiteral_Negative) << '\n'
+               << LVD_REFLECT(LogicalLiteral_Positive(SubjVerbObj(Cat, LikesA, Hat))) << '\n'   // Not sure why this one works and
+               << LVD_REFLECT(LogicalLiteral_Positive(svo0)) << '\n'                            // this one doesn't.  Maybe some difference with copy vs move?
+               << LVD_REFLECT(LogicalLiteral_Negative(Not, svo0)) << '\n'
+               << LVD_REFLECT(Conjunction(And, LogicalPredicateArray(svo0, svo1, svo2))) << '\n'
+               << '\n';
+
     return 0;
 }
