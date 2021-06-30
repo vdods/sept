@@ -3,6 +3,7 @@
 #include "ast.hpp"
 #include "belief.hpp"
 #include "common.hpp"
+#include "logic.hpp"
 #include "pattern.hpp"
 #include "sept/ArrayTerm.hpp"
 #include "sept/ArrayType.hpp"
@@ -139,7 +140,7 @@ inline ostream &operator << (ostream &out, optional<T_> const &x) {
 } // end namespace std
 
 int main (int argc, char **argv) {
-//     lvd::g_log.set_log_level_threshold(lvd::LogLevel::DBG);
+    lvd::g_log.set_log_level_threshold(lvd::LogLevel::DBG);
     lvd::g_log.out().precision(std::numeric_limits<double>::max_digits10+1);
     lvd::g_log.out().setf(std::ios_base::boolalpha, std::ios_base::boolalpha);
 
@@ -231,8 +232,8 @@ int main (int argc, char **argv) {
 
     // Testing
 
-    auto rule2 = Implication(SubjVerbObj(X, LikesEntity, Y), Implies, SubjVerbObj(X, IsA, Person));
-    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(rule2) << '\n';
+    auto rule_x = Implication(SubjVerbObj(X, LikesEntity, Y), Implies, SubjVerbObj(X, IsA, Person));
+    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(rule_x) << '\n';
 
     lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(matched_pattern__data(X, sept::Uint32(123))) << '\n';
 
@@ -288,28 +289,8 @@ int main (int argc, char **argv) {
     }
 
     //
-    // derive_beliefs_2
     //
-
-    auto rule0 = Implication(SubjVerbObj(X, HasProperty, Smart), Implies, SubjVerbObj(X, LikesA, Cat));
-
-    lvd::g_log << lvd::Log::dbg() << "testing non-actionable implication " << rule0 << " ...\n";
-    bs.derive_beliefs_2(rule0);
-    lvd::g_log << lvd::Log::dbg() << "no action should have been taken.\n\n";
-
-    lvd::g_log << lvd::Log::dbg() << "adding belief...\n";
-    bs.add_belief(SubjVerbObj(Charlie, HasProperty, Smart));
-    lvd::g_log << lvd::Log::dbg() << "testing actionable (direct) implication...\n";
-    bs.derive_beliefs_2(rule0);
-    lvd::g_log << lvd::Log::dbg() << '\n';
-    assert(bs.evaluate_predicate(SubjVerbObj(Charlie, LikesA, Cat)));
-
-    lvd::g_log << lvd::Log::dbg() << "adding belief...\n";
-    bs.add_belief(Predicate(Not, SubjVerbObj(Dave, LikesA, Cat)));
-    lvd::g_log << lvd::Log::dbg() << "testing actionable (contrapositive) implication\n";
-    bs.derive_beliefs_2(rule0);
-    lvd::g_log << lvd::Log::dbg() << '\n';
-    assert(bs.evaluate_predicate(Predicate(Not, SubjVerbObj(Dave, HasProperty, Smart))));
+    //
 
     assert(
         BeliefSystem::validate_inference(
@@ -605,6 +586,61 @@ int main (int argc, char **argv) {
                << LVD_REFLECT(LogicalLiteral_Negative(Not, svo0)) << '\n'
                << LVD_REFLECT(Conjunction(And, LogicalPredicateArray(svo0, svo1, svo2))) << '\n'
                << '\n';
+
+    //
+    // derive_beliefs_2
+    //
+
+    auto rule0 = Implication(SubjVerbObj(X, HasProperty, Smart), Implies, SubjVerbObj(X, LikesA, Cat));
+
+    lvd::g_log << lvd::Log::dbg() << "testing non-actionable implication " << rule0 << " ...\n";
+    bs.derive_beliefs_2(rule0);
+    lvd::g_log << lvd::Log::dbg() << "no action should have been taken.\n\n";
+
+    lvd::g_log << lvd::Log::dbg() << "adding belief...\n";
+    bs.add_belief(SubjVerbObj(Charlie, HasProperty, Smart));
+    lvd::g_log << lvd::Log::dbg() << "testing actionable (direct) implication...\n";
+    bs.derive_beliefs_2(rule0);
+    lvd::g_log << lvd::Log::dbg() << '\n';
+    assert(bs.evaluate_predicate(SubjVerbObj(Charlie, LikesA, Cat)));
+
+    lvd::g_log << lvd::Log::dbg() << "adding belief...\n";
+    bs.add_belief(Predicate(Not, SubjVerbObj(Dave, LikesA, Cat)));
+    lvd::g_log << lvd::Log::dbg() << "testing actionable (contrapositive) implication\n";
+    bs.derive_beliefs_2(rule0);
+    lvd::g_log << lvd::Log::dbg() << '\n';
+    assert(bs.evaluate_predicate(Predicate(Not, SubjVerbObj(Dave, HasProperty, Smart))));
+
+    //
+    // A kind of authority epistemology based on loudness.
+    //
+
+    auto rule1 = Implication(Predicate_And(And, sept::Tuple(SubjVerbObj(X, HasProperty, Loud), SubjVerbObj(X, Says, Y))), Implies, Y);
+
+    lvd::g_log << lvd::Log::dbg() << "testing non-actionable implication " << rule1 << " ...\n";
+    bs.derive_beliefs_2(rule1);
+    lvd::g_log << lvd::Log::dbg() << "no action should have been taken.\n\n";
+
+    lvd::g_log << lvd::Log::dbg() << "adding belief...\n";
+    bs.add_belief(SubjVerbObj(Alice, HasProperty, Loud));
+    lvd::g_log << lvd::Log::dbg() << "adding belief...\n";
+    bs.add_belief(SubjVerbObj(Alice, Says, SubjVerbObj(Book, HasProperty, Indigo)));
+    lvd::g_log << lvd::Log::dbg() << "testing actionable (direct) implication...\n";
+    bs.derive_beliefs_2(rule1);
+    lvd::g_log << lvd::Log::dbg() << '\n';
+    assert(bs.evaluate_predicate(SubjVerbObj(Book, HasProperty, Indigo)));
+
+    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(bs) << '\n';
+
+    //
+    // Preferences based on properties
+    //
+
+    auto rule2 = Implication(SubjVerbObj(X, HasProperty, Indigo), Implies, SubjVerbObj(Bob, LikesEntity, X));
+    bs.derive_beliefs_2(rule2);
+    lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(bs) << '\n';
+    assert(bs.evaluate_predicate(SubjVerbObj(Bob, LikesEntity, Book)));
+    assert(bs.evaluate_predicate(Predicate_Not(Not, SubjVerbObj(Alice, HasProperty, Indigo))));
 
     return 0;
 }

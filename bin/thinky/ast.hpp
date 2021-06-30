@@ -43,6 +43,3 @@ extern sept::ArrayETerm_c const ConjunctionOfLogicalLiteralsArray;
 extern sept::ArrayETerm_c const DisjunctionOfLogicalLiteralsArray;
 extern sept::TupleTerm_c const ConjunctiveNormalForm; // Should be a subtype of Conjunction.
 extern sept::TupleTerm_c const DisjunctiveNormalForm; // Should be a subtype of Disjunction.
-
-// Changes the given predicate into its canonical form using deMorgan's laws.
-sept::Data demorganize_data (sept::Data const &predicate);

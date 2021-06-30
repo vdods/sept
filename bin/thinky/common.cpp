@@ -46,6 +46,8 @@ std::string const &as_string (ThinkyNPTerm t) {
         "Smart",
         "Fast",
         "Slow",
+        "Loud",
+        "Quiet",
 
         "Red",
         "Orange",

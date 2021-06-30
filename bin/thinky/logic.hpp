@@ -30,6 +30,9 @@ bool is_disjunction_of_logical_literals (sept::Data const &term);
 
 std::unordered_set<sept::FreeVarTerm_c> concludable_free_var_set__data (sept::Data const &term);
 
+// Changes the given predicate into its canonical form using deMorgan's laws.
+sept::Data demorganize_data (sept::Data const &predicate);
+
 // TODO: Figure out if there's something in std for unordered_set -- it seems not
 template <typename T_>
 bool is_subset (std::unordered_set<T_> const &lhs, std::unordered_set<T_> const &rhs) {

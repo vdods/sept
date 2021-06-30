@@ -3,6 +3,8 @@
 #pragma once
 
 #include "sept/Data.hpp"
+#include "sept/SymbolTable.hpp"
+#include "sept/TupleTerm.hpp"
 #include "trit.hpp"
 #include <unordered_set>
 
@@ -49,13 +51,15 @@ public:
 //         m_inference_set.erase(inference);
 //     }
 
-    static bool validate_inference (sept::Data &demorganized_premise, sept::Data const &conclusion, lvd::Log *validation_failure_log = nullptr);
+    static bool validate_inference (sept::Data const &demorganized_premise, sept::Data const &conclusion, lvd::Log *validation_failure_log = nullptr);
     static bool validate_inference (sept::Data const &inference, lvd::Log *validation_failure_log = nullptr);
+
+    static bool validate_inference_2 (sept::Data const &premise, sept::Data const &conclusion, lvd::Log *validation_failure_log = nullptr);
+    static bool validate_inference_2 (sept::Data const &inference, lvd::Log *validation_failure_log = nullptr);
 
 private:
 
-//     void derive_beliefs_2__impl (sept::Data const &demorganized_premise, sept::Data const &conclusion);
-//     void derive_beliefs_2__Predicate_And (sept::Data const &inference, bool also_derive_using_contrapositive = true);
+    void derive_beliefs_2_impl (lvd::nnsp<sept::SymbolTable> const &parent_symbol_assignment, sept::TupleTerm_c const &premise_logical_literal_tuple, size_t i, sept::Data const &conclusion);
 
     // For now, just a flat storage of beliefs.
     BeliefSet m_belief_set;

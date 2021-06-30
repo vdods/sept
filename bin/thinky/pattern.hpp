@@ -11,22 +11,26 @@ public:
 
     Match (sept::Data &&matched_content, sept::SymbolTable &&symbol_assignment)
         :   m_matched_content(std::move(matched_content))
-        ,   m_symbol_assignment(std::move(symbol_assignment))
+        ,   m_symbol_assignment(lvd::make_nnsp<sept::SymbolTable>(std::move(symbol_assignment)))
     { }
 
     sept::Data const &matched_content () const { return m_matched_content; }
-    sept::SymbolTable const &symbol_assignment () const { return m_symbol_assignment; }
+    sept::SymbolTable const &symbol_assignment () const { return *m_symbol_assignment; }
+    // MAYBE TEMP HACK
+    lvd::nnsp<sept::SymbolTable> const &symbol_assignment_nnsp () const { return m_symbol_assignment; }
 
 private:
 
     sept::Data m_matched_content;
-    sept::SymbolTable m_symbol_assignment;
+    // TEMP HACK: Use not_null shared_ptr for now to simplify derive_beliefs_2
+    lvd::nnsp<sept::SymbolTable> m_symbol_assignment;
 };
 
 std::ostream &operator<< (std::ostream &out, Match const &match);
 
-// This will return std::nullopt if there is no match, otherwise a populated Match struct.
-std::optional<Match> matched_pattern__data (sept::Data const &pattern, sept::Data &&term, lvd::Log *match_failure_log = nullptr);
+// This will return std::nullopt if there is no match, otherwise a populated Match struct.  If parent_symbol_table
+// is provided, it will be used as the parent for the matching SymbolTable (returned in Match).
+std::optional<Match> matched_pattern__data (sept::Data const &pattern, sept::Data &&term, lvd::sp<sept::SymbolTable> const &parent_symbol_table = nullptr, lvd::Log *match_failure_log = nullptr);
 
 // Substitute FreeVars with their SymbolTable-defined values in a term.
 sept::Data free_var_substitution__data (sept::Data const &term, sept::SymbolTable const &symbol_assignment) noexcept;

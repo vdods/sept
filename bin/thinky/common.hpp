@@ -94,6 +94,8 @@ enum class ThinkyNPTerm : ThinkyNPTerm_CType {
     SMART,
     FAST,
     SLOW,
+    LOUD,
+    QUIET,
     // Colors < Adjectives
     RED,
     ORANGE,
@@ -196,6 +198,8 @@ inline ThinkyNPTerm constexpr Stupid = ThinkyNPTerm::STUPID;
 inline ThinkyNPTerm constexpr Smart = ThinkyNPTerm::SMART;
 inline ThinkyNPTerm constexpr Fast = ThinkyNPTerm::FAST;
 inline ThinkyNPTerm constexpr Slow = ThinkyNPTerm::SLOW;
+inline ThinkyNPTerm constexpr Loud = ThinkyNPTerm::LOUD;
+inline ThinkyNPTerm constexpr Quiet = ThinkyNPTerm::QUIET;
 
 inline ThinkyNPTerm constexpr Red = ThinkyNPTerm::RED;
 inline ThinkyNPTerm constexpr Orange = ThinkyNPTerm::ORANGE;

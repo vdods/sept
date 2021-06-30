@@ -24,8 +24,11 @@ public:
     using SymbolMap = std::unordered_map<std::string,Data>;
 
     SymbolTable () = default;
-    SymbolTable (SymbolMap &&symbol_map, lvd::sp<SymbolTable> const &parent_symbol_table)
-        :   m_symbol_map(std::move(symbol_map))
+    SymbolTable (lvd::sp<SymbolTable> const &parent_symbol_table)
+        :   m_parent_symbol_table(parent_symbol_table)
+    { }
+    SymbolTable (SymbolMap &&initial_symbol_map, lvd::sp<SymbolTable> const &parent_symbol_table = nullptr)
+        :   m_symbol_map(std::move(initial_symbol_map))
         ,   m_parent_symbol_table(parent_symbol_table)
     { }
 

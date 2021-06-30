@@ -109,73 +109,43 @@ void BeliefSystem::derive_beliefs (sept::Data const &inference) {
 }
 
 void BeliefSystem::derive_beliefs_2 (sept::Data const &inference, bool also_derive_using_contrapositive) {
+    lvd::g_log << lvd::Log::dbg() << "deriving beliefs from " << LVD_REFLECT(inference) << '\n';
+
     // TODO: Write extractions
     auto premise = inference[0];
     assert(inference[1] == Implies);
     auto conclusion = inference[2];
 
-    // TODO: pre-demorganize premise?
-    auto demorganized_premise = demorganize_data(premise);
-    // If the premise is Predicate_And, then it can be broken up into separate predicates and each one
-    // dealt with individually.
-    if (inhabits_data(demorganized_premise, Predicate_And)) {
-        // TODO: Have to verify that if there are FreeVars in the conclusion, that they're all
-        // present in the premise (otherwise the pattern matching and substitution will leave an
-        // unbound FreeVar in the conclusion).
+    {
+        std::ostringstream out;
+        lvd::Log log_out(out);
+        bool v = validate_inference_2(premise, conclusion, &log_out);
+        lvd::g_log << lvd::Log::trc() << "Skipping inference " << inference << " because it's not valid; " << out.str() << '\n';
+        if (!v) {
+            if (!also_derive_using_contrapositive)
+                return;
+            else
+                LVD_ABORT(out.str());
+        }
+    }
 
-
-//         // p => q
-//         // not(p) or q
-//         //
-//         // (a and b) => q
-//         // not(a and b) or q
-//         // (not(a) or not(b)) or q
-//         // not(a) or (not(b) or q)
-//         // a => not(b) or q
-//         TODO start here -- this needs some re-thinking...
-//         auto operand_tuple = demorganized_premise[1].cast<sept::TupleTerm_c>();
-//         for (auto const &operand : operand_tuple.elements()) {
-//             auto match_o = matched_pattern__data(premise, lvd::cloned(belief));
-//             if (match_o.has_value()) {
-//                 auto const &match = match_o.value();
-//                 add_belief(free_var_substitution__data(conclusion, match.symbol_assignment()));
-//             }
-// //             lvd::g_log << lvd::Log::trc() << "adding belief: " << operand << '\n';
-// //             m_belief_set.insert(operand);
-//         }
-        LVD_ABORT("derive_beliefs_2 not yet implemented for Predicate_And");
-    } else if (inhabits_data(demorganized_premise, Predicate_Or)) {
-        LVD_ABORT("derive_beliefs_2 not yet implemented for Predicate_Or");
-        // TODO: Have to verify that if there are FreeVars in the conclusion, that they're all
-        // present in each of the branches of the Or (otherwise the pattern matching and substitution
-        // will leave an unbound FreeVar in the conclusion)
-//         auto operand_tuple = demorganized_premise[1].cast<sept::TupleTerm_c>();
-//         for (auto const &operand : operand_tuple.elements()) {
-//             auto match_o = matched_pattern__data(premise, lvd::cloned(belief));
-//             if (match_o.has_value()) {
-//                 auto const &match = match_o.value();
-//                 add_belief(free_var_substitution__data(conclusion, match.symbol_assignment()));
-//             }
-// //             lvd::g_log << lvd::Log::trc() << "adding belief: " << operand << '\n';
-// //             m_belief_set.insert(operand);
-//         }
-    } else if (inhabits_data(demorganized_premise, Predicate_Xor)) {
-        // TODO: Have to verify that if there are FreeVars in the conclusion, that they're all
-        // present in the premise (otherwise the pattern matching and substitution will leave an
-        // unbound FreeVar in the conclusion)
-        // TODO: This would have to evaluate all operands
-        LVD_ABORT("derive_beliefs_2 not yet implemented for Predicate_Xor");
+    if (inhabits_data(premise, Predicate_And)) {
+        auto premise_logical_literal_tuple = premise[1].cast<sept::TupleTerm_c>();
+        auto parent_symbol_assignment = lvd::make_sp<sept::SymbolTable>();
+        derive_beliefs_2_impl(parent_symbol_assignment, premise_logical_literal_tuple, 0, conclusion);
     } else {
-        lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(demorganized_premise) << '\n';
+        lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(premise) << '\n';
         auto ig = lvd::IndentGuard(lvd::g_log);
 
+        // TEMP HACK: Brute force search for matches.  Eventually this will be replaced with
+        // a poset search.
         for (auto const &belief : belief_set()) {
-            lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - checking demorganized_premise against " << LVD_REFLECT(belief) << " ...\n";
+            lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - checking premise " << premise << " against " << LVD_REFLECT(belief) << " ...\n";
             // Most beliefs won't match, so this clone is wasteful.  TODO: Fix.
-            auto match_o = matched_pattern__data(demorganized_premise, lvd::cloned(belief));
+            auto match_o = matched_pattern__data(premise, lvd::cloned(belief));
             if (match_o.has_value()) {
                 auto const &match = match_o.value();
-                lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(match) << " -- adding conclusion to belief_set...\n";
+//                 lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(match) << " -- adding conclusion to belief_set...\n";
                 add_belief(free_var_substitution__data(conclusion, match.symbol_assignment()));
             }
         }
@@ -195,11 +165,11 @@ void BeliefSystem::add_belief (sept::Data const &belief) {
     if (inhabits_data(demorganized_belief, Predicate_And)) {
         auto operand_tuple = demorganized_belief[1].move_cast<sept::TupleTerm_c>();
         for (auto const &operand : operand_tuple.elements()) {
-            lvd::g_log << lvd::Log::dbg() << "adding belief: " << operand << '\n';
+            lvd::g_log << lvd::Log::inf() << "adding belief: " << operand << '\n';
             m_belief_set.insert(operand);
         }
     } else {
-        lvd::g_log << lvd::Log::dbg() << "adding belief: " << belief << '\n';
+        lvd::g_log << lvd::Log::inf() << "adding belief: " << belief << '\n';
         m_belief_set.insert(belief);
     }
 }
@@ -218,7 +188,7 @@ inline ostream &operator << (ostream &out, unordered_set<K_,Hash_,KeyEqual_,Allo
 
 } // end namespace std
 
-bool BeliefSystem::validate_inference (sept::Data &demorganized_premise, sept::Data const &conclusion, lvd::Log *validation_failure_log) {
+bool BeliefSystem::validate_inference (sept::Data const &demorganized_premise, sept::Data const &conclusion, lvd::Log *validation_failure_log) {
     // Compute the FreeVar set that can be part of the conclusion.
     auto concludable_free_var_s = concludable_free_var_set__data(demorganized_premise);
     // Compute the FreeVar set in conclusion
@@ -240,9 +210,60 @@ bool BeliefSystem::validate_inference (sept::Data const &inference, lvd::Log *va
     return validate_inference(demorganized_premise, conclusion, validation_failure_log);
 }
 
-// void BeliefSystem::derive_beliefs_2__impl (sept::Data const &demorganized_premise, sept::Data const &conclusion) {
-//
-// }
+bool BeliefSystem::validate_inference_2 (sept::Data const &premise, sept::Data const &conclusion, lvd::Log *validation_failure_log) {
+    if (!is_logical_literal(premise) && !is_conjunction_of_logical_literals(premise))
+        return false;
+    // Compute the FreeVar set that can be part of the conclusion.
+    auto concludable_free_var_s = concludable_free_var_set__data(premise);
+    // Compute the FreeVar set in conclusion
+    auto conclusion_free_var_s = free_var_collection__data(conclusion);
+    // Check the constraint.
+    if (!is_subset(conclusion_free_var_s, concludable_free_var_s)) {
+        if (validation_failure_log != nullptr)
+            *validation_failure_log << "conclusion " << conclusion << " has non-matched free vars: " << unordered_set_difference(conclusion_free_var_s, concludable_free_var_s) << "; " << LVD_REFLECT(concludable_free_var_s) << ", " << LVD_REFLECT(conclusion_free_var_s) << "; premise was " << premise;
+        return false;
+    }
+    // If it passed this far, it's good.
+    return true;
+}
+
+bool BeliefSystem::validate_inference_2 (sept::Data const &inference, lvd::Log *validation_failure_log) {
+    if (!sept::inhabits_data(inference, Implication))
+        return false;
+    auto premise = inference[0];
+    auto conclusion = inference[2];
+    return validate_inference_2(premise, conclusion, validation_failure_log);
+}
+
+void BeliefSystem::derive_beliefs_2_impl (lvd::nnsp<sept::SymbolTable> const &parent_symbol_assignment, sept::TupleTerm_c const &premise_logical_literal_tuple, size_t i, sept::Data const &conclusion) {
+    if (belief_set().empty())
+        return;
+
+    assert(i <= premise_logical_literal_tuple.size());
+    if (i == premise_logical_literal_tuple.size()) {
+        auto substituted_conclusion = free_var_substitution__data(conclusion, parent_symbol_assignment);
+        lvd::g_log << lvd::Log::dbg() << "concluding " << substituted_conclusion << " from premise " << premise_logical_literal_tuple << " with symbol assignment " << *parent_symbol_assignment << '\n';
+        add_belief(substituted_conclusion);
+        return;
+    }
+
+    // TEMP HACK: The way this is implemented, it's exponential in the number of elements of premise_logical_literal_tuple,
+    // where the base of the exponential is the number of beliefs.  This will later be optimized to do an efficient
+    // pattern-matching search through the belief_set using a poset search.
+    for (auto const &belief : belief_set()) {
+        // Most beliefs won't match, so this clone is wasteful.  TODO: Fix.
+        auto log = lvd::g_log << lvd::Log::dbg() << "checking belief " << belief << " against pattern " << premise_logical_literal_tuple[i] << " ... ";
+        auto match_o = matched_pattern__data(premise_logical_literal_tuple[i], lvd::cloned(belief), parent_symbol_assignment);
+        if (match_o.has_value()) {
+            auto const &match = match_o.value();
+            log << "match occurred; " << LVD_REFLECT(match.symbol_assignment()) << '\n';
+            // Recurse, using the match's symbol_assignment as parent for the next.
+            derive_beliefs_2_impl(match.symbol_assignment_nnsp(), premise_logical_literal_tuple, i+1, conclusion);
+        } else {
+            log << "no match occurred\n";
+        }
+    }
+}
 
 std::ostream &operator<< (std::ostream &out, BeliefSystem const &bs) {
     lvd::Log log(out);

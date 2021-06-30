@@ -198,16 +198,15 @@ bool matched_pattern__data (sept::Data const &pattern, sept::Data const &term, s
 }
 
 // TODO: If no match is made, then the rvalue ref `term` is discarded, which is a waste.
-std::optional<Match> matched_pattern__data (sept::Data const &pattern, sept::Data &&term, lvd::Log *match_failure_log) {
+std::optional<Match> matched_pattern__data (sept::Data const &pattern, sept::Data &&term, lvd::sp<sept::SymbolTable> const &parent_symbol_table, lvd::Log *match_failure_log) {
     lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(pattern) << ", " << LVD_REFLECT(term) << '\n';
     auto ig = lvd::IndentGuard(lvd::g_log);
 
-    sept::SymbolTable symbol_assignment;
+    sept::SymbolTable symbol_assignment(parent_symbol_table);
     if (matched_pattern__data(pattern, term, symbol_assignment, match_failure_log))
         return std::make_optional<Match>(std::move(term), std::move(symbol_assignment));
     else
         return std::nullopt;
-
 }
 
 //
