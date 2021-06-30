@@ -5538,3 +5538,29 @@ Structured Expression Project Toolkit Design Document
             any number elements and VariadicFreeVar(X,ArrayS(R)) to match R elements (where R could eventually
             be a range).  Maybe a type `Variadic` could be factored out and made generally useful?
 
+2021.05.22
+
+-   Another use case for semantic subtypes:
+    For a version control system which is actually aware of the sept data that it manages (as code should be)
+    could prevent certain kinds of values from being committed to the repo -- in particular, passwords and
+    encryption keys and other secrets.  There would be semantic classes that indicate each of these, and
+    in order to represent those data types, you would have to use those semantic classes, and therefore
+    anything that handles that data would be able to easily detect the presence of that kind of data.  E.g.
+
+        Password const DB_PASSWORD = Password("2313374U");
+        ECPrivKey const SIGNING_KEY = ECPrivKey(b"DEADBEEF");
+
+    would be detected by the source control system, and would be prevented.  Representing these as non-semantic
+    values, e.g.
+
+        std::string const DB_PASSWORD_STR = "2313374U";
+        ByteArray const SIGNING_KEY = b"DEADBEEF";
+
+    would have to be prevented by careful design of the semantic types themselves, so that it's not possible to
+    promote these types to Password/ECPrivKey.  For example, in the vein of the Bell-LaPadula model of access
+    (see https://goteleport.com/blog/access-controls/ ), it should be impossible to promote a non-sensitive
+    piece of data to sensitive, and vice-versa.
+
+    Note that a literal value of type (e.g.) Password in a program is different than a variable in a function
+    that has type Password, and so this wouldn't trigger on that case, and there wouldn't have to be any
+    special logic to facilitate that distinction.
