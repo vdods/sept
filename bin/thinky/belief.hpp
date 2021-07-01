@@ -8,13 +8,15 @@
 #include "trit.hpp"
 #include <unordered_set>
 
+using BeliefSet = std::unordered_set<sept::Data>;
+// using InferenceSet = std::unordered_set<sept::Data>;
+
+void add_belief_to (BeliefSet &belief_set, sept::Data const &belief);
+
 // TODO: Could use PartiallyOrderedSet_t containing types, where beliefs are stored
 // in the set as FormalTypeOf(belief).
 class BeliefSystem {
 public:
-
-    using BeliefSet = std::unordered_set<sept::Data>;
-//     using InferenceSet = std::unordered_set<sept::Data>;
 
     BeliefSystem () { }
 
@@ -22,12 +24,9 @@ public:
     // TODO: Implement some limit on the number of search steps.
     Trit evaluate_predicate (sept::Data const &predicate) const;
 
-    // Attempts to derive new beliefs using a rule of inference.
-    void derive_beliefs (sept::Data const &inference);
-    // Here's the "real" version of derive_beliefs, which uses pattern matching against a
-    // rule of inference "schema" (meaning a rule of inference with free variables which
-    // are to be replaced with matching values).
-    void derive_beliefs_2 (sept::Data const &inference, bool also_derive_using_contrapositive = true);
+    // Derives beliefs using pattern matching against a rule of inference "schema" (meaning a
+    // rule of inference potentially with free variables which are to be replaced with matching values).
+    void derive_beliefs (sept::Data const &inference, bool also_derive_using_contrapositive = true);
 
     BeliefSet const &belief_set () const { return m_belief_set; }
     bool contains_belief (sept::Data const &belief) const {
@@ -51,15 +50,12 @@ public:
 //         m_inference_set.erase(inference);
 //     }
 
-    static bool validate_inference (sept::Data const &demorganized_premise, sept::Data const &conclusion, lvd::Log *validation_failure_log = nullptr);
+    static bool validate_inference (sept::Data const &premise, sept::Data const &conclusion, lvd::Log *validation_failure_log = nullptr);
     static bool validate_inference (sept::Data const &inference, lvd::Log *validation_failure_log = nullptr);
-
-    static bool validate_inference_2 (sept::Data const &premise, sept::Data const &conclusion, lvd::Log *validation_failure_log = nullptr);
-    static bool validate_inference_2 (sept::Data const &inference, lvd::Log *validation_failure_log = nullptr);
 
 private:
 
-    void derive_beliefs_2_impl (lvd::nnsp<sept::SymbolTable> const &parent_symbol_assignment, sept::TupleTerm_c const &premise_logical_literal_tuple, size_t i, sept::Data const &conclusion);
+    void derive_beliefs_impl (BeliefSet &new_belief_set, lvd::nnsp<sept::SymbolTable> const &parent_symbol_assignment, sept::TupleTerm_c const &premise_logical_literal_tuple, size_t i, sept::Data const &conclusion);
 
     // For now, just a flat storage of beliefs.
     BeliefSet m_belief_set;

@@ -430,7 +430,7 @@ int main (int argc, char **argv) {
     );
 
     assert(
-        BeliefSystem::validate_inference(
+        !BeliefSystem::validate_inference(
             Implication(
                 Predicate_Or(
                     Or,
@@ -445,7 +445,7 @@ int main (int argc, char **argv) {
         )
     );
     assert(
-        BeliefSystem::validate_inference(
+        !BeliefSystem::validate_inference(
             Implication(
                 Predicate_Or(
                     Or,
@@ -460,7 +460,7 @@ int main (int argc, char **argv) {
         )
     );
     assert(
-        BeliefSystem::validate_inference(
+        !BeliefSystem::validate_inference(
             Implication(
                 Predicate_Or(
                     Or,
@@ -475,7 +475,7 @@ int main (int argc, char **argv) {
         )
     );
     assert(
-        BeliefSystem::validate_inference(
+        !BeliefSystem::validate_inference(
             Implication(
                 Predicate_Or(
                     Or,
@@ -531,8 +531,9 @@ int main (int argc, char **argv) {
         )
     );
     assert(
-        BeliefSystem::validate_inference(
+        !BeliefSystem::validate_inference(
             Implication(
+                // This is not a conjunction of logical literals
                 Predicate(Not, Predicate(Or, sept::Tuple(X, Y))),
                 Implies,
                 Predicate(And, sept::Tuple(X, Y))
@@ -560,7 +561,7 @@ int main (int argc, char **argv) {
     );
 
     assert(
-        BeliefSystem::validate_inference(
+        !BeliefSystem::validate_inference(
             Implication(
                 Predicate(Not, Predicate(And, sept::Tuple(X, Y))),
                 Implies,
@@ -588,26 +589,26 @@ int main (int argc, char **argv) {
                << '\n';
 
     //
-    // derive_beliefs_2
+    // derive_beliefs
     //
 
     auto rule0 = Implication(SubjVerbObj(X, HasProperty, Smart), Implies, SubjVerbObj(X, LikesA, Cat));
 
     lvd::g_log << lvd::Log::dbg() << "testing non-actionable implication " << rule0 << " ...\n";
-    bs.derive_beliefs_2(rule0);
+    bs.derive_beliefs(rule0);
     lvd::g_log << lvd::Log::dbg() << "no action should have been taken.\n\n";
 
     lvd::g_log << lvd::Log::dbg() << "adding belief...\n";
     bs.add_belief(SubjVerbObj(Charlie, HasProperty, Smart));
     lvd::g_log << lvd::Log::dbg() << "testing actionable (direct) implication...\n";
-    bs.derive_beliefs_2(rule0);
+    bs.derive_beliefs(rule0);
     lvd::g_log << lvd::Log::dbg() << '\n';
     assert(bs.evaluate_predicate(SubjVerbObj(Charlie, LikesA, Cat)));
 
     lvd::g_log << lvd::Log::dbg() << "adding belief...\n";
     bs.add_belief(Predicate(Not, SubjVerbObj(Dave, LikesA, Cat)));
     lvd::g_log << lvd::Log::dbg() << "testing actionable (contrapositive) implication\n";
-    bs.derive_beliefs_2(rule0);
+    bs.derive_beliefs(rule0);
     lvd::g_log << lvd::Log::dbg() << '\n';
     assert(bs.evaluate_predicate(Predicate(Not, SubjVerbObj(Dave, HasProperty, Smart))));
 
@@ -618,7 +619,7 @@ int main (int argc, char **argv) {
     auto rule1 = Implication(Predicate_And(And, sept::Tuple(SubjVerbObj(X, HasProperty, Loud), SubjVerbObj(X, Says, Y))), Implies, Y);
 
     lvd::g_log << lvd::Log::dbg() << "testing non-actionable implication " << rule1 << " ...\n";
-    bs.derive_beliefs_2(rule1);
+    bs.derive_beliefs(rule1);
     lvd::g_log << lvd::Log::dbg() << "no action should have been taken.\n\n";
 
     lvd::g_log << lvd::Log::dbg() << "adding belief...\n";
@@ -626,7 +627,7 @@ int main (int argc, char **argv) {
     lvd::g_log << lvd::Log::dbg() << "adding belief...\n";
     bs.add_belief(SubjVerbObj(Alice, Says, SubjVerbObj(Book, HasProperty, Indigo)));
     lvd::g_log << lvd::Log::dbg() << "testing actionable (direct) implication...\n";
-    bs.derive_beliefs_2(rule1);
+    bs.derive_beliefs(rule1);
     lvd::g_log << lvd::Log::dbg() << '\n';
     assert(bs.evaluate_predicate(SubjVerbObj(Book, HasProperty, Indigo)));
 
@@ -637,7 +638,7 @@ int main (int argc, char **argv) {
     //
 
     auto rule2 = Implication(SubjVerbObj(X, HasProperty, Indigo), Implies, SubjVerbObj(Bob, LikesEntity, X));
-    bs.derive_beliefs_2(rule2);
+    bs.derive_beliefs(rule2);
     lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(bs) << '\n';
     assert(bs.evaluate_predicate(SubjVerbObj(Bob, LikesEntity, Book)));
     assert(bs.evaluate_predicate(Predicate_Not(Not, SubjVerbObj(Alice, HasProperty, Indigo))));

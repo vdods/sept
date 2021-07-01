@@ -11,6 +11,22 @@
 #include <lvd/comma.hpp>
 #include <lvd/fmt.hpp>
 
+void add_belief_to (BeliefSet &belief_set, sept::Data const &belief) {
+    auto demorganized_belief = demorganize_data(belief);
+    // If a belief is Predicate_And, then it can be broken up into separate beliefs and each one added.
+    // Otherwise it's just added as is.
+    if (inhabits_data(demorganized_belief, Predicate_And)) {
+        auto operand_tuple = demorganized_belief[1].move_cast<sept::TupleTerm_c>();
+        for (auto const &operand : operand_tuple.elements()) {
+            lvd::g_log << lvd::Log::inf() << "adding belief (to " << &belief_set << "): " << operand << '\n';
+            belief_set.insert(operand);
+        }
+    } else {
+        lvd::g_log << lvd::Log::inf() << "adding belief (to " << &belief_set << "): " << belief << '\n';
+        belief_set.insert(belief);
+    }
+}
+
 //
 // Remaining stuff
 //
@@ -70,45 +86,7 @@ Trit BeliefSystem::evaluate_predicate (sept::Data const &predicate) const {
     }
 }
 
-void BeliefSystem::derive_beliefs (sept::Data const &inference) {
-    assert(inhabits_data(inference, Implication));
-    // TODO: Write extractions
-    auto premise = inference[0];
-    assert(inference[1] == Implies);
-    auto conclusion = inference[2];
-
-    // NOTE: Because the direct implication and the contrapositive are both acted upon,
-    // this could result in some redundancy.
-
-    // Direct implication.
-    switch (evaluate_predicate(premise)) {
-        case Yep:
-            add_belief(conclusion);
-            break;
-        case Kwatz:
-            // TODO: If the premise is Predicate_Not/And/Or/Xor, then the unknown bit
-            // could be added to some "wondering about" predicate set.
-            break;
-        case Nope:
-            // Nothing to be inferred.
-            break;
-    }
-    // Evaluate the contrapositive.
-    switch (evaluate_predicate(conclusion)) {
-        case Yep:
-            // Nothing to be inferred.
-            break;
-        case Kwatz:
-            // TODO: If the premise is Predicate_Not/And/Or/Xor, then the unknown bit
-            // could be added to some "wondering about" predicate set.
-            break;
-        case Nope:
-            add_belief(Predicate(Not, premise));
-            break;
-    }
-}
-
-void BeliefSystem::derive_beliefs_2 (sept::Data const &inference, bool also_derive_using_contrapositive) {
+void BeliefSystem::derive_beliefs (sept::Data const &inference, bool also_derive_using_contrapositive) {
     lvd::g_log << lvd::Log::dbg() << "deriving beliefs from " << LVD_REFLECT(inference) << '\n';
 
     // TODO: Write extractions
@@ -119,7 +97,7 @@ void BeliefSystem::derive_beliefs_2 (sept::Data const &inference, bool also_deri
     {
         std::ostringstream out;
         lvd::Log log_out(out);
-        bool v = validate_inference_2(premise, conclusion, &log_out);
+        bool v = validate_inference(premise, conclusion, &log_out);
         lvd::g_log << lvd::Log::trc() << "Skipping inference " << inference << " because it's not valid; " << out.str() << '\n';
         if (!v) {
             if (!also_derive_using_contrapositive)
@@ -129,10 +107,11 @@ void BeliefSystem::derive_beliefs_2 (sept::Data const &inference, bool also_deri
         }
     }
 
+    BeliefSet new_belief_set;
     if (inhabits_data(premise, Predicate_And)) {
-        auto premise_logical_literal_tuple = premise[1].cast<sept::TupleTerm_c>();
         auto parent_symbol_assignment = lvd::make_sp<sept::SymbolTable>();
-        derive_beliefs_2_impl(parent_symbol_assignment, premise_logical_literal_tuple, 0, conclusion);
+        auto premise_logical_literal_tuple = premise[1].cast<sept::TupleTerm_c>();
+        derive_beliefs_impl(new_belief_set, parent_symbol_assignment, premise_logical_literal_tuple, 0, conclusion);
     } else {
         lvd::g_log << lvd::Log::trc() << LVD_CALL_SITE() << " - " << LVD_REFLECT(premise) << '\n';
         auto ig = lvd::IndentGuard(lvd::g_log);
@@ -146,32 +125,24 @@ void BeliefSystem::derive_beliefs_2 (sept::Data const &inference, bool also_deri
             if (match_o.has_value()) {
                 auto const &match = match_o.value();
 //                 lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(match) << " -- adding conclusion to belief_set...\n";
-                add_belief(free_var_substitution__data(conclusion, match.symbol_assignment()));
+                add_belief_to(new_belief_set, free_var_substitution__data(conclusion, match.symbol_assignment()));
             }
         }
+    }
+    // Add the new beliefs to the BeliefSystem's belief set.
+    for (auto &new_belief : new_belief_set) {
+        m_belief_set.emplace(std::move(new_belief));
     }
 
     if (also_derive_using_contrapositive) {
         auto contrapositive = Implication(Predicate(Not, conclusion), Implies, Predicate(Not, premise));
         // Don't derive using contrapositive again, or infinite loop.
-        derive_beliefs_2(contrapositive, false);
+        derive_beliefs(contrapositive, false);
     }
 }
 
 void BeliefSystem::add_belief (sept::Data const &belief) {
-    auto demorganized_belief = demorganize_data(belief);
-    // If a belief is Predicate_And, then it can be broken up into separate beliefs and each one added.
-    // Otherwise it's just added as is.
-    if (inhabits_data(demorganized_belief, Predicate_And)) {
-        auto operand_tuple = demorganized_belief[1].move_cast<sept::TupleTerm_c>();
-        for (auto const &operand : operand_tuple.elements()) {
-            lvd::g_log << lvd::Log::inf() << "adding belief: " << operand << '\n';
-            m_belief_set.insert(operand);
-        }
-    } else {
-        lvd::g_log << lvd::Log::inf() << "adding belief: " << belief << '\n';
-        m_belief_set.insert(belief);
-    }
+    add_belief_to(m_belief_set, belief);
 }
 
 // TEMP HACK
@@ -188,29 +159,7 @@ inline ostream &operator << (ostream &out, unordered_set<K_,Hash_,KeyEqual_,Allo
 
 } // end namespace std
 
-bool BeliefSystem::validate_inference (sept::Data const &demorganized_premise, sept::Data const &conclusion, lvd::Log *validation_failure_log) {
-    // Compute the FreeVar set that can be part of the conclusion.
-    auto concludable_free_var_s = concludable_free_var_set__data(demorganized_premise);
-    // Compute the FreeVar set in conclusion
-    auto conclusion_free_var_s = free_var_collection__data(conclusion);
-    // Check the constraint.
-    if (!is_subset(conclusion_free_var_s, concludable_free_var_s)) {
-        if (validation_failure_log != nullptr)
-            *validation_failure_log << "conclusion has non-matched free vars: " << unordered_set_difference(conclusion_free_var_s, concludable_free_var_s) << "; " << LVD_REFLECT(concludable_free_var_s) << ", " << LVD_REFLECT(conclusion_free_var_s) << '\n';
-        return false;
-    }
-    // If it passed this far, it's good.
-    return true;
-}
-
-bool BeliefSystem::validate_inference (sept::Data const &inference, lvd::Log *validation_failure_log) {
-    assert(sept::inhabits_data(inference, Implication));
-    auto demorganized_premise = demorganize_data(inference[0]);
-    auto conclusion = inference[2];
-    return validate_inference(demorganized_premise, conclusion, validation_failure_log);
-}
-
-bool BeliefSystem::validate_inference_2 (sept::Data const &premise, sept::Data const &conclusion, lvd::Log *validation_failure_log) {
+bool BeliefSystem::validate_inference (sept::Data const &premise, sept::Data const &conclusion, lvd::Log *validation_failure_log) {
     if (!is_logical_literal(premise) && !is_conjunction_of_logical_literals(premise))
         return false;
     // Compute the FreeVar set that can be part of the conclusion.
@@ -227,15 +176,15 @@ bool BeliefSystem::validate_inference_2 (sept::Data const &premise, sept::Data c
     return true;
 }
 
-bool BeliefSystem::validate_inference_2 (sept::Data const &inference, lvd::Log *validation_failure_log) {
+bool BeliefSystem::validate_inference (sept::Data const &inference, lvd::Log *validation_failure_log) {
     if (!sept::inhabits_data(inference, Implication))
         return false;
     auto premise = inference[0];
     auto conclusion = inference[2];
-    return validate_inference_2(premise, conclusion, validation_failure_log);
+    return validate_inference(premise, conclusion, validation_failure_log);
 }
 
-void BeliefSystem::derive_beliefs_2_impl (lvd::nnsp<sept::SymbolTable> const &parent_symbol_assignment, sept::TupleTerm_c const &premise_logical_literal_tuple, size_t i, sept::Data const &conclusion) {
+void BeliefSystem::derive_beliefs_impl (BeliefSet &new_belief_set, lvd::nnsp<sept::SymbolTable> const &parent_symbol_assignment, sept::TupleTerm_c const &premise_logical_literal_tuple, size_t i, sept::Data const &conclusion) {
     if (belief_set().empty())
         return;
 
@@ -243,7 +192,7 @@ void BeliefSystem::derive_beliefs_2_impl (lvd::nnsp<sept::SymbolTable> const &pa
     if (i == premise_logical_literal_tuple.size()) {
         auto substituted_conclusion = free_var_substitution__data(conclusion, parent_symbol_assignment);
         lvd::g_log << lvd::Log::dbg() << "concluding " << substituted_conclusion << " from premise " << premise_logical_literal_tuple << " with symbol assignment " << *parent_symbol_assignment << '\n';
-        add_belief(substituted_conclusion);
+        add_belief_to(new_belief_set, substituted_conclusion);
         return;
     }
 
@@ -258,7 +207,7 @@ void BeliefSystem::derive_beliefs_2_impl (lvd::nnsp<sept::SymbolTable> const &pa
             auto const &match = match_o.value();
             log << "match occurred; " << LVD_REFLECT(match.symbol_assignment()) << '\n';
             // Recurse, using the match's symbol_assignment as parent for the next.
-            derive_beliefs_2_impl(match.symbol_assignment_nnsp(), premise_logical_literal_tuple, i+1, conclusion);
+            derive_beliefs_impl(new_belief_set, match.symbol_assignment_nnsp(), premise_logical_literal_tuple, i+1, conclusion);
         } else {
             log << "no match occurred\n";
         }

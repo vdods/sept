@@ -22,7 +22,7 @@ public:
 private:
 
     sept::Data m_matched_content;
-    // TEMP HACK: Use not_null shared_ptr for now to simplify derive_beliefs_2
+    // TEMP HACK: Use not_null shared_ptr for now to simplify derive_beliefs
     lvd::nnsp<sept::SymbolTable> m_symbol_assignment;
 };
 

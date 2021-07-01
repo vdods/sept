@@ -18,8 +18,7 @@ extern sept::TupleTerm_c const Predicate_Or;
 extern sept::TupleTerm_c const Predicate_Xor;
 extern sept::TupleTerm_c const Predicate_LogicalNaryOp;
 extern sept::TupleTerm_c const Predicate_LogicalUnOp;
-
-inline auto const Predicate_LogicalOp = sept::Union(Predicate_LogicalNaryOp, Predicate_LogicalUnOp);
+extern sept::UnionTerm_c const Predicate_LogicalOp;
 
 extern sept::Data LogicalPredicate_as_Data;
 extern sept::RefTerm_c const LogicalPredicate_as_Ref;

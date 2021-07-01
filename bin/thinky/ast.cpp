@@ -16,6 +16,7 @@ sept::TupleTerm_c const Predicate_Or = sept::Tuple(sept::FormalTypeOf(Or), sept:
 sept::TupleTerm_c const Predicate_Xor = sept::Tuple(sept::FormalTypeOf(Xor), sept::Tuple);
 sept::TupleTerm_c const Predicate_LogicalNaryOp = sept::Tuple(LogicalNaryOp, sept::Tuple);
 sept::TupleTerm_c const Predicate_LogicalUnOp = sept::Tuple(LogicalUnOp, sept::Tuple);
+sept::UnionTerm_c const Predicate_LogicalOp = sept::Union(Predicate_LogicalNaryOp, Predicate_LogicalUnOp);
 
 sept::RefTerm_c const LogicalPredicate_as_Ref = sept::MemRef(&LogicalPredicate_as_Data);
 
