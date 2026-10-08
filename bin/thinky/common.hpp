@@ -156,6 +156,7 @@ enum class ThinkyNPTerm : ThinkyNPTerm_CType {
 size_t constexpr THINKY_NP_TERM_COUNT = size_t(ThinkyNPTerm::__HIGHEST__)+1 - size_t(ThinkyNPTerm::__LOWEST__);
 
 std::string const &as_string (ThinkyNPTerm t);
+ThinkyNPTerm thinky_np_term_from_string (std::string const &s) noexcept(false);
 
 inline std::ostream &operator<< (std::ostream &out, ThinkyNPTerm const &t) {
     return out << as_string(t);

@@ -3,7 +3,9 @@
 #include "ast.hpp"
 #include "belief.hpp"
 #include "common.hpp"
+#include <limits>
 #include "logic.hpp"
+#include "parse.hpp"
 #include "pattern.hpp"
 #include "sept/ArrayTerm.hpp"
 #include "sept/ArrayType.hpp"
@@ -137,10 +139,68 @@ inline ostream &operator << (ostream &out, optional<T_> const &x) {
     return out << ')';
 }
 
+template <typename T_>
+inline ostream &operator << (ostream &out, unordered_set<T_> const &x) {
+    lvd::Log log(out);
+    log << "unordered_set{";
+    auto csd = lvd::make_comma_space_delimiter();
+    {
+        auto ig = lvd::IndentGuard(log);
+        for (auto const &e : x) {
+            log << csd << e;
+        }
+    }
+    log << "}\n";
+    return out;
+}
+
 } // end namespace std
 
+void interactive_session (std::istream &in) {
+    auto X = sept::FreeVar("X");
+    auto Y = sept::FreeVar("Y");
+    auto Z = sept::FreeVar("Z");
+    BeliefSystem bs;
+    sept::DataVector inferences{
+        Implication(SubjVerbObj(Alice, Says, X), Implies, X),
+        Implication(SubjVerbObj(Bob, Says, X), Implies, Predicate_Not(Not, X))
+    };
+    while (true) {
+        std::string input;
+        lvd::g_log << lvd::Log::inf() << "Input predicate, human:\n";
+        std::getline(in, input);
+        BeliefSet new_belief_set;
+        try {
+            auto predicate = parse_data(input);
+            if (predicate == sept::Void) {
+                lvd::g_log << lvd::Log::inf() << "Got empty line; exiting.\n";
+                break;
+            }
+            if (predicate != sept::Void) {
+                lvd::g_log << lvd::Log::inf() << "Got predicate: " << predicate << '\n';
+                bs.add_belief(predicate);
+
+                for (auto const &inference : inferences) {
+                    try {
+                        lvd::g_log << lvd::Log::dbg() << "Deriving beliefs for inference: " << inference << '\n';
+                        new_belief_set.clear();
+                        bs.derive_beliefs_and_add(new_belief_set, inference);
+                        lvd::g_log << lvd::Log::dbg() << "New beliefs: " << new_belief_set << '\n';
+                        new_belief_set.clear();
+                    } catch (std::exception const &e) {
+                        lvd::g_log << lvd::Log::err() << "Error while deriving beliefs: " << e.what() << '\n';
+                    }
+                }
+                lvd::g_log << lvd::Log::dbg() << "Current state: " << bs << '\n';
+            }
+        } catch (std::exception const &e) {
+            lvd::g_log << lvd::Log::err() << "Parse error: " << e.what() << '\n';
+        }
+    }
+}
+
 int main (int argc, char **argv) {
-    lvd::g_log.set_log_level_threshold(lvd::LogLevel::DBG);
+//     lvd::g_log.set_log_level_threshold(lvd::LogLevel::DBG);
     lvd::g_log.out().precision(std::numeric_limits<double>::max_digits10+1);
     lvd::g_log.out().setf(std::ios_base::boolalpha, std::ios_base::boolalpha);
 
@@ -570,6 +630,16 @@ int main (int argc, char **argv) {
         )
     );
 
+    assert(
+        BeliefSystem::validate_inference(
+            Implication(
+                Predicate(Not, X),
+                Implies,
+                Predicate(Not, SubjVerbObj(Alice, Says, X))
+            )
+        )
+    );
+
     auto svo0 = SubjVerbObj(Cat, LikesA, Hat);
     auto svo1 = SubjVerbObj(Alice, HasProperty, Smart);
     auto svo2 = SubjVerbObj(Bob, HatesEvery, Box);
@@ -589,26 +659,26 @@ int main (int argc, char **argv) {
                << '\n';
 
     //
-    // derive_beliefs
+    // derive_beliefs_and_add
     //
 
     auto rule0 = Implication(SubjVerbObj(X, HasProperty, Smart), Implies, SubjVerbObj(X, LikesA, Cat));
 
     lvd::g_log << lvd::Log::dbg() << "testing non-actionable implication " << rule0 << " ...\n";
-    bs.derive_beliefs(rule0);
+    bs.derive_beliefs_and_add(rule0);
     lvd::g_log << lvd::Log::dbg() << "no action should have been taken.\n\n";
 
     lvd::g_log << lvd::Log::dbg() << "adding belief...\n";
     bs.add_belief(SubjVerbObj(Charlie, HasProperty, Smart));
     lvd::g_log << lvd::Log::dbg() << "testing actionable (direct) implication...\n";
-    bs.derive_beliefs(rule0);
+    bs.derive_beliefs_and_add(rule0);
     lvd::g_log << lvd::Log::dbg() << '\n';
     assert(bs.evaluate_predicate(SubjVerbObj(Charlie, LikesA, Cat)));
 
     lvd::g_log << lvd::Log::dbg() << "adding belief...\n";
     bs.add_belief(Predicate(Not, SubjVerbObj(Dave, LikesA, Cat)));
     lvd::g_log << lvd::Log::dbg() << "testing actionable (contrapositive) implication\n";
-    bs.derive_beliefs(rule0);
+    bs.derive_beliefs_and_add(rule0);
     lvd::g_log << lvd::Log::dbg() << '\n';
     assert(bs.evaluate_predicate(Predicate(Not, SubjVerbObj(Dave, HasProperty, Smart))));
 
@@ -619,7 +689,7 @@ int main (int argc, char **argv) {
     auto rule1 = Implication(Predicate_And(And, sept::Tuple(SubjVerbObj(X, HasProperty, Loud), SubjVerbObj(X, Says, Y))), Implies, Y);
 
     lvd::g_log << lvd::Log::dbg() << "testing non-actionable implication " << rule1 << " ...\n";
-    bs.derive_beliefs(rule1);
+    bs.derive_beliefs_and_add(rule1);
     lvd::g_log << lvd::Log::dbg() << "no action should have been taken.\n\n";
 
     lvd::g_log << lvd::Log::dbg() << "adding belief...\n";
@@ -627,7 +697,7 @@ int main (int argc, char **argv) {
     lvd::g_log << lvd::Log::dbg() << "adding belief...\n";
     bs.add_belief(SubjVerbObj(Alice, Says, SubjVerbObj(Book, HasProperty, Indigo)));
     lvd::g_log << lvd::Log::dbg() << "testing actionable (direct) implication...\n";
-    bs.derive_beliefs(rule1);
+    bs.derive_beliefs_and_add(rule1);
     lvd::g_log << lvd::Log::dbg() << '\n';
     assert(bs.evaluate_predicate(SubjVerbObj(Book, HasProperty, Indigo)));
 
@@ -638,10 +708,14 @@ int main (int argc, char **argv) {
     //
 
     auto rule2 = Implication(SubjVerbObj(X, HasProperty, Indigo), Implies, SubjVerbObj(Bob, LikesEntity, X));
-    bs.derive_beliefs(rule2);
+    bs.derive_beliefs_and_add(rule2);
     lvd::g_log << lvd::Log::dbg() << LVD_REFLECT(bs) << '\n';
     assert(bs.evaluate_predicate(SubjVerbObj(Bob, LikesEntity, Book)));
     assert(bs.evaluate_predicate(Predicate_Not(Not, SubjVerbObj(Alice, HasProperty, Indigo))));
+
+    parse_test();
+
+    interactive_session(std::cin);
 
     return 0;
 }

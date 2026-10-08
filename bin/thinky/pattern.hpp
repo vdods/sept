@@ -1,6 +1,7 @@
 // 2021.05.16 - Victor Dods
 
 #include "common.hpp"
+#include <optional>
 #include "sept/Data.hpp"
 #include "sept/FreeVar.hpp"
 #include "sept/SymbolTable.hpp"

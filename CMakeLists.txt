@@ -12,24 +12,6 @@ option(BUILD_sept "Build sept binary (requires Qt5)" ON)
 option(BUILD_interop "Build interop binaries: front and back (requires Boost)" ON)
 option(BUILD_SHARED_LIBS "Build shared libraries (instead of static libraries)" ON)
 
-# NOTE: There's something wonky with this option -- when you toggle it, it freaks out and lies
-# a bit, and you may have to run configure twice, setting this option to the desired setting
-# both times.  Hit 't' to view the advanced vars to verify that the desired compiler is configured.
-option(USE_CLANG "Use clang++-10 C++ compiler")
-
-if(USE_CLANG)
-    # Use clang++-9 and libc++ (there's a bug in libstdc++ 8.3.0 regarding a particular use of std::any and std::is_copy_constructible)
-    # Compiling with g++ against libc++ is nontrivial, so just use clang++.  Note that clang++-5 and later fully support C++17 --
-    # see https://clang.llvm.org/cxx_status.html -- though for some reason clang++-6.0 seemed to not know about the <any> header.
-    set(CMAKE_CXX_COMPILER "clang++-10" CACHE STRING "" FORCE)
-    set(CMAKE_CXX_FLAGS "-stdlib=libc++" CACHE STRING "" FORCE)
-    set(CMAKE_EXE_LINKER_FLAGS "-lc++abi" CACHE STRING "" FORCE)
-else()
-    set(CMAKE_CXX_COMPILER "g++-8" CACHE STRING "" FORCE)
-    set(CMAKE_CXX_FLAGS "" CACHE STRING "" FORCE)
-    set(CMAKE_EXE_LINKER_FLAGS "" CACHE STRING "" FORCE)
-endif()
-
 # Use C++17 standard, but not extensions.
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -62,7 +44,7 @@ if(NOT USE_CLANG)
     target_link_libraries(CppStdFilesystem INTERFACE -lstdc++fs)
 endif()
 
-find_package(lvd 0.12.0 REQUIRED)
+find_package(lvd 0.13.1 REQUIRED)
 
 #
 # Libraries
@@ -246,6 +228,8 @@ endif()
 
 if(BUILD_thinky)
     set(thinky_SOURCES
+        #bin/thinky/agent.cpp
+        #bin/thinky/agent.hpp
         bin/thinky/ast.cpp
         bin/thinky/ast.hpp
         bin/thinky/belief.cpp
@@ -255,6 +239,8 @@ if(BUILD_thinky)
         bin/thinky/logic.cpp
         bin/thinky/logic.hpp
         bin/thinky/main.cpp
+        bin/thinky/parse.cpp
+        bin/thinky/parse.hpp
         bin/thinky/pattern.cpp
         bin/thinky/pattern.hpp
         bin/thinky/trit.cpp

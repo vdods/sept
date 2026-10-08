@@ -11,19 +11,39 @@
 #include <lvd/comma.hpp>
 #include <lvd/fmt.hpp>
 
-void add_belief_to (BeliefSet &belief_set, sept::Data const &belief) {
+// This is a private function, an implementation detail of add_belief_to.
+void attempt_to_add_belief_to (BeliefSet &belief_set, sept::Data const &belief, BeliefSet const *existing_belief_set) {
+    assert(!inhabits_data(belief, Predicate_And));
+    lvd::g_log << lvd::Log::trc() << "attempting to add belief (to " << &belief_set << "): " << belief << " ... ";
+    // TODO: Check belief_set also
+    if (existing_belief_set != nullptr) {
+        if (existing_belief_set->find(belief) == existing_belief_set->end()) {
+            lvd::g_log << lvd::Log::trc() << "succeeded (belief didn't already exist)\n";
+        } else {
+            lvd::g_log << lvd::Log::trc() << "belief was already present\n";
+        }
+    }
+    belief_set.insert(belief);
+//     auto [it, inserted] = belief_set.insert(belief);
+//     std::ignore = it;
+//     if (inserted) {
+//         lvd::g_log << lvd::Log::dbg() << "added belief (to " << &belief_set << "): " << belief << '\n';
+//     } else {
+//         lvd::g_log << lvd::Log::trc() << "belief was already present\n";
+//     }
+}
+
+void add_belief_to (BeliefSet &belief_set, sept::Data const &belief, BeliefSet const *existing_belief_set) {
     auto demorganized_belief = demorganize_data(belief);
     // If a belief is Predicate_And, then it can be broken up into separate beliefs and each one added.
     // Otherwise it's just added as is.
     if (inhabits_data(demorganized_belief, Predicate_And)) {
         auto operand_tuple = demorganized_belief[1].move_cast<sept::TupleTerm_c>();
         for (auto const &operand : operand_tuple.elements()) {
-            lvd::g_log << lvd::Log::inf() << "adding belief (to " << &belief_set << "): " << operand << '\n';
-            belief_set.insert(operand);
+            attempt_to_add_belief_to(belief_set, operand, existing_belief_set);
         }
     } else {
-        lvd::g_log << lvd::Log::inf() << "adding belief (to " << &belief_set << "): " << belief << '\n';
-        belief_set.insert(belief);
+        attempt_to_add_belief_to(belief_set, belief, existing_belief_set);
     }
 }
 
@@ -86,7 +106,7 @@ Trit BeliefSystem::evaluate_predicate (sept::Data const &predicate) const {
     }
 }
 
-void BeliefSystem::derive_beliefs (sept::Data const &inference, bool also_derive_using_contrapositive) {
+void BeliefSystem::derive_beliefs (BeliefSet &new_belief_set, sept::Data const &inference, bool also_derive_using_contrapositive) {
     lvd::g_log << lvd::Log::dbg() << "deriving beliefs from " << LVD_REFLECT(inference) << '\n';
 
     // TODO: Write extractions
@@ -107,7 +127,6 @@ void BeliefSystem::derive_beliefs (sept::Data const &inference, bool also_derive
         }
     }
 
-    BeliefSet new_belief_set;
     if (inhabits_data(premise, Predicate_And)) {
         auto parent_symbol_assignment = lvd::make_sp<sept::SymbolTable>();
         auto premise_logical_literal_tuple = premise[1].cast<sept::TupleTerm_c>();
@@ -129,15 +148,11 @@ void BeliefSystem::derive_beliefs (sept::Data const &inference, bool also_derive
             }
         }
     }
-    // Add the new beliefs to the BeliefSystem's belief set.
-    for (auto &new_belief : new_belief_set) {
-        m_belief_set.emplace(std::move(new_belief));
-    }
 
     if (also_derive_using_contrapositive) {
         auto contrapositive = Implication(Predicate(Not, conclusion), Implies, Predicate(Not, premise));
         // Don't derive using contrapositive again, or infinite loop.
-        derive_beliefs(contrapositive, false);
+        derive_beliefs(new_belief_set, contrapositive, false);
     }
 }
 

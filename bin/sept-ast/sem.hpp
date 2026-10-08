@@ -177,6 +177,8 @@ struct SymbolDefn_Term_c {
 };
 
 struct FuncPrototype_Term_c {
+    // TODO: This also needs to specify the scope (i.e. SymbolTable) that this FuncPrototype was declared in
+    // so that the types of each param can be looked up correctly.
     SymbolTypeDeclArray_Term_c m_param_decls;
     // TODO: This would eventually be TypeExpr
     sept::Data m_codomain;
@@ -188,12 +190,14 @@ struct FuncLiteral_Term_c {
 };
 
 struct Assignment_Term_c {
+    // TODO: Eventually this would become sept::Data representing an lvalue
     std::string m_symbol_id;
     sept::Data m_value;
 };
 
 struct SymbolId_Term_c {
     std::string m_symbol_id;
+    // TODO: Should be able to specify which SymbolTable this should start its lookup in.
 };
 
 // TODO: Make this a std::variant -- or not?  sept::Data is more flexible and extensible,

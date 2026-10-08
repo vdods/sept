@@ -44,7 +44,7 @@ QVariant SEPTModel::data (QModelIndex const &index, int role) const {
 
 Qt::ItemFlags SEPTModel::flags (QModelIndex const &index) const {
     if (!index.isValid())
-        return 0;
+        return Qt::ItemFlags();
 
     auto f = QAbstractItemModel::flags(index);
 

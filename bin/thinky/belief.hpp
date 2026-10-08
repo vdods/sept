@@ -11,7 +11,7 @@
 using BeliefSet = std::unordered_set<sept::Data>;
 // using InferenceSet = std::unordered_set<sept::Data>;
 
-void add_belief_to (BeliefSet &belief_set, sept::Data const &belief);
+void add_belief_to (BeliefSet &belief_set, sept::Data const &belief, BeliefSet const *existing_belief_set = nullptr);
 
 // TODO: Could use PartiallyOrderedSet_t containing types, where beliefs are stored
 // in the set as FormalTypeOf(belief).
@@ -26,7 +26,24 @@ public:
 
     // Derives beliefs using pattern matching against a rule of inference "schema" (meaning a
     // rule of inference potentially with free variables which are to be replaced with matching values).
-    void derive_beliefs (sept::Data const &inference, bool also_derive_using_contrapositive = true);
+    void derive_beliefs (BeliefSet &new_belief_set, sept::Data const &inference, bool also_derive_using_contrapositive = true);
+    inline void derive_beliefs_and_add (sept::Data const &inference, bool also_derive_using_contrapositive = true) {
+        BeliefSet new_belief_set;
+        derive_beliefs(new_belief_set, inference, also_derive_using_contrapositive);
+        // Add the new beliefs to the BeliefSystem's belief set.
+        for (auto &new_belief : new_belief_set) {
+            m_belief_set.emplace(std::move(new_belief));
+        }
+    }
+    // Note that this will clear new_belief_set before doing anything else.
+    inline void derive_beliefs_and_add (BeliefSet &new_belief_set, sept::Data const &inference, bool also_derive_using_contrapositive = true) {
+        new_belief_set.clear();
+        derive_beliefs(new_belief_set, inference, also_derive_using_contrapositive);
+        // Add the new beliefs to the BeliefSystem's belief set.
+        for (auto &new_belief : new_belief_set) {
+            m_belief_set.emplace(std::move(new_belief));
+        }
+    }
 
     BeliefSet const &belief_set () const { return m_belief_set; }
     bool contains_belief (sept::Data const &belief) const {

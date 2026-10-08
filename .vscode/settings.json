@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "*.vjson": "json",
+        "cstdint": "cpp",
+        "iosfwd": "cpp",
+        "pointers": "cpp",
+        "assert": "cpp"
+    }
+}

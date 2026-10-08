@@ -143,6 +143,23 @@ SEPT__REGISTER__EXECUTE_STMT__GIVE_ID(sept::TupleTerm_c, __sept__TupleTerm_c__)
 
 } // end namespace sem
 
+void define_sept_global_symbols () {
+//     TODO: actually, do this in sept directly, and do it within a SymbolTable called "sept" under the global one.
+//     use formal registration of types with their names.
+
+    // NPTerm
+
+    // NPType
+
+    // ArrayTerm
+
+    // ArrayType
+
+    // OrderedMapTerm
+
+    // OrderedMapType
+}
+
 int main (int argc, char **argv) {
 //     lvd::g_log.set_log_level_threshold(lvd::LogLevel::DBG);
     lvd::g_log.out().precision(std::numeric_limits<double>::max_digits10+1);

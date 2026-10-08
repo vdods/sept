@@ -3,6 +3,8 @@
 #include "common.hpp"
 
 #include <array>
+#include <lvd/literal.hpp>
+#include <string>
 
 std::string const &as_string (ThinkyNPTerm t) {
     static std::array<std::string,THINKY_NP_TERM_COUNT> const TABLE{
@@ -83,4 +85,23 @@ std::string const &as_string (ThinkyNPTerm t) {
         "Dog",
     };
     return TABLE.at(size_t(t));
+}
+
+// This constructs the effective inverse to the function `std::string as_string(ThinkyNPTerm)`
+std::unordered_map<std::string,ThinkyNPTerm> make_thinky_np_term_map () {
+    std::unordered_map<std::string,ThinkyNPTerm> retval;
+    for (ThinkyNPTerm_CType i = ThinkyNPTerm_CType(ThinkyNPTerm::__LOWEST__); i <= ThinkyNPTerm_CType(ThinkyNPTerm::__HIGHEST__); ++i) {
+        auto t = ThinkyNPTerm(i);
+        retval[as_string(t)] = t;
+    }
+    return retval;
+}
+
+ThinkyNPTerm thinky_np_term_from_string (std::string const &s) noexcept(false) {
+    static auto const MAP = make_thinky_np_term_map();
+    try {
+        return MAP.at(s);
+    } catch (std::out_of_range const &e) {
+        throw std::runtime_error(LVD_FMT("Unrecognized ThinkyNPTerm: " << lvd::literal_of(s)));
+    }
 }
